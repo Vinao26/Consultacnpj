@@ -11,10 +11,27 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <!-- Babel Standalone para transpilar JSX no navegador -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- html2pdf.js para exportação direta de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
       background-color: #f8fafc;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    @media print {
+      body {
+        background-color: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-shadow-none {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      .print-break-inside-avoid {
+        page-break-inside: avoid;
+      }
     }
   </style>
 </head>
@@ -96,7 +113,7 @@
         return (
           <div className="space-y-3 mt-2">
             {data.map((item, index) => (
-              <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 print-break-inside-avoid">
                 <span className="text-xs font-bold text-gray-500 uppercase block mb-1">Item #{index + 1}</span>
                 <DynamicDataViewer data={item} level={level + 1} />
               </div>
@@ -113,7 +130,7 @@
               return (
                 <div
                   key={key}
-                  className={`p-2.5 rounded-lg border border-gray-100 bg-white ${
+                  className={`p-2.5 rounded-lg border border-gray-100 bg-white print-break-inside-avoid ${
                     isComplex ? 'col-span-full bg-gray-50/50 p-3' : ''
                   }`}
                 >
@@ -143,6 +160,7 @@
       const [cnpj, setCnpj] = useState('');
       const [data, setData] = useState(null);
       const [loading, setLoading] = useState(false);
+      const [generatingPdf, setGeneratingPdf] = useState(false);
       const [error, setError] = useState(null);
       const [showRawJson, setShowRawJson] = useState(false);
       const [copied, setCopied] = useState(false);
@@ -192,12 +210,67 @@
         setTimeout(() => setCopied(false), 2000);
       };
 
+      // 🖨️ IMPRESSÃO DA FICHA CADASTRAL
+      const handlePrint = () => {
+        window.print();
+      };
+
+      // 📄 EXPORTAR PDF DA FICHA CADASTRAL
+      const handleExportPDF = () => {
+        if (!data) return;
+        setGeneratingPdf(true);
+        const element = document.getElementById('ficha-cadastral-content');
+        const formattedCnpj = data.estabelecimento?.cnpj || cnpj.replace(/\D/g, '');
+
+        const opt = {
+          margin: 10,
+          filename: `ficha-cadastral-cnpj-${formattedCnpj}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+          setGeneratingPdf(false);
+        }).catch((err) => {
+          console.error(err);
+          setGeneratingPdf(false);
+        });
+      };
+
+      // 💬 COMPARTILHAR NO WHATSAPP
+      const handleShareWhatsApp = () => {
+        if (!data) return;
+        
+        const razao = data.razao_social || 'Empresa';
+        const fantasia = data.estabelecimento?.nome_fantasia ? ` (${data.estabelecimento.nome_fantasia})` : '';
+        const cnpjNum = formatCNPJ(data.estabelecimento?.cnpj || cnpj);
+        const situacao = data.estabelecimento?.situação_cadastral || data.estabelecimento?.situacao_cadastral || 'Ativa';
+        const cidadeUf = `${data.estabelecimento?.cidade?.nome || '-'}/${data.estabelecimento?.estado?.sigla || '-'}`;
+        const cnae = `${data.estabelecimento?.atividade_principal?.subclasse || '-'} - ${data.estabelecimento?.atividade_principal?.descricao || '-'}`;
+        const telefone = data.estabelecimento?.ddd1 && data.estabelecimento?.telefone1 
+          ? `(${data.estabelecimento.ddd1}) ${data.estabelecimento.telefone1}` 
+          : 'Não informado';
+
+        const text = `*Ficha Cadastral de CNPJ*\n\n` +
+          `🏢 *Razão Social:* ${razao}${fantasia}\n` +
+          `🔢 *CNPJ:* ${cnpjNum}\n` +
+          `📌 *Situação:* ${situacao}\n` +
+          `📍 *Cidade/UF:* ${cidadeUf}\n` +
+          `💼 *CNAE Principal:* ${cnae}\n` +
+          `📞 *Telefone:* ${telefone}\n\n` +
+          `_Consulte e exporte a ficha completa em PDF._`;
+
+        const encodedText = encodeURIComponent(text);
+        window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+      };
+
       return (
         <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8">
           <div className="max-w-6xl mx-auto space-y-6">
             
-            {/* CABEÇALHO E BUSCA */}
-            <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            {/* CABEÇALHO E BUSCA (Oculto ao imprimir) */}
+            <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 no-print">
               <div className="max-w-3xl mx-auto text-center space-y-3 mb-6">
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
                   Consultar CNPJ
@@ -240,98 +313,152 @@
             {data && (
               <main className="space-y-6">
                 
-                {/* CARD DE RESUMO PRINCIPAL */}
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
-                    <div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                        {data.estabelecimento?.tipo || 'Empresa'}
-                      </span>
-                      <h2 className="text-2xl font-bold text-slate-900">{data.razao_social}</h2>
-                      {data.estabelecimento?.nome_fantasia && (
-                        <p className="text-slate-500 font-medium">
-                          {data.estabelecimento.nome_fantasia}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                          data.estabelecimento?.situação_cadastral === 'Ativa' || data.estabelecimento?.situacao_cadastral === 'Ativa'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        Situação: {data.estabelecimento?.situação_cadastral || data.estabelecimento?.situacao_cadastral || 'Desconhecida'}
-                      </span>
-                    </div>
+                {/* BARRA DE AÇÕES (IMPRESSÃO, PDF, WHATSAPP) - OCULTA NA IMPRESSÃO */}
+                <div className="no-print bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-slate-700">
+                    Ações da Ficha Cadastral:
                   </div>
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    {/* Botão Impressão */}
+                    <button
+                      onClick={handlePrint}
+                      className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-slate-300"
+                    >
+                      <span>🖨️</span>
+                      <span>Imprimir Ficha</span>
+                    </button>
 
-                  {/* GRID DE INFORMAÇÕES BÁSICAS */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <span className="text-xs font-medium text-slate-400 uppercase">CNAE Principal</span>
-                      <p className="text-sm font-semibold text-slate-800 mt-1">
-                        {data.estabelecimento?.atividade_principal?.subclasse || '-'} - {data.estabelecimento?.atividade_principal?.descricao || '-'}
-                      </p>
-                    </div>
+                    {/* Botão PDF */}
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={generatingPdf}
+                      className="flex-1 sm:flex-none px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <span>📄</span>
+                      <span>{generatingPdf ? 'Gerando PDF...' : 'Exportar PDF'}</span>
+                    </button>
 
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <span className="text-xs font-medium text-slate-400 uppercase">Endereço</span>
-                      <p className="text-sm font-semibold text-slate-800 mt-1">
-                        {data.estabelecimento?.tipo_logradouro} {data.estabelecimento?.logradouro}, {data.estabelecimento?.numero}
-                        {data.estabelecimento?.complemento ? ` - ${data.estabelecimento.complemento}` : ''}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {data.estabelecimento?.bairro} | CEP: {formatCEP(data.estabelecimento?.cep)}
-                      </p>
-                    </div>
+                    {/* Botão WhatsApp */}
+                    <button
+                      onClick={handleShareWhatsApp}
+                      className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <span>💬</span>
+                      <span>Enviar p/ WhatsApp</span>
+                    </button>
+                  </div>
+                </div>
 
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <span className="text-xs font-medium text-slate-400 uppercase">Cidade / UF</span>
-                      <p className="text-sm font-semibold text-slate-800 mt-1">
-                        {data.estabelecimento?.cidade?.nome || '-'} / {data.estabelecimento?.estado?.sigla || '-'}
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <span className="text-xs font-medium text-slate-400 uppercase">Contatos</span>
-                      <p className="text-sm font-semibold text-slate-800 mt-1">
-                        {data.estabelecimento?.ddd1 && data.estabelecimento?.telefone1
-                          ? `(${data.estabelecimento.ddd1}) ${data.estabelecimento.telefone1}`
-                          : 'Sem telefone'}
-                      </p>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">
-                        {data.estabelecimento?.email || 'Sem e-mail'}
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <span className="text-xs font-medium text-slate-400 uppercase">Capital Social</span>
-                      <p className="text-sm font-semibold text-slate-800 mt-1">
-                        {formatCurrency(data.capital_social)}
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                      <span className="text-xs font-medium text-slate-400 uppercase">Inscrições Estaduais</span>
-                      <div className="text-sm font-semibold text-slate-800 mt-1 max-h-16 overflow-y-auto">
-                        {data.estabelecimento?.inscricoes_estadual?.length > 0 ? (
-                          data.estabelecimento.inscricoes_estadual.map((ie, i) => (
-                            <div key={i} className="text-xs">
-                              <span className="font-bold">{ie.inscricao_estadual}</span> ({ie.estado?.sigla || 'UF'}) - {ie.ativo ? 'Ativa' : 'Inativa'}
-                            </div>
-                          ))
-                        ) : (
-                          <span className="text-slate-400 text-xs">Nenhuma cadastrada</span>
+                {/* CONTEÚDO DA FICHA CADASTRAL (IMPRESSO OU EXPORTADO COMO PDF) */}
+                <div id="ficha-cadastral-content" className="space-y-6">
+                  
+                  {/* CARD DE RESUMO PRINCIPAL */}
+                  <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-6 print-shadow-none">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                      <div>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          {data.estabelecimento?.tipo || 'Empresa'}
+                        </span>
+                        <h2 className="text-2xl font-bold text-slate-900">{data.razao_social}</h2>
+                        {data.estabelecimento?.nome_fantasia && (
+                          <p className="text-slate-500 font-medium">
+                            {data.estabelecimento.nome_fantasia}
+                          </p>
                         )}
                       </div>
+                      <div>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                            data.estabelecimento?.situação_cadastral === 'Ativa' || data.estabelecimento?.situacao_cadastral === 'Ativa'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          Situação: {data.estabelecimento?.situação_cadastral || data.estabelecimento?.situacao_cadastral || 'Desconhecida'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </section>
 
-                {/* BARRA DE AÇÕES & METADADOS */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200">
+                    {/* GRID DE INFORMAÇÕES BÁSICAS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <span className="text-xs font-medium text-slate-400 uppercase">CNAE Principal</span>
+                        <p className="text-sm font-semibold text-slate-800 mt-1">
+                          {data.estabelecimento?.atividade_principal?.subclasse || '-'} - {data.estabelecimento?.atividade_principal?.descricao || '-'}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <span className="text-xs font-medium text-slate-400 uppercase">Endereço</span>
+                        <p className="text-sm font-semibold text-slate-800 mt-1">
+                          {data.estabelecimento?.tipo_logradouro} {data.estabelecimento?.logradouro}, {data.estabelecimento?.numero}
+                          {data.estabelecimento?.complemento ? ` - ${data.estabelecimento.complemento}` : ''}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {data.estabelecimento?.bairro} | CEP: {formatCEP(data.estabelecimento?.cep)}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <span className="text-xs font-medium text-slate-400 uppercase">Cidade / UF</span>
+                        <p className="text-sm font-semibold text-slate-800 mt-1">
+                          {data.estabelecimento?.cidade?.nome || '-'} / {data.estabelecimento?.estado?.sigla || '-'}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <span className="text-xs font-medium text-slate-400 uppercase">Contatos</span>
+                        <p className="text-sm font-semibold text-slate-800 mt-1">
+                          {data.estabelecimento?.ddd1 && data.estabelecimento?.telefone1
+                            ? `(${data.estabelecimento.ddd1}) ${data.estabelecimento.telefone1}`
+                            : 'Sem telefone'}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">
+                          {data.estabelecimento?.email || 'Sem e-mail'}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <span className="text-xs font-medium text-slate-400 uppercase">Capital Social</span>
+                        <p className="text-sm font-semibold text-slate-800 mt-1">
+                          {formatCurrency(data.capital_social)}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl">
+                        <span className="text-xs font-medium text-slate-400 uppercase">Inscrições Estaduais</span>
+                        <div className="text-sm font-semibold text-slate-800 mt-1 max-h-16 overflow-y-auto">
+                          {data.estabelecimento?.inscricoes_estadual?.length > 0 ? (
+                            data.estabelecimento.inscricoes_estadual.map((ie, i) => (
+                              <div key={i} className="text-xs">
+                                <span className="font-bold">{ie.inscricao_estadual}</span> ({ie.estado?.sigla || 'UF'}) - {ie.ativo ? 'Ativa' : 'Inativa'}
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-slate-400 text-xs">Nenhuma cadastrada</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* SEÇÃO DINÂMICA RECURSIVA */}
+                  <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-4 print-shadow-none">
+                    <div className="border-b border-slate-100 pb-3">
+                      <h3 className="text-xl font-bold text-slate-900">
+                        Estrutura Completa de Dados
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Mapeamento dinâmico e automático de todas as propriedades retornadas pela API.
+                      </p>
+                    </div>
+                    
+                    <DynamicDataViewer data={data} />
+                  </section>
+                </div>
+
+                {/* BARRA DE AÇÕES SECUNDÁRIA & METADADOS (Oculta na impressão) */}
+                <div className="no-print flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                   <div className="text-sm text-slate-600">
                     Total de campos preenchidos: <strong className="text-blue-600">{countFilledFields(data)}</strong>
                   </div>
@@ -351,26 +478,12 @@
                   </div>
                 </div>
 
-                {/* VISUALIZADOR DE JSON BRUTO */}
+                {/* VISUALIZADOR DE JSON BRUTO (Oculto na impressão) */}
                 {showRawJson && (
-                  <section className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96 shadow-inner">
+                  <section className="no-print bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96 shadow-inner">
                     <pre>{JSON.stringify(data, null, 2)}</pre>
                   </section>
                 )}
-
-                {/* SEÇÃO DINÂMICA RECURSIVA */}
-                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-4">
-                  <div className="border-b border-slate-100 pb-3">
-                    <h3 className="text-xl font-bold text-slate-900">
-                      Estrutura Completa de Dados
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Mapeamento dinâmico e automático de todas as propriedades retornadas pela API.
-                    </p>
-                  </div>
-                  
-                  <DynamicDataViewer data={data} />
-                </section>
 
               </main>
             )}
@@ -384,3 +497,4 @@
   </script>
 </body>
 </html>
+
