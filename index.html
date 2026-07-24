@@ -39,7 +39,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect, useRef } = React;
 
     // --- FUNÇÕES UTILITÁRIAS DE FORMATAÇÃO ---
 
@@ -165,12 +165,34 @@
       const [showRawJson, setShowRawJson] = useState(false);
       const [copied, setCopied] = useState(false);
 
+      // ESTADOS DO TEMPORIZADOR DE 60s
+      const [cooldown, setCooldown] = useState(0);
+      const timerRef = useRef(null);
+
+      // Gerenciamento do temporizador regressivo
+      useEffect(() => {
+        if (cooldown > 0) {
+          timerRef.current = setInterval(() => {
+            setCooldown((prev) => prev - 1);
+          }, 1000);
+        } else if (cooldown === 0 && timerRef.current) {
+          clearInterval(timerRef.current);
+        }
+
+        return () => {
+          if (timerRef.current) clearInterval(timerRef.current);
+        };
+      }, [cooldown]);
+
       const handleInputChange = (e) => {
         setCnpj(formatCNPJ(e.target.value));
       };
 
       const handleSearch = async (e) => {
         e.preventDefault();
+
+        if (cooldown > 0) return;
+
         const cleanCNPJ = cnpj.replace(/\D/g, '');
 
         if (cleanCNPJ.length !== 14) {
@@ -189,13 +211,16 @@
             if (response.status === 404) {
               throw new Error('CNPJ não encontrado na base de dados.');
             } else if (response.status === 429) {
-              throw new Error('Limite de requisições atingido. Aguarde um instante e tente novamente.');
+              throw new Error('Limite de requisições atingido na API. Aguarde antes de tentar novamente.');
             }
             throw new Error(`Erro na consulta (${response.status}). Tente novamente mais tarde.`);
           }
 
           const json = await response.json();
           setData(json);
+
+          // Dispara o cooldown de 60 segundos após consulta bem-sucedida
+          setCooldown(60);
         } catch (err) {
           setError(err.message || 'Ocorreu um erro ao consultar o CNPJ.');
         } finally {
@@ -291,16 +316,27 @@
                 />
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold rounded-xl shadow-md transition duration-200 flex items-center justify-center min-w-[140px]"
+                  disabled={loading || cooldown > 0}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-md transition duration-200 flex items-center justify-center min-w-[170px]"
                 >
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : cooldown > 0 ? (
+                    <span className="text-slate-600 text-sm font-medium">
+                      Aguarde {cooldown}s
+                    </span>
                   ) : (
                     'Consultar'
                   )}
                 </button>
               </form>
+
+              {/* AVISO DO INTERVALO */}
+              {cooldown > 0 && (
+                <p className="text-xs text-amber-600 text-center mt-3 font-medium">
+                  ⏳ Por proteção contra instabilidade na API, aguarde {cooldown} segundos para uma nova consulta.
+                </p>
+              )}
 
               {error && (
                 <div className="max-w-xl mx-auto mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm text-center">
