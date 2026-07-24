@@ -29,19 +29,15 @@
         box-shadow: none !important;
         border: 1px solid #cbd5e1 !important;
       }
-      .print-break-inside-avoid {
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
     }
 
-    /* PREVENÇÃO RIGOROSA DE CORTE DE PÁGINA NO PDF */
+    /* PREVENÇÃO DE CORTE DE PÁGINA NO PDF */
     .pdf-no-break {
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
 
-    /* ESTILOS REPETIDOS DO CARTÃO CNPJ OFICIAL */
+    /* ESTILOS DO CARTÃO CNPJ OFICIAL */
     .cnpj-card-box {
       border: 1px solid #000;
       font-family: Arial, Helvetica, sans-serif;
@@ -59,7 +55,7 @@
     }
     .cnpj-td {
       border: 1px solid #000;
-      padding: 2px 4px;
+      padding: 3px 5px;
       vertical-align: top;
     }
     .cnpj-label {
@@ -68,7 +64,7 @@
       text-transform: uppercase;
       color: #000;
       display: block;
-      margin-bottom: 1px;
+      margin-bottom: 2px;
     }
     .cnpj-val {
       font-size: 9.5px;
@@ -76,10 +72,10 @@
       color: #000;
       text-transform: uppercase;
       word-break: break-word;
-      line-height: 1.1;
+      line-height: 1.2;
     }
 
-    /* ESTILOS FIÉIS DO SINTEGRA - REDESIM RONDÔNIA */
+    /* ESTILOS DO SINTEGRA */
     .sintegra-container {
       font-family: Arial, Helvetica, sans-serif;
       color: #000;
@@ -91,7 +87,7 @@
     .sintegra-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: -1px;
+      margin-bottom: 6px;
       page-break-inside: avoid;
       break-inside: avoid;
     }
@@ -100,22 +96,23 @@
       color: #ffffff;
       font-size: 9px;
       font-weight: bold;
-      padding: 2px 4px;
+      padding: 3px 5px;
       text-align: left;
       text-transform: uppercase;
       border: 1px solid #000;
     }
     .sintegra-td {
       border: 1px solid #7f7f7f;
-      padding: 1.5px 4px;
+      padding: 3px 5px;
       vertical-align: top;
       background-color: #fff;
     }
     .sintegra-label {
-      font-size: 7.5px;
+      font-size: 8px;
       color: #333;
       display: inline-block;
       text-transform: uppercase;
+      font-weight: bold;
     }
     .sintegra-val {
       font-size: 8.5px;
@@ -205,7 +202,7 @@
         return (
           <div className="space-y-3 mt-2">
             {data.map((item, index) => (
-              <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 print-break-inside-avoid pdf-no-break">
+              <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200 pdf-no-break">
                 <span className="text-xs font-bold text-gray-500 uppercase block mb-1">Item #{index + 1}</span>
                 <DynamicDataViewer data={item} level={level + 1} />
               </div>
@@ -222,7 +219,7 @@
               return (
                 <div
                   key={key}
-                  className={`p-2.5 rounded-lg border border-gray-100 bg-white print-break-inside-avoid pdf-no-break ${
+                  className={`p-2.5 rounded-lg border border-gray-100 bg-white pdf-no-break ${
                     isComplex ? 'col-span-full bg-gray-50/50 p-3' : ''
                   }`}
                 >
@@ -329,7 +326,7 @@
         window.print();
       };
 
-      // 📄 FUNÇÃO GENÉRICA DE EXPORTAÇÃO DE PDF AJUSTADA PARA PÁGINA INTEIRA
+      // 📄 EXPORTAÇÃO DE PDF REFINADA COM QUEBRA LIMPA
       const generatePDF = (elementId, filename, type) => {
         if (!data) return;
         setGeneratingPdf(true);
@@ -338,12 +335,12 @@
         setTimeout(() => {
           const element = document.getElementById(elementId);
           const opt = {
-            margin: [3, 3, 3, 3],
+            margin: [5, 5, 5, 5],
             filename: filename,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            pagebreak: { mode: ['css', 'legacy'] }
           };
 
           html2pdf().set(opt).from(element).save().then(() => {
@@ -378,7 +375,7 @@
         const razao = data.razao_social || 'Empresa';
         const fantasia = data.estabelecimento?.nome_fantasia ? ` (${data.estabelecimento.nome_fantasia})` : '';
         const cnpjNum = formatCNPJ(data.estabelecimento?.cnpj || cnpj);
-        const situacao = data.estabelecimento?.situação_cadastral || data.estabelecimento?.situacao_cadastral || 'Ativa';
+        const situacao = (data.estabelecimento?.situação_cadastral || data.estabelecimento?.situacao_cadastral || 'NÃO INFORMADA').toUpperCase();
         const cidadeUf = `${data.estabelecimento?.cidade?.nome || '-'}/${data.estabelecimento?.estado?.sigla || '-'}`;
         const cnae = `${data.estabelecimento?.atividade_principal?.subclasse || '-'} - ${data.estabelecimento?.atividade_principal?.descricao || '-'}`;
         const telefone = data.estabelecimento?.ddd1 && data.estabelecimento?.telefone1 
@@ -398,13 +395,12 @@
         window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
       };
 
-      // Dados Auxiliares extraídos para os templates de PDF
+      // EXTRAÇÃO DE DADOS PARA OS TEMPLATES
       const formattedCnpjVal = formatCNPJ(data?.estabelecimento?.cnpj || cnpj);
-      const rawCnpjDigits = (data?.estabelecimento?.cnpj || cnpj).replace(/\D/g, '');
       const dataAbertura = formatDate(data?.estabelecimento?.data_inicio_atividade);
       const razaoSocial = data?.razao_social || '-';
       const nomeFantasia = data?.estabelecimento?.nome_fantasia || '********';
-      const porte = data?.porte?.descricao || 'EPP';
+      const porte = data?.porte?.descricao || '-';
       
       const cnaeCode = data?.estabelecimento?.atividade_principal?.subclasse || '';
       const cnaeDesc = data?.estabelecimento?.atividade_principal?.descricao || '';
@@ -420,7 +416,7 @@
       const logradouroNome = data?.estabelecimento?.logradouro || '';
       const logradouro = `${tipoLogradouro} ${logradouroNome}`.trim();
       const numero = data?.estabelecimento?.numero || 'S/N';
-      const complemento = data?.estabelecimento?.complemento || '********';
+      const complemento = data?.estabelecimento?.complemento || '';
       const cep = formatCEP(data?.estabelecimento?.cep);
       const bairro = data?.estabelecimento?.bairro || '-';
       const municipio = data?.estabelecimento?.cidade?.nome || '-';
@@ -431,14 +427,17 @@
       const ddd2 = data?.estabelecimento?.ddd2 || '';
       const tel2 = data?.estabelecimento?.telefone2 || '';
       const telefone = ddd1 && tel1 
-        ? `(${ddd1}) ${tel1}` + (ddd2 && tel2 ? ` / (${ddd2}) ${tel2}` : ' / (0000) 0000-0000') 
-        : '(00) 0000-0000';
+        ? `(${ddd1}) ${tel1}` + (ddd2 && tel2 ? ` / (${ddd2}) ${tel2}` : '') 
+        : '-';
 
-      const situacaoCadastral = (data?.estabelecimento?.situação_cadastral || data?.estabelecimento?.situacao_cadastral || 'ATIVA').toUpperCase();
+      // FIDELIDADE DA SITUAÇÃO CADASTRAL DA API
+      const situacaoCadastral = (data?.estabelecimento?.situação_cadastral || data?.estabelecimento?.situacao_cadastral || 'NÃO INFORMADA').toUpperCase();
       const dataSituacao = formatDate(data?.estabelecimento?.data_situacao_cadastral || data?.estabelecimento?.updated_at);
+      
+      // Inscrição Estadual vinda da API se houver (se não houver, fica em branco/não inventado)
       const iePrincipal = data?.estabelecimento?.inscricoes_estadual?.length > 0 
         ? data.estabelecimento.inscricoes_estadual[0].inscricao_estadual 
-        : '00000006748279';
+        : '-';
 
       const now = new Date();
       const currentDateStr = formatDate(now.toISOString());
@@ -508,7 +507,6 @@
                     Ações & Exportações:
                   </div>
                   <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    {/* Botão Impressão */}
                     <button
                       onClick={handlePrint}
                       className="flex-1 sm:flex-none px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold rounded-lg transition flex items-center justify-center gap-1.5 border border-slate-300"
@@ -517,7 +515,6 @@
                       <span>Imprimir</span>
                     </button>
 
-                    {/* Botão PDF Ficha */}
                     <button
                       onClick={handleExportPDF}
                       disabled={generatingPdf}
@@ -527,7 +524,6 @@
                       <span>{generatingPdf && pdfType === 'ficha' ? 'Gerando...' : 'Ficha PDF'}</span>
                     </button>
 
-                    {/* BOTÃO CARTÃO CNPJ */}
                     <button
                       onClick={handleExportCartaoCNPJ}
                       disabled={generatingPdf}
@@ -537,7 +533,6 @@
                       <span>{generatingPdf && pdfType === 'cartao' ? 'Gerando Cartão...' : 'Cartão CNPJ'}</span>
                     </button>
 
-                    {/* BOTÃO SINTEGRA */}
                     <button
                       onClick={handleExportSintegra}
                       disabled={generatingPdf}
@@ -547,7 +542,6 @@
                       <span>{generatingPdf && pdfType === 'sintegra' ? 'Gerando Sintegra...' : 'Sintegra'}</span>
                     </button>
 
-                    {/* Botão WhatsApp */}
                     <button
                       onClick={handleShareWhatsApp}
                       className="flex-1 sm:flex-none px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm"
@@ -580,7 +574,7 @@
                           className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                             situacaoCadastral === 'ATIVA'
                               ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
                           }`}
                         >
                           Situação: {situacaoCadastral}
@@ -600,7 +594,7 @@
                       <div className="p-4 bg-slate-50 rounded-xl pdf-no-break">
                         <span className="text-xs font-medium text-slate-400 uppercase">Endereço</span>
                         <p className="text-sm font-semibold text-slate-800 mt-1">
-                          {logradouro}, {numero} {complemento !== '********' ? `- ${complemento}` : ''}
+                          {logradouro}, {numero} {complemento ? `- ${complemento}` : ''}
                         </p>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {bairro} | CEP: {cep}
@@ -620,7 +614,7 @@
                           {telefone}
                         </p>
                         <p className="text-xs text-slate-500 truncate mt-0.5">
-                          {email}
+                          {email || '-'}
                         </p>
                       </div>
 
@@ -692,14 +686,14 @@
                 )}
 
                 {/* ========================================================================= */}
-                {/* TEMPLATE OCULTO PARA GERAÇÃO DO PDF CARTÃO CNPJ (IDÊNTICO À IMAGEM 1)      */}
+                {/* TEMPLATE OCULTO PARA GERAÇÃO DO PDF CARTÃO CNPJ                             */}
                 {/* ========================================================================= */}
                 <div className="overflow-hidden h-0 w-0">
                   <div id="cartao-cnpj-template" style={{ width: '190mm', padding: '2mm', background: '#fff', fontSize: '9px', color: '#000', fontFamily: 'Arial, sans-serif' }}>
-                    <div style={{ border: '1px solid #000', padding: '3px' }} className="pdf-no-break">
+                    <div style={{ border: '1px solid #000', padding: '3px' }}>
                       
                       {/* CABEÇALHO DA RECEITA FEDERAL */}
-                      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }} className="pdf-no-break">
                         <tbody>
                           <tr>
                             <td style={{ width: '50px', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -714,27 +708,27 @@
                       </table>
 
                       {/* NÚMERO DE INSCRIÇÃO / COMPROVANTE / DATA DE ABERTURA */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '36%' }}>
                               <span className="cnpj-label">NÚMERO DE INSCRIÇÃO</span>
                               <span className="cnpj-val">{formattedCnpjVal}</span><br/>
-                              <span className="cnpj-val" style={{ fontSize: '8.5px' }}>MATRIZ</span>
+                              <span className="cnpj-val" style={{ fontSize: '8.5px' }}>{data.estabelecimento?.tipo === 'Matriz' ? 'MATRIZ' : 'FILIAL'}</span>
                             </td>
                             <td className="cnpj-td" style={{ width: '42%', textAlign: 'center', verticalAlign: 'middle' }}>
                               <span style={{ fontSize: '10px', fontWeight: 'bold' }}>COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL</span>
                             </td>
                             <td className="cnpj-td" style={{ width: '22%' }}>
                               <span className="cnpj-label">DATA DE ABERTURA</span>
-                              <span className="cnpj-val">{dataAbertura}</span>
+                              <span className="cnpj-val">{dataAbertura || '-'}</span>
                             </td>
                           </tr>
                         </tbody>
                       </table>
 
                       {/* NOME EMPRESARIAL */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td">
@@ -746,7 +740,7 @@
                       </table>
 
                       {/* TÍTULO DO ESTABELECIMENTO / PORTE */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '82%' }}>
@@ -762,7 +756,7 @@
                       </table>
 
                       {/* CNAE PRINCIPAL */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td">
@@ -774,7 +768,7 @@
                       </table>
 
                       {/* CNAE SECUNDÁRIOS */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td">
@@ -784,7 +778,7 @@
                                   {cnaesSecundariosList.map((sec, idx) => {
                                     const sub = sec.subclasse ? sec.subclasse.replace(/^(\d{2})(\d{2})(\d{1})(\d{2})$/, '$1.$2-$3-$4') : '';
                                     return (
-                                      <div key={idx}>
+                                      <div key={idx} style={{ marginBottom: '2px' }}>
                                         {sub} - {sec.descricao}
                                       </div>
                                     );
@@ -799,7 +793,7 @@
                       </table>
 
                       {/* NATUREZA JURÍDICA */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td">
@@ -811,12 +805,12 @@
                       </table>
 
                       {/* ENDEREÇO */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '52%' }}>
                               <span className="cnpj-label">LOGRADOURO</span>
-                              <span className="cnpj-val">{logradouro}</span>
+                              <span className="cnpj-val">{logradouro || '-'}</span>
                             </td>
                             <td className="cnpj-td" style={{ width: '18%' }}>
                               <span className="cnpj-label">NÚMERO</span>
@@ -824,19 +818,19 @@
                             </td>
                             <td className="cnpj-td" style={{ width: '30%' }}>
                               <span className="cnpj-label">COMPLEMENTO</span>
-                              <span className="cnpj-val">{complemento}</span>
+                              <span className="cnpj-val">{complemento || '********'}</span>
                             </td>
                           </tr>
                         </tbody>
                       </table>
 
                       {/* CEP / BAIRRO / MUNICÍPIO / UF */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '22%' }}>
                               <span className="cnpj-label">CEP</span>
-                              <span className="cnpj-val">{cep}</span>
+                              <span className="cnpj-val">{cep || '-'}</span>
                             </td>
                             <td className="cnpj-td" style={{ width: '32%' }}>
                               <span className="cnpj-label">BAIRRO/DISTRITO</span>
@@ -855,12 +849,12 @@
                       </table>
 
                       {/* CONTATO */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '58%' }}>
                               <span className="cnpj-label">ENDEREÇO ELETRÔNICO</span>
-                              <span className="cnpj-val">{email}</span>
+                              <span className="cnpj-val">{email || '-'}</span>
                             </td>
                             <td className="cnpj-td" style={{ width: '42%' }}>
                               <span className="cnpj-label">TELEFONE</span>
@@ -871,7 +865,7 @@
                       </table>
 
                       {/* EFR */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td">
@@ -882,8 +876,8 @@
                         </tbody>
                       </table>
 
-                      {/* SITUAÇÃO CADASTRAL */}
-                      <table className="cnpj-table">
+                      {/* SITUAÇÃO CADASTRAL DA API */}
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '70%' }}>
@@ -892,26 +886,26 @@
                             </td>
                             <td className="cnpj-td" style={{ width: '30%' }}>
                               <span className="cnpj-label">DATA DA SITUAÇÃO CADASTRAL</span>
-                              <span className="cnpj-val">{dataSituacao}</span>
+                              <span className="cnpj-val">{dataSituacao || '-'}</span>
                             </td>
                           </tr>
                         </tbody>
                       </table>
 
                       {/* MOTIVO SITUAÇÃO CADASTRAL */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td">
                               <span className="cnpj-label">MOTIVO DE SITUAÇÃO CADASTRAL</span>
-                              <span className="cnpj-val"></span>
+                              <span className="cnpj-val">{data.estabelecimento?.motivo_situacao_cadastral?.descricao || ''}</span>
                             </td>
                           </tr>
                         </tbody>
                       </table>
 
                       {/* SITUAÇÃO ESPECIAL */}
-                      <table className="cnpj-table">
+                      <table className="cnpj-table pdf-no-break">
                         <tbody>
                           <tr>
                             <td className="cnpj-td" style={{ width: '70%' }}>
@@ -929,18 +923,17 @@
                     </div>
 
                     {/* RODAPÉ DO CARTÃO CNPJ */}
-                    <div style={{ marginTop: '10px', fontSize: '9px', fontFamily: 'Arial, sans-serif' }} className="pdf-no-break">
+                    <div style={{ marginTop: '10px', fontSize: '8.5px', fontFamily: 'Arial, sans-serif' }} className="pdf-no-break">
                       <p style={{ margin: 0 }}>Aprovado pela Instrução Normativa RFB nº 2.119, de 06 de dezembro de 2022.</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
                         <span>Emitido no dia <strong>{currentDateStr}</strong> às <strong>{currentTimeStr}</strong> (data e hora de Brasília).</span>
-                        <span>Página: <strong>1/1</strong></span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* ========================================================================= */}
-                {/* TEMPLATE OCULTO PARA GERAÇÃO DO PDF SINTEGRA (IDÊNTICO À IMAGEM 2)         */}
+                {/* TEMPLATE OCULTO PARA GERAÇÃO DO PDF SINTEGRA                                */}
                 {/* ========================================================================= */}
                 <div className="overflow-hidden h-0 w-0">
                   <div id="sintegra-template" className="sintegra-container">
@@ -953,10 +946,10 @@
                       </div>
                       <div style={{ flex: 1, paddingLeft: '6px' }}>
                         <h2 style={{ fontSize: '13px', fontWeight: 'bold', margin: 0, textTransform: 'uppercase', color: '#000' }}>
-                          CONSULTA PÚBLICA À REDESIM DE RONDÔNIA
+                          CONSULTA PÚBLICA À REDESIM
                         </h2>
                         <div style={{ fontSize: '8.5px', marginTop: '2px', color: '#000' }}>
-                          Data e Hora: {currentDateStr}
+                          Data e Hora: {currentDateStr} {currentTimeStr}
                         </div>
                       </div>
                     </div>
@@ -979,34 +972,18 @@
                         </tr>
                         <tr>
                           <td className="sintegra-td">
-                            <span className="sintegra-label">Nire:</span> <span className="sintegra-val">11201196092</span>
+                            <span className="sintegra-label">Nire:</span> <span className="sintegra-val">-</span>
                           </td>
                           <td className="sintegra-td">
-                            <span className="sintegra-label">Licença Bombeiros:</span> <span className="sintegra-val"></span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">Insc.Municipal(ISS):</span> <span className="sintegra-val"></span>
-                          </td>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">Insc. Imobiliária :</span> <span className="sintegra-val"></span>
+                            <span className="sintegra-label">Licença Bombeiros:</span> <span className="sintegra-val">-</span>
                           </td>
                         </tr>
                         <tr>
                           <td className="sintegra-td">
-                            <span className="sintegra-label">Nr. Alvara Municipal:</span> <span className="sintegra-val"></span>
+                            <span className="sintegra-label">Insc.Municipal(ISS):</span> <span className="sintegra-val">-</span>
                           </td>
                           <td className="sintegra-td">
-                            <span className="sintegra-label">Lic. Ambiental Est.:</span> <span className="sintegra-val"></span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">Lic. Vigilância Sanit.:</span> <span className="sintegra-val"></span>
-                          </td>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">Lic. Ambiental Munc.:</span> <span className="sintegra-val"></span>
+                            <span className="sintegra-label">Insc. Imobiliária :</span> <span className="sintegra-val">-</span>
                           </td>
                         </tr>
                         <tr>
@@ -1016,12 +993,7 @@
                         </tr>
                         <tr>
                           <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Nome Fantasia:</span> <span className="sintegra-val">{nomeFantasia !== '********' ? nomeFantasia : ''}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Utilização do Estabelecimento:</span> <span className="sintegra-val">-</span>
+                            <span className="sintegra-label">Nome Fantasia:</span> <span className="sintegra-val">{nomeFantasia !== '********' ? nomeFantasia : '-'}</span>
                           </td>
                         </tr>
                       </tbody>
@@ -1037,12 +1009,12 @@
                       <tbody>
                         <tr>
                           <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Endereço:</span> <span className="sintegra-val">{logradouro}</span>
+                            <span className="sintegra-label">Endereço:</span> <span className="sintegra-val">{logradouro || '-'}</span>
                           </td>
                         </tr>
                         <tr>
                           <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Complemento:</span> <span className="sintegra-val">{complemento !== '********' ? complemento : ''}</span>
+                            <span className="sintegra-label">Complemento:</span> <span className="sintegra-val">{complemento || '-'}</span>
                           </td>
                         </tr>
                         <tr>
@@ -1058,7 +1030,7 @@
                             <span className="sintegra-label">Município:</span> <span className="sintegra-val">{municipio}</span>
                           </td>
                           <td className="sintegra-td">
-                            <span className="sintegra-label">CEP:</span> <span className="sintegra-val">{cep.replace('-', '')}</span>
+                            <span className="sintegra-label">CEP:</span> <span className="sintegra-val">{cep || '-'}</span>
                           </td>
                         </tr>
                         <tr>
@@ -1069,57 +1041,7 @@
                       </tbody>
                     </table>
 
-                    {/* SEÇÃO 3: ENDEREÇO DE CORRESPONDÊNCIA */}
-                    <table className="sintegra-table pdf-no-break">
-                      <thead>
-                        <tr>
-                          <th colSpan="2" className="sintegra-header-cell">ENDEREÇO DE CORRESPONDÊNCIA</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Endereço:</span> <span className="sintegra-val">{logradouro}, {numero}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Bairro:</span> <span className="sintegra-val">{bairro}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" style={{ width: '55%' }}>
-                            <span className="sintegra-label">Município:</span> <span className="sintegra-val">{municipio}</span>
-                          </td>
-                          <td className="sintegra-td" style={{ width: '45%' }}>
-                            <span className="sintegra-label">Distrito:</span> <span className="sintegra-val"></span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">Telefone:</span> <span className="sintegra-val">{telefone.replace(/[() -]/g, '')}</span>
-                          </td>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">UF:</span> <span className="sintegra-val">{uf}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">Fax:</span> <span className="sintegra-val"></span>
-                          </td>
-                          <td className="sintegra-td">
-                            <span className="sintegra-label">CEP:</span> <span className="sintegra-val">{cep.replace('-', '')}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">E-mail:</span> <span className="sintegra-val">{email.toUpperCase()}</span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    {/* SEÇÃO 4: INFORMAÇÕES COMPLEMENTARES */}
+                    {/* SEÇÃO 3: INFORMAÇÕES COMPLEMENTARES DA API */}
                     <table className="sintegra-table pdf-no-break">
                       <thead>
                         <tr>
@@ -1128,57 +1050,32 @@
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Regime de Pagamento:</span> <span className="sintegra-val">001-REGIME NORMAL</span>
-                          </td>
-                        </tr>
-                        <tr>
                           <td className="sintegra-td" style={{ width: '70%' }}>
-                            <span className="sintegra-label">Situação Cadastral Vigente:</span> <span className="sintegra-val">HABILITADO</span>
+                            <span className="sintegra-label">Situação Cadastral:</span> <span className="sintegra-val" style={{ fontWeight: 'bold' }}>{situacaoCadastral}</span>
                           </td>
                           <td className="sintegra-td" style={{ width: '30%' }}>
-                            <span className="sintegra-label">Data:</span> <span className="sintegra-val">{dataSituacao}</span>
+                            <span className="sintegra-label">Data:</span> <span className="sintegra-val">{dataSituacao || '-'}</span>
                           </td>
                         </tr>
                         <tr>
                           <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Situação do Contribuinte:</span> <span className="sintegra-val">{situacaoCadastral}</span>
+                            <span className="sintegra-label">Data Inicio Atividade:</span> <span className="sintegra-val">{dataAbertura || '-'}</span>
                           </td>
                         </tr>
                         <tr>
                           <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Data Inicio Atividade:</span> <span className="sintegra-val">{dataAbertura}</span>
+                            <span className="sintegra-label">Código da Atividade Principal:</span> <span className="sintegra-val">{cnaeCode || '-'}</span>
                           </td>
                         </tr>
                         <tr>
                           <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Código da Atividade Principal:</span> <span className="sintegra-val">{cnaeCode}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Descrição da Atividade:</span> <span className="sintegra-val">{cnaeDesc.toUpperCase()}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Usuário de PED ?:</span> <span className="sintegra-val">Sim - Livros fiscais</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Regime de Apuração do ICMS:</span> <span className="sintegra-val">Documentos fiscais emitidos geram crédito ao destinatário</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Situação da NFe:</span> <span className="sintegra-val">ATIVO</span>
+                            <span className="sintegra-label">Descrição da Atividade:</span> <span className="sintegra-val">{cnaeDesc ? cnaeDesc.toUpperCase() : '-'}</span>
                           </td>
                         </tr>
                       </tbody>
                     </table>
 
-                    {/* SEÇÃO 5: ATIVIDADES SECUNDÁRIAS */}
+                    {/* SEÇÃO 4: ATIVIDADES SECUNDÁRIAS */}
                     <table className="sintegra-table pdf-no-break">
                       <thead>
                         <tr>
@@ -1201,40 +1098,6 @@
                             </td>
                           </tr>
                         )}
-                      </tbody>
-                    </table>
-
-                    {/* SEÇÃO 6: CONTADOR OU ORGANIZAÇÃO CONTÁBIL */}
-                    <table className="sintegra-table pdf-no-break">
-                      <thead>
-                        <tr>
-                          <th colSpan="2" className="sintegra-header-cell">CONTADOR OU ORGANIZAÇÃO CONTÁBIL</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="sintegra-td" style={{ width: '50%' }}>
-                            <span className="sintegra-label">C.P.F / C.N.P.J</span> <span className="sintegra-val">***.164.772-**</span>
-                          </td>
-                          <td className="sintegra-td" style={{ width: '50%' }}>
-                            <span className="sintegra-label">Nr. CRC:</span> <span className="sintegra-val">RO******01</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" colSpan="2">
-                            <span className="sintegra-label">Nome/Razão Social:</span> <span className="sintegra-val">A. C. F.</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="sintegra-td" style={{ width: '25%' }}>
-                            <span className="sintegra-label">Codigo do Regime</span><br/>
-                            <span className="sintegra-val">91</span>
-                          </td>
-                          <td className="sintegra-td" style={{ width: '75%' }}>
-                            <span className="sintegra-label">Regime Especial</span><br/>
-                            <span className="sintegra-val">ROT-ST. RICMS/RO ANEXO VI ART. 24-D C/C IN 2/2025</span>
-                          </td>
-                        </tr>
                       </tbody>
                     </table>
 
