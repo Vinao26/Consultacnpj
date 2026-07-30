@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raio-X do PDV - Sistema de Auditoria</title>
+
+    <!-- Bibliotecas Externas (FontAwesome, XLSX e jsPDF) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #2563eb;
+            --accent: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 20px; }
+        
+        .container { max-width: 1050px; margin: 0 auto; background: var(--card-bg); border-radius: 14px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); padding: 25px; }
+        
+        header { border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { color: var(--primary); font-size: 24px; display: flex; align-items: center; gap: 10px; }
+
+        /* BANNER DE IMPORTAÇÃO EXCEL */
+        .top-excel-bar { background: #f0f9ff; border: 1px dashed #0284c7; padding: 16px; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+        .excel-info h3 { color: #0369a1; font-size: 15px; margin-bottom: 3px; }
+        .excel-info p { font-size: 13px; color: #0284c7; }
+
+        /* CARDS E FORMULÁRIOS */
+        .card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .card-header { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-weight: 600; font-size: 13px; color: #475569; }
+        input, select, textarea { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+        .radio-group, .checkbox-group { display: flex; gap: 15px; align-items: center; margin-top: 5px; }
+        .radio-group label, .checkbox-group label { cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: normal; }
+
+        /* BOTÕES */
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: var(--primary-light); color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: var(--accent); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: #64748b; color: white; }
+
+        /* UPLOAD DE FOTOS E GALERIA */
+        .upload-box { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; background: #fafafa; cursor: pointer; transition: 0.2s; }
+        .upload-box:hover { border-color: var(--primary-light); background: #f0f9ff; }
+        .upload-box i { font-size: 22px; color: var(--primary-light); margin-bottom: 4px; }
+
+        .gallery-preview { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .gallery-item { position: relative; width: 90px; height: 90px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-item .btn-del { position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 11px; font-weight: bold; }
+
+        /* TAREFAS E TABELAS */
+        .task-item { display: flex; gap: 10px; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+        th { background: #f1f5f9; font-weight: 600; color: #334155; }
+
+        /* MODAL / POPUP DE BUSCA */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: flex-start; padding-top: 80px; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.2s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: white; width: 90%; max-width: 650px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); padding: 20px; max-height: 75vh; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+        .modal-body { overflow-y: auto; flex: 1; }
+        .pdv-search-item { padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .pdv-search-item:hover { background: #f0f9ff; border-color: var(--primary-light); }
+        .badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-neutral { background: #f1f5f9; color: #475569; }
+
+        /* CARDS INDIVIDUAIS DE EQUIPAMENTO COM CORES */
+        .equip-card-item { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; background: #ffffff; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .equip-title { font-size: 15px; font-weight: bold; color: var(--primary); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        
+        .box-meta-status { border-radius: 8px; padding: 12px 15px; margin-top: 10px; transition: all 0.3s ease; }
+        .meta-ok { background-color: #dcfce7; border: 1px solid #86efac; color: #14532d; }
+        .meta-nok { background-color: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><i class="fas fa-search-location"></i> Raio-X do PDV</h1>
+    </header>
+
+    <!-- 1. BASE DE DADOS EXCEL -->
+    <div class="top-excel-bar">
+        <div class="excel-info">
+            <h3><i class="fas fa-database"></i> Banco de Dados (Planilha de Faturamento / Equipamentos)</h3>
+            <p>Anexe a planilha para habilitar a busca automática por Pop-up e o carregamento das metas.</p>
+        </div>
+        <div>
+            <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="carregarExcel(this)">
+            <button class="btn btn-primary" onclick="document.getElementById('excelFile').click()">
+                <i class="fas fa-file-excel"></i> Anexar Planilha Excel
+            </button>
+            <span id="excelStatus" style="display: block; font-size: 12px; color: #15803d; font-weight: bold; margin-top: 5px;"></span>
+        </div>
+    </div>
+
+    <!-- 2. IDENTIFICAÇÃO DO PDV COM BUSCA -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-store"></i> Identificação do PDV</div>
+        <div class="grid">
+            <div class="form-group">
+                <label>Código do PDV (Digite para buscar)</label>
+                <input type="text" id="pdvCodigo" placeholder="Ex: 173, 210, 262..." oninput="abrirPopupBusca('codigo')">
+            </div>
+            <div class="form-group">
+                <label>Nome Fantasia / Razão (Digite para buscar)</label>
+                <input type="text" id="pdvNome" placeholder="Ex: Bar Pioneiros, Posto..." oninput="abrirPopupBusca('nome')">
+            </div>
+        </div>
+
+        <div class="grid" style="margin-top: 15px;">
+            <!-- FOTOS DO PDV -->
+            <div class="form-group">
+                <label>Fotos do PDV (Fachada / Estrutura / Interno)</label>
+                <div class="upload-box" onclick="document.getElementById('fotosPdvInput').click()">
+                    <i class="fas fa-camera"></i>
+                    <div>Anexar Fotos do PDV</div>
+                    <input type="file" id="fotosPdvInput" accept="image/*" multiple class="hidden" onchange="adicionarFotos(this, 'galeriaPdv', fotosPdv)">
+                </div>
+                <div id="galeriaPdv" class="gallery-preview"></div>
+            </div>
+
+            <!-- TIPO DE VISITA -->
+            <div class="form-group">
+                <label>Tipo de Visita</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="tipoVisita" value="presencial" checked onchange="toggleVisita()"> Presencial</label>
+                    <label><input type="radio" name="tipoVisita" value="fechado" onchange="toggleVisita()"> Fechado / Remoto</label>
+                </div>
+                
+                <div style="margin-top: 10px;">
+                    <div id="boxPresencial" class="upload-box" onclick="document.getElementById('fotoCliente').click()">
+                        <i class="fas fa-user-check"></i>
+                        <div>Selfie / Foto com Cliente</div>
+                        <input type="file" id="fotoCliente" accept="image/*" class="hidden" onchange="previewUnicaFoto(this, 'galeriaVisita', fotoVisita)">
+                    </div>
+                    <div id="boxFechado" class="upload-box hidden" onclick="document.getElementById('fotoComprovante').click()">
+                        <i class="fas fa-comments"></i>
+                        <div>Foto da Conversa WhatsApp</div>
+                        <input type="file" id="fotoComprovante" accept="image/*" class="hidden" onchange="previewUnicaFoto(this, 'galeriaVisita', fotoVisita)">
+                    </div>
+                    <div id="galeriaVisita" class="gallery-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOTOS DE EXECUÇÃO -->
+        <div class="form-group" style="margin-top: 15px;">
+            <label><i class="fas fa-bullhorn"></i> Fotos de Execução / Merchandising (Cartazes, Precificação, Material)</label>
+            <div class="upload-box" onclick="document.getElementById('fotosExecucaoInput').click()">
+                <i class="fas fa-images"></i>
+                <div>Anexar Fotos de Execução no PDV</div>
+                <input type="file" id="fotosExecucaoInput" accept="image/*" multiple class="hidden" onchange="adicionarFotos(this, 'galeriaExecucao', fotosExecucao)">
+            </div>
+            <div id="galeriaExecucao" class="gallery-preview"></div>
+        </div>
+    </div>
+
+    <!-- 3. PAINEL DE EQUIPAMENTOS E METAS ESPECÍFICAS -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-cubes"></i> Equipamentos e Metas do PDV</span>
+            <span id="pdvStatusHeader" class="badge badge-neutral">Nenhum PDV Selecionado</span>
+        </div>
+
+        <div id="containerEquipamentos">
+            <p id="msgEquipamentoZero" style="color: #64748b; font-size: 13px; text-align: center; padding: 15px;">
+                Anexe a planilha no topo e busque por um PDV acima para carregar automaticamente o faturamento e os equipamentos.
+            </p>
+            
+            <!-- LISTA DINÂMICA DE EQUIPAMENTOS DO PDV -->
+            <div id="listaEquipamentosPdv"></div>
+        </div>
+    </div>
+
+    <!-- 4. TAREFAS REALIZADAS -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-tasks"></i> Tarefas Realizadas</span>
+            <span id="contadorTarefas" style="font-size: 13px; color: var(--primary); font-weight: bold;">Total: 1</span>
+        </div>
+        <div id="listaTarefas">
+            <div class="task-item">
+                <input type="text" class="input-tarefa" placeholder="Descrição da tarefa realizada..." oninput="atualizarContadorTarefas()">
+                <button class="btn btn-danger" onclick="removerTarefa(this)"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+        <button class="btn btn-secondary" onclick="adicionarTarefa()" style="margin-top: 5px;"><i class="fas fa-plus"></i> Adicionar Tarefa</button>
+    </div>
+
+    <!-- 5. LEVANTAMENTO DE ESTOQUE E VASILHAMES -->
+    <div class="card">
+        <div class="card-header" style="cursor: pointer;" onclick="toggleSection('secEstoque')">
+            <span><i class="fas fa-boxes"></i> Levantamento de Estoque / Vasilhames</span>
+            <label class="checkbox-group" onclick="event.stopPropagation()">
+                <input type="checkbox" id="chkEstoque" onchange="toggleSection('secEstoque', this.checked)"> Incluir Estoque
+            </label>
+        </div>
+
+        <div id="secEstoque" class="hidden" style="margin-top: 15px;">
+            <div class="grid">
+                <div class="form-group"><label>Produto (Opcional)</label><input type="text" id="estProduto" placeholder="Ex: Skol 269ml"></div>
+                <div class="form-group"><label>Embalagem</label><input type="text" id="estEmbalagem" placeholder="Ex: Lata"></div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="estTipo"><option value="Unidade">Unidade</option><option value="Caixa">Caixa</option></select>
+                </div>
+                <div class="form-group"><label>Qtd. Produtos</label><input type="number" id="estQtd" placeholder="0"></div>
+                <div class="form-group">
+                    <label>Área</label>
+                    <select id="estArea">
+                        <option value="Estoque Gelado">Estoque Gelado</option>
+                        <option value="Estoque Quente">Estoque Quente</option>
+                        <option value="Exposto">Exposto</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label><input type="checkbox" id="chkVasilhame" onchange="document.getElementById('boxVasilhame').classList.toggle('hidden', !this.checked)"> Vasilhame / Cxs Vazias?</label>
+                    <div id="boxVasilhame" class="hidden" style="margin-top: 5px;">
+                        <input type="text" id="estVasilhameTipo" placeholder="Tipo (ex: Cx 300ml)" style="margin-bottom: 5px;">
+                        <input type="number" id="estVasilhameQtd" placeholder="Qtd Caixas Vazias">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="chkTroca" onchange="document.getElementById('boxTroca').classList.toggle('hidden', !this.checked)"> Troca / Avaria?</label>
+                    <div id="boxTroca" class="hidden" style="margin-top: 5px;">
+                        <input type="text" id="estTrocaMotivo" placeholder="Motivo da Troca">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="chkVenc" onchange="document.getElementById('boxVenc').classList.toggle('hidden', !this.checked)"> Data Próxima?</label>
+                    <div id="boxVenc" class="hidden" style="margin-top: 5px;">
+                        <input type="date" id="estVencData">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="adicionarEstoqueItem()" style="margin-top: 12px;"><i class="fas fa-plus"></i> Adicionar Item de Estoque</button>
+
+            <table id="tblEstoque" style="margin-top: 15px;">
+                <thead>
+                    <tr><th>Produto</th><th>Embalagem</th><th>Qtd Prod.</th><th>Área</th><th>Vasilhames / Cxs Vazias</th><th>Troca</th><th>Venc.</th><th>Ação</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- BOTÃO GERAR PDF -->
+    <div style="text-align: center; margin-top: 30px;">
+        <button class="btn btn-success" style="font-size: 18px; padding: 14px 35px; border-radius: 30px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);" onclick="gerarPDFRaioX()">
+            <i class="fas fa-file-pdf"></i> Gerar PDF Raio-X do PDV
+        </button>
+    </div>
+</div>
+
+<!-- MODAL / POPUP DE BUSCA DE PDVs -->
+<div id="modalBuscaPDV" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="color: var(--primary); font-size: 16px;"><i class="fas fa-search"></i> Selecione o PDV na Planilha</h3>
+            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="fecharModalBusca()">X</button>
+        </div>
+        <div class="modal-body" id="modalListaResultados">
+            <!-- Itens preenchidos dinamicamente -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // DADOS E ESTADO DA APLICAÇÃO
+    let basePDVs = {}; // PDVs agrupados por Código
+    let pdvSelecionado = null;
+    let listaEstoque = [];
+    
+    let fotosPdv = [];
+    let fotoVisita = [];
+    let fotosExecucao = [];
+
+    // HELPER PARA IDENTIFICAR O TIPO EXATO DE EQUIPAMENTO DE FORMA DISTINTA
+    function obterIdentificacaoEquipamento(modelo) {
+        const mod = String(modelo || '').toLowerCase().trim();
+        
+        if (mod.includes('sop')) {
+            return { tipo: 'SOP', icone: 'fa-cubes', ehSop: true, ehChopeira: false, labelExibicao: 'SOP' };
+        } else if (mod.includes('chopeira') || mod.includes('chopp')) {
+            return { tipo: 'CHOPEIRA', icone: 'fa-beer', ehSop: false, ehChopeira: true, labelExibicao: 'CHOPEIRA (CHOPP)' };
+        } else if (mod.includes('visa')) {
+            return { tipo: 'VISA', icone: 'fa-snowflake', ehSop: false, ehChopeira: false, labelExibicao: 'VISA COOLER' };
+        } else {
+            return { tipo: 'OUTRO', icone: 'fa-box', ehSop: false, ehChopeira: false, labelExibicao: modelo.toUpperCase() };
+        }
+    }
+
+    // LEITURA E DEDUPLICAÇÃO INTELIGENTE DA PLANILHA EXCEL
+    function carregarExcel(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            basePDVs = {};
+
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                if (rows.length < 2) return;
+
+                let headerIdx = -1;
+                for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                    const rStr = rows[i].map(c => String(c).toLowerCase()).join(' ');
+                    if (rStr.includes('codigo') || rStr.includes('cliente') || rStr.includes('fantasia')) {
+                        headerIdx = i;
+                        break;
+                    }
+                }
+
+                if (headerIdx === -1) return;
+
+                const headers = rows[headerIdx].map(h => String(h || '').trim());
+                
+                const colCod = headers.findIndex(h => h.toLowerCase().includes('codigo cliente') || h.toLowerCase().includes('código'));
+                const colNome = headers.findIndex(h => h.toLowerCase().includes('nome fantasia') || h.toLowerCase().includes('nome'));
+                const colEquip = headers.findIndex(h => h.toLowerCase().includes('modelo de equipamento') || h.toLowerCase().includes('modelo'));
+                const colTemEquip = headers.findIndex(h => h.toLowerCase().includes('tem equipamento'));
+                const colQtd = headers.findIndex(h => h.toLowerCase().includes('qtd'));
+                const colMeta = headers.findIndex(h => h.toLowerCase().includes('meta'));
+                const colReal = headers.findIndex(h => h.toLowerCase().includes('real'));
+
+                for (let i = headerIdx + 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || !row[colCod]) continue;
+
+                    const cod = String(row[colCod]).trim();
+                    const nome = String(row[colNome] || 'PDV Sem Nome').trim();
+                    
+                    if (!cod || cod === 'undefined' || cod === '0') continue;
+
+                    if (!basePDVs[cod]) {
+                        basePDVs[cod] = {
+                            codigo: cod,
+                            nome: nome,
+                            equipamentosMap: {} // Mapeamento para evitar duplicidade
+                        };
+                    }
+
+                    const modeloRaw = colEquip !== -1 ? String(row[colEquip] || 'GERAL').trim() : 'GERAL';
+                    const temEquip = colTemEquip !== -1 ? String(row[colTemEquip] || 'NÃO').trim().toUpperCase() : 'NÃO';
+                    const qtd = colQtd !== -1 ? parseInt(row[colQtd]) || 0 : 0;
+                    const meta = colMeta !== -1 ? parseFloat(row[colMeta]) || 0 : 0;
+                    const real = colReal !== -1 ? parseFloat(row[colReal]) || 0 : 0;
+
+                    // NORMALIZAÇÃO DO NOME DO EQUIPAMENTO
+                    const modeloNormalizado = modeloRaw.toUpperCase().trim();
+                    const chaveEquip = `${modeloNormalizado}`;
+
+                    // DEDUPLICAÇÃO INTELIGENTE
+                    if (!basePDVs[cod].equipamentosMap[chaveEquip]) {
+                        basePDVs[cod].equipamentosMap[chaveEquip] = {
+                            modelo: modeloRaw,
+                            temEquipamento: temEquip === 'SIM',
+                            qtd: qtd,
+                            meta: meta,
+                            real: real,
+                            compradoVisita: 0
+                        };
+                    } else {
+                        // Se a linha for do mesmo equipamento já lido, acumula/atualiza
+                        const equipExistente = basePDVs[cod].equipamentosMap[chaveEquip];
+                        if (temEquip === 'SIM') equipExistente.temEquipamento = true;
+                        
+                        // Garante que a quantidade seja a maior ou somada de forma coerente
+                        equipExistente.qtd = Math.max(equipExistente.qtd, qtd);
+                        
+                        // Caso a planilha tenha metas/reais divididos em várias linhas, consolida
+                        if (meta > equipExistente.meta) equipExistente.meta = meta;
+                        if (real > equipExistente.real) equipExistente.real = real;
+                    }
+                }
+            });
+
+            // Converte os mapeamentos deduplicados para arrays
+            Object.keys(basePDVs).forEach(cod => {
+                basePDVs[cod].equipamentos = Object.values(basePDVs[cod].equipamentosMap);
+            });
+
+            const totalPdvs = Object.keys(basePDVs).length;
+            if (totalPdvs > 0) {
+                document.getElementById('excelStatus').innerText = `✓ Planilha Carregada! (${totalPdvs} PDVs consolidados sem duplicidades)`;
+            } else {
+                alert('Não foi possível identificar as colunas da planilha. Verifique o arquivo.');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // LÓGICA DO POPUP DE BUSCA AUTOMÁTICA
+    function abrirPopupBusca(origem) {
+        const termo = document.getElementById(origem === 'codigo' ? 'pdvCodigo' : 'pdvNome').value.toLowerCase().trim();
+        const listaDiv = document.getElementById('modalListaResultados');
+
+        if (termo.length < 1 || Object.keys(basePDVs).length === 0) {
+            fecharModalBusca();
+            return;
+        }
+
+        const pdvKeys = Object.keys(basePDVs);
+        const filtrados = pdvKeys.filter(key => {
+            const pdv = basePDVs[key];
+            return pdv.codigo.toLowerCase().includes(termo) || pdv.nome.toLowerCase().includes(termo);
+        }).slice(0, 15);
+
+        if (filtrados.length === 0) {
+            listaDiv.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">Nenhum PDV encontrado para "${termo}".</p>`;
+        } else {
+            listaDiv.innerHTML = filtrados.map(key => {
+                const pdv = basePDVs[key];
+                const equipReais = pdv.equipamentos.filter(e => e.temEquipamento);
+                const totalEquipQtd = equipReais.reduce((acc, curr) => acc + curr.qtd, 0);
+
+                return `
+                    <div class="pdv-search-item" onclick="selecionarPDV('${pdv.codigo}')">
+                        <div>
+                            <strong style="color: var(--primary);">[${pdv.codigo}]</strong> - ${pdv.nome}
+                        </div>
+                        <div>
+                            ${equipReais.length > 0 
+                                ? `<span class="badge badge-success"><i class="fas fa-check"></i> ${totalEquipQtd} Equipamento(s)</span>` 
+                                : `<span class="badge badge-neutral">Sem Equipamento</span>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('modalBuscaPDV').classList.add('active');
+    }
+
+    function fecharModalBusca() {
+        document.getElementById('modalBuscaPDV').classList.remove('active');
+    }
+
+    // SELEÇÃO DO PDV E MONTAGEM DOS EQUIPAMENTOS ESPECÍFICOS
+    function selecionarPDV(codigo) {
+        pdvSelecionado = basePDVs[codigo];
+        if (!pdvSelecionado) return;
+
+        document.getElementById('pdvCodigo').value = pdvSelecionado.codigo;
+        document.getElementById('pdvNome').value = pdvSelecionado.nome;
+        fecharModalBusca();
+
+        const msgZero = document.getElementById('msgEquipamentoZero');
+        const containerLista = document.getElementById('listaEquipamentosPdv');
+        const pdvHeaderStatus = document.getElementById('pdvStatusHeader');
+
+        msgZero.classList.add('hidden');
+        pdvHeaderStatus.innerText = `${pdvSelecionado.codigo} - ${pdvSelecionado.nome}`;
+        pdvHeaderStatus.className = "badge badge-success";
+
+        // FILTRA APENAS EQUIPAMENTOS REALMENTE EXISTENTES (SEM DUPLICIDADES)
+        const equipamentosPosso = pdvSelecionado.equipamentos.filter(eq => eq.temEquipamento);
+
+        if (equipamentosPosso.length === 0) {
+            containerLista.innerHTML = `
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #0284c7;"></i> PDV sem equipamentos cadastrados.
+                </div>
+            `;
+            return;
+        }
+
+        let htmlEquips = '';
+
+        equipamentosPosso.forEach((eq, index) => {
+            const infoEq = obterIdentificacaoEquipamento(eq.modelo);
+
+            htmlEquips += `
+                <div class="equip-card-item">
+                    <div class="equip-title">
+                        <span><i class="fas ${infoEq.icone}"></i> Modelo: ${eq.modelo}</span>
+                        <span class="badge badge-success">Quantidade: ${eq.qtd} UN</span>
+                    </div>
+
+                    <div class="grid" style="margin-bottom: 12px; font-size: 13px;">
+                        <div>Meta do Equipamento: <b>R$ ${eq.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</b></div>
+                        <div>Já Comprado / Acumulado: <b>R$ ${eq.real.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</b></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Valor Comprado nesta Visita para ${eq.modelo} (R$)</label>
+                        <input type="number" id="inputComprado_${index}" value="${eq.compradoVisita || ''}" placeholder="0.00" oninput="atualizarValorCompradoEquip(${index}, this.value)">
+                    </div>
+
+                    <div id="boxStatusEquip_${index}" class="box-meta-status meta-ok">
+                        <!-- Atualizado Dinamicamente -->
+                    </div>
+                </div>
+            `;
+        });
+
+        containerLista.innerHTML = htmlEquips;
+
+        // Recalcula o status individual de cada equipamento
+        equipamentosPosso.forEach((eq, index) => {
+            calcularMetaItem(index);
+        });
+    }
+
+    // ATUALIZA VALOR COMPRADO INDIVIDUAL
+    function atualizarValorCompradoEquip(index, valor) {
+        if (!pdvSelecionado) return;
+        const eqPosso = pdvSelecionado.equipamentos.filter(e => e.temEquipamento);
+        if (eqPosso[index]) {
+            eqPosso[index].compradoVisita = parseFloat(valor || 0);
+            calcularMetaItem(index);
+        }
+    }
+
+    // CÁLCULO INDIVIDUAL COM NOMENCLATURA ESPECÍFICA (SOP, CHOPEIRA, VISA COOLER)
+    function calcularMetaItem(index) {
+        if (!pdvSelecionado) return;
+        const eqPosso = pdvSelecionado.equipamentos.filter(e => e.temEquipamento);
+        const eq = eqPosso[index];
+        if (!eq) return;
+
+        const boxStatus = document.getElementById(`boxStatusEquip_${index}`);
+        const infoEq = obterIdentificacaoEquipamento(eq.modelo);
+
+        const valorVisita = eq.compradoVisita || 0;
+        const totalComprado = eq.real + valorVisita;
+        const saldoFalta = eq.meta - totalComprado;
+
+        // SE FOR SOP OU CHOPEIRA -> META ATINGIDA AUTOMATICAMENTE
+        if (infoEq.ehSop || infoEq.ehChopeira) {
+            const rotuloEspecifico = infoEq.ehSop ? "SOP" : "CHOPEIRA (CHOPP)";
+
+            boxStatus.className = "box-meta-status meta-ok";
+            boxStatus.innerHTML = `
+                <div style="font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-check-circle" style="font-size: 18px; color: #166534;"></i>
+                    <span>[ OK ] ${rotuloEspecifico} - META ATINGIDA AUTOMATICAMENTE</span>
+                </div>
+                ${valorVisita > 0 ? `<div style="font-size: 12px; margin-top: 3px;">Comprado na visita: R$ ${valorVisita.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>` : ''}
+            `;
+            return;
+        }
+
+        // DEMAS EQUIPAMENTOS (VISA COOLERS E DEMAIS MODELOS)
+        const rotuloEquip = infoEq.labelExibicao;
+
+        if (eq.meta === 0) {
+            boxStatus.className = "box-meta-status meta-ok";
+            boxStatus.innerHTML = `<i class="fas fa-check-circle"></i> <b>[ OK ] ${rotuloEquip} - Sem meta atribuída para este equipamento.</b>`;
+        } else if (saldoFalta <= 0) {
+            // META BATIDA - VERDE CLARO
+            const superou = Math.abs(saldoFalta);
+            boxStatus.className = "box-meta-status meta-ok";
+            boxStatus.innerHTML = `
+                <div style="font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-check-circle" style="font-size: 18px; color: #166534;"></i>
+                    <span>[ OK ] ${rotuloEquip} - META ATINGIDA</span>
+                </div>
+                <div style="font-size: 12px; margin-top: 3px;">
+                    Total: R$ ${totalComprado.toLocaleString('pt-BR', {minimumFractionDigits: 2})} / Meta: R$ ${eq.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                    ${superou > 0 ? `<b style="margin-left: 8px; color: #15803d;">(Superou em R$ ${superou.toLocaleString('pt-BR', {minimumFractionDigits: 2})})</b>` : ''}
+                </div>
+            `;
+        } else {
+            // META PENDENTE - VERMELHO CLARO
+            boxStatus.className = "box-meta-status meta-nok";
+            boxStatus.innerHTML = `
+                <div style="font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-times-circle" style="font-size: 18px; color: #991b1b;"></i>
+                    <span>[ NÃO OK ] ${rotuloEquip} - META PENDENTE</span>
+                </div>
+                <div style="font-size: 12px; margin-top: 3px;">
+                    Total: R$ ${totalComprado.toLocaleString('pt-BR', {minimumFractionDigits: 2})} / Meta: R$ ${eq.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
+                    <b style="color: #b91c1c; font-size: 13px;">FALTA COMPRAR: R$ ${saldoFalta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</b>
+                </div>
+            `;
+        }
+    }
+
+    // FUNÇÕES COMPLEMENTARES
+    function toggleSection(id, forceState) {
+        const content = document.getElementById(id);
+        if (forceState !== undefined) content.classList.toggle('hidden', !forceState);
+        else content.classList.toggle('hidden');
+    }
+
+    function toggleVisita() {
+        const isPresencial = document.querySelector('input[name="tipoVisita"]:checked').value === 'presencial';
+        document.getElementById('boxPresencial').classList.toggle('hidden', !isPresencial);
+        document.getElementById('boxFechado').classList.toggle('hidden', isPresencial);
+        fotoVisita = [];
+        renderizarGaleria('galeriaVisita', fotoVisita);
+    }
+
+    function adicionarFotos(input, targetGaleriaId, arrayFotos) {
+        if (input.files) {
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    arrayFotos.push(e.target.result);
+                    renderizarGaleria(targetGaleriaId, arrayFotos);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function previewUnicaFoto(input, targetGaleriaId, arrayFotos) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                arrayFotos[0] = e.target.result;
+                renderizarGaleria(targetGaleriaId, arrayFotos);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function renderizarGaleria(targetGaleriaId, arrayFotos) {
+        const galeria = document.getElementById(targetGaleriaId);
+        galeria.innerHTML = arrayFotos.map((src, idx) => `
+            <div class="gallery-item">
+                <img src="${src}">
+                <button class="btn-del" onclick="removerFoto('${targetGaleriaId}', ${idx})">X</button>
+            </div>
+        `).join('');
+    }
+
+    function removerFoto(targetGaleriaId, idx) {
+        let arr = targetGaleriaId === 'galeriaPdv' ? fotosPdv : (targetGaleriaId === 'galeriaVisita' ? fotoVisita : fotosExecucao);
+        arr.splice(idx, 1);
+        renderizarGaleria(targetGaleriaId, arr);
+    }
+
+    function adicionarTarefa() {
+        const div = document.createElement('div');
+        div.className = 'task-item';
+        div.innerHTML = `
+            <input type="text" class="input-tarefa" placeholder="Descrição da tarefa realizada..." oninput="atualizarContadorTarefas()">
+            <button class="btn btn-danger" onclick="removerTarefa(this)"><i class="fas fa-trash"></i></button>
+        `;
+        document.getElementById('listaTarefas').appendChild(div);
+        atualizarContadorTarefas();
+    }
+
+    function removerTarefa(btn) {
+        btn.parentElement.remove();
+        atualizarContadorTarefas();
+    }
+
+    function atualizarContadorTarefas() {
+        const inputs = document.querySelectorAll('.input-tarefa');
+        let count = 0;
+        inputs.forEach(i => { if (i.value.trim() !== '') count++; });
+        document.getElementById('contadorTarefas').innerText = `Total: ${count}`;
+    }
+
+    function adicionarEstoqueItem() {
+        const prod = document.getElementById('estProduto').value;
+        const qtd = document.getElementById('estQtd').value;
+        const possuiVasilhame = document.getElementById('chkVasilhame').checked;
+
+        if (!prod && !possuiVasilhame) {
+            alert('Informe o Produto ou marque a opção de Vasilhames!');
+            return;
+        }
+
+        const item = {
+            produto: prod || 'Apenas Vasilhames / Cxs Vazias',
+            embalagem: document.getElementById('estEmbalagem').value || '-',
+            tipo: document.getElementById('estTipo').value,
+            qtd: qtd || '0',
+            area: document.getElementById('estArea').value,
+            vasilhame: possuiVasilhame ? `${document.getElementById('estVasilhameTipo').value || 'Cx'} (${document.getElementById('estVasilhameQtd').value || 0} cxs)` : '-',
+            troca: document.getElementById('chkTroca').checked ? document.getElementById('estTrocaMotivo').value : '-',
+            venc: document.getElementById('chkVenc').checked ? document.getElementById('estVencData').value : '-'
+        };
+
+        listaEstoque.push(item);
+        atualizarTabelaEstoque();
+
+        document.getElementById('estProduto').value = '';
+        document.getElementById('estQtd').value = '';
+        document.getElementById('estEmbalagem').value = '';
+    }
+
+    function atualizarTabelaEstoque() {
+        const tbody = document.querySelector('#tblEstoque tbody');
+        tbody.innerHTML = listaEstoque.map((item, idx) => `
+            <tr>
+                <td>${item.produto}</td>
+                <td>${item.embalagem} (${item.tipo})</td>
+                <td>${item.qtd}</td>
+                <td>${item.area}</td>
+                <td>${item.vasilhame}</td>
+                <td>${item.troca}</td>
+                <td>${item.venc}</td>
+                <td><button class="btn btn-danger" style="padding:2px 6px;" onclick="listaEstoque.splice(${idx},1);atualizarTabelaEstoque();"><i class="fas fa-trash"></i></button></td>
+            </tr>
+        `).join('');
+    }
+
+    // GERADOR DE PDF COM NOMENCLATURA EXATA
+    async function gerarPDFRaioX() {
+        if (typeof window.jspdf === 'undefined') {
+            alert('Aguarde o carregamento do gerador de PDF.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const codPDV = document.getElementById('pdvCodigo').value || 'S_CODIGO';
+        const nomePDV = document.getElementById('pdvNome').value || 'PDV_NAO_INFORMADO';
+        
+        const dataHoraObj = new Date();
+        const dataStr = dataHoraObj.toLocaleDateString('pt-BR').replace(/\//g, '-');
+        const horaStr = dataHoraObj.toLocaleTimeString('pt-BR');
+
+        // Cabeçalho
+        doc.setFillColor(30, 58, 138);
+        doc.rect(0, 0, 210, 26, 'F');
+        doc.setFontSize(16);
+        doc.setTextColor(255, 255, 255);
+        doc.text("RELATÓRIO RAIO-X DO PDV", 14, 15);
+        doc.setFontSize(9);
+        doc.text(`Data: ${dataStr} às ${horaStr}`, 14, 21);
+
+        let y = 35;
+
+        // PDV
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(13);
+        doc.setFont("helvetica", "bold");
+        doc.text(`PDV: [${codPDV}] - ${nomePDV}`, 14, y);
+        y += 8;
+
+        if (pdvSelecionado) {
+            const equipReais = pdvSelecionado.equipamentos.filter(e => e.temEquipamento);
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("Análise de Equipamentos e Metas Específicas:", 14, y);
+            y += 6;
+
+            if (equipReais.length > 0) {
+                equipReais.forEach(e => {
+                    const infoEq = obterIdentificacaoEquipamento(e.modelo);
+                    const totalComp = e.real + (e.compradoVisita || 0);
+                    const saldoFalta = e.meta - totalComp;
+
+                    doc.setFontSize(9);
+                    doc.setFont("helvetica", "bold");
+                    doc.setTextColor(30, 58, 138);
+                    doc.text(`• Modelo: ${e.modelo} (Qtd: ${e.qtd} UN)`, 16, y);
+                    y += 4;
+
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(`  Meta: R$ ${e.meta.toLocaleString('pt-BR', {minimumFractionDigits:2})} | Acumulado: R$ ${e.real.toLocaleString('pt-BR', {minimumFractionDigits:2})} | Visita: R$ ${(e.compradoVisita||0).toLocaleString('pt-BR', {minimumFractionDigits:2})}`, 16, y);
+                    y += 5;
+
+                    // CAIXA DE STATUS NO PDF COM NOMENCLATURA CLARA
+                    if (infoEq.ehSop || infoEq.ehChopeira) {
+                        const txtRotulo = infoEq.ehSop ? "SOP" : "CHOPEIRA (CHOPP)";
+                        doc.setFillColor(220, 252, 231); doc.setDrawColor(134, 239, 172);
+                        doc.roundedRect(16, y, 178, 10, 1, 1, 'FD');
+                        doc.setTextColor(20, 83, 45); doc.setFont("helvetica", "bold");
+                        doc.text(`[ OK ] ${txtRotulo} - META ATINGIDA AUTOMATICAMENTE`, 19, y + 6.5);
+                    } else if (saldoFalta <= 0) {
+                        doc.setFillColor(220, 252, 231); doc.setDrawColor(134, 239, 172);
+                        doc.roundedRect(16, y, 178, 10, 1, 1, 'FD');
+                        doc.setTextColor(20, 83, 45); doc.setFont("helvetica", "bold");
+                        doc.text(`[ OK ] ${infoEq.labelExibicao} - META ATINGIDA (Total: R$ ${totalComp.toLocaleString('pt-BR', {minimumFractionDigits:2})})`, 19, y + 6.5);
+                    } else {
+                        doc.setFillColor(254, 226, 226); doc.setDrawColor(252, 165, 165);
+                        doc.roundedRect(16, y, 178, 10, 1, 1, 'FD');
+                        doc.setTextColor(153, 27, 27); doc.setFont("helvetica", "bold");
+                        doc.text(`[ NÃO OK ] ${infoEq.labelExibicao} - META PENDENTE (FALTA COMPRAR: R$ ${saldoFalta.toLocaleString('pt-BR', {minimumFractionDigits:2})})`, 19, y + 6.5);
+                    }
+
+                    y += 14;
+                });
+            } else {
+                doc.setFont("helvetica", "normal");
+                doc.text("• Nenhum equipamento cadastrado para este PDV.", 16, y);
+                y += 8;
+            }
+        }
+
+        // TAREFAS
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        const tarefasInputs = document.querySelectorAll('.input-tarefa');
+        let tarefasValidas = [];
+        tarefasInputs.forEach(input => { if (input.value.trim()) tarefasValidas.push(input.value.trim()); });
+
+        doc.setFont("helvetica", "bold");
+        doc.text(`Tarefas Realizadas (${tarefasValidas.length}):`, 14, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+
+        if (tarefasValidas.length > 0) {
+            tarefasValidas.forEach(t => {
+                doc.text(`- ${t}`, 18, y);
+                y += 5;
+            });
+        } else {
+            doc.text("- Nenhuma tarefa registrada.", 18, y);
+            y += 5;
+        }
+        y += 4;
+
+        // ESTOQUE
+        if (document.getElementById('chkEstoque').checked && listaEstoque.length > 0) {
+            doc.setFont("helvetica", "bold");
+            doc.text("Levantamento de Estoque:", 14, y);
+            y += 4;
+
+            const tableRows = listaEstoque.map(i => [i.produto, `${i.embalagem} (${i.tipo})`, i.qtd, i.area, i.vasilhame, i.troca, i.venc]);
+            doc.autoTable({
+                startY: y,
+                head: [['Produto', 'Embalagem', 'Qtd', 'Área', 'Vasilhames', 'Troca', 'Venc.']],
+                body: tableRows,
+                theme: 'grid',
+                styles: { fontSize: 8 }
+            });
+            y = doc.lastAutoTable.finalY + 10;
+        }
+
+        // FOTOS
+        const adicionarFotosPDF = (titulo, fotosArr) => {
+            if (!fotosArr.length) return;
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.text(`${titulo} (${fotosArr.length}):`, 14, y);
+            y += 6;
+
+            let x = 14;
+            fotosArr.forEach((img, idx) => {
+                doc.addImage(img, 'JPEG', x, y, 50, 60);
+                x += 55;
+                if ((idx + 1) % 3 === 0) {
+                    x = 14;
+                    y += 65;
+                    if (y > 200 && idx < fotosArr.length - 1) { doc.addPage(); y = 20; }
+                }
+            });
+            if (fotosArr.length % 3 !== 0) y += 65;
+        };
+
+        adicionarFotosPDF("Fotos do PDV", fotosPdv);
+        adicionarFotosPDF("Comprovante de Visita", fotoVisita);
+        adicionarFotosPDF("Fotos de Execução e Merchandising", fotosExecucao);
+
+        const nomeArquivoPDF = `RaioX_${codPDV}_${dataStr}.pdf`;
+        doc.save(nomeArquivoPDF);
+    }
+</script>
+
+</body>
+</html>
