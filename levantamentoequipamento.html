@@ -36,13 +36,13 @@
         .excel-info p { font-size: 13px; color: #0284c7; }
 
         .card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .card-header { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .card-header { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; flex-wrap: wrap; gap: 10px; }
 
         .grid-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
         label { font-weight: 600; font-size: 13px; color: #475569; }
-        input, select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; transition: 0.2s; }
-        input:focus, select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+        input, select, textarea { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
 
         .highlight-metodo { background: #fffbeebf; border: 1px solid #f59e0b; border-radius: 8px; padding: 8px; }
         .highlight-metodo label { color: #b45309; }
@@ -64,6 +64,7 @@
         .btn-success:hover { background: #059669; }
         .btn-whatsapp { background: #25d366; color: white; }
         .btn-whatsapp:hover { background: #1eb954; }
+        .btn-sm { padding: 5px 10px; font-size: 11.5px; }
 
         .table-responsive { overflow-x: auto; margin-top: 15px; max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -76,6 +77,19 @@
         .badge-neutral { background: #f1f5f9; color: #475569; }
         .badge-origem-ok { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
         .badge-origem-erro { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* MODAL WHATSAPP MODERNO */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
+        .modal-overlay.show { display: flex; }
+        .modal-card { background: #fff; width: 100%; max-width: 550px; border-radius: 14px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: modalPop 0.25s ease-out; }
+        @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header { background: #075e54; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .modal-close { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
+        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .whatsapp-preview-box { background: #e5ddd5; border-radius: 10px; padding: 14px; border: 1px solid #cbd5e1; }
+        .whatsapp-bubble { background: #dcf8c6; padding: 12px 14px; border-radius: 8px; font-size: 13px; color: #111; white-space: pre-wrap; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-family: 'Segoe UI', sans-serif; }
+        .modal-footer { padding: 15px 20px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
 
         .hidden { display: none !important; }
     </style>
@@ -110,7 +124,6 @@
         </div>
 
         <div class="grid-filters">
-            <!-- SELETOR DE MÉTODO DE FILTRAGEM -->
             <div class="form-group highlight-metodo">
                 <label><i class="fas fa-code-branch"></i> Origem dos Dados / Método</label>
                 <select id="filtroMetodoLeitura" onchange="aplicarFiltros()">
@@ -120,7 +133,6 @@
                 </select>
             </div>
 
-            <!-- Posse do Equipamento -->
             <div class="form-group">
                 <label>Posse de Equipamento</label>
                 <select id="filtroPosseEquipamento" onchange="aplicarFiltros()">
@@ -130,21 +142,17 @@
                 </select>
             </div>
 
-            <!-- MULTI-SELECT: Setor / RN -->
             <div class="form-group">
                 <label>Setor / RN (Seleção Múltipla)</label>
                 <div class="custom-multiselect">
                     <div class="select-box" onclick="toggleDropdown('dropdownSetor')">
-                        <span id="labelSetor">Todos os Setores</span>
+                        <span id="labelSetor">Nenhum setor selecionado</span>
                         <i class="fas fa-chevron-down" style="font-size: 11px; color: #64748b;"></i>
                     </div>
-                    <div id="dropdownSetor" class="checkboxes-dropdown">
-                        <!-- Gerado via JS -->
-                    </div>
+                    <div id="dropdownSetor" class="checkboxes-dropdown"></div>
                 </div>
             </div>
 
-            <!-- Dia de Visita -->
             <div class="form-group">
                 <label>Dia de Visita</label>
                 <select id="filtroDiaVisita" onchange="aplicarFiltros()">
@@ -152,7 +160,6 @@
                 </select>
             </div>
 
-            <!-- MULTI-SELECT: Tipo de Equipamento -->
             <div class="form-group">
                 <label>Tipo / Modelo (Seleção Múltipla)</label>
                 <div class="custom-multiselect">
@@ -162,15 +169,14 @@
                     </div>
                     <div id="dropdownTipo" class="checkboxes-dropdown">
                         <label><input type="checkbox" value="ALL" checked onchange="toggleSelectAll('Tipo', this)"> <b>[Selecionar Todos]</b></label>
-                        <label><input type="checkbox" value="CHOPEIRA" checked onchange="atualizarMultiSelect('Tipo')"> Chopeira / Chopp</label>
-                        <label><input type="checkbox" value="SOP" checked onchange="atualizarMultiSelect('Tipo')"> SOP / SOPI</label>
-                        <label><input type="checkbox" value="VISA" checked onchange="atualizarMultiSelect('Tipo')"> Visa Cooler</label>
+                        <label><input type="checkbox" value="CHOPEIRA" checked onchange="atualizarMultiSelect('Tipo')"> Chopeira</label>
+                        <label><input type="checkbox" value="SOPI" checked onchange="atualizarMultiSelect('Tipo')"> SOPI - Cerveja</label>
+                        <label><input type="checkbox" value="VISA" checked onchange="atualizarMultiSelect('Tipo')"> VISA - Nab</label>
                         <label><input type="checkbox" value="OUTRO" checked onchange="atualizarMultiSelect('Tipo')"> Outros</label>
                     </div>
                 </div>
             </div>
 
-            <!-- Status da Meta -->
             <div class="form-group">
                 <label>Status da Meta</label>
                 <select id="filtroStatusMeta" onchange="aplicarFiltros()">
@@ -180,7 +186,6 @@
                 </select>
             </div>
 
-            <!-- Busca por PDV -->
             <div class="form-group">
                 <label>Buscar PDV</label>
                 <input type="text" id="filtroBuscaTexto" placeholder="Nome ou código..." oninput="aplicarFiltros()">
@@ -192,9 +197,9 @@
     <div class="card">
         <div class="card-header">
             <span><i class="fas fa-list-check"></i> Equipamentos Filtrados</span>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-whatsapp" onclick="enviarResumoWhatsApp()">
-                    <i class="fab fa-whatsapp"></i> Enviar no WhatsApp
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-whatsapp" onclick="abrirModalWhatsAppGeral()">
+                    <i class="fab fa-whatsapp"></i> Gerar WhatsApp (Geral)
                 </button>
                 <button class="btn btn-success" onclick="gerarPDFRelatorio()">
                     <i class="fas fa-file-pdf"></i> Exportar PDF Detalhado
@@ -206,21 +211,22 @@
             <table id="tabelaEquipamentos">
                 <thead>
                     <tr>
-                        <th>Origem da Aba</th>
+                        <th>Origem</th>
                         <th>Setor</th>
                         <th>Dia</th>
                         <th>Código - PDV</th>
-                        <th>Equipamento</th>
+                        <th>Equipamento (Controle Interno)</th>
                         <th>Qtd</th>
                         <th>Meta (R$)</th>
                         <th>Realizado (R$)</th>
                         <th>Falta (R$)</th>
                         <th>Status</th>
+                        <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyEquipamentos">
                     <tr>
-                        <td colspan="10" style="text-align: center; color: #64748b; padding: 20px;">
+                        <td colspan="11" style="text-align: center; color: #64748b; padding: 20px;">
                             Anexe a planilha no botão acima para carregar e comparar os dados.
                         </td>
                     </tr>
@@ -230,11 +236,40 @@
     </div>
 </div>
 
+<!-- MODAL DE VISUALIZAÇÃO E ENVIO DO WHATSAPP -->
+<div id="modalWhatsApp" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fab fa-whatsapp"></i> Enviar Mensagem via WhatsApp</h3>
+            <button class="modal-close" onclick="fecharModalWhatsApp()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" id="grupoTelefoneCliente">
+                <label>Número do WhatsApp do Cliente (Opcional)</label>
+                <input type="text" id="inputTelefoneCliente" placeholder="Ex: 5511999999999 (com DDD e DDI)">
+                <span style="font-size: 11px; color: #64748b;">Se preenchido, abrirá direto na conversa do número informado. Caso contrário, abrirá para você escolher o contato.</span>
+            </div>
+            <div class="form-group">
+                <label>Prévia da Mensagem Formatada:</label>
+                <div class="whatsapp-preview-box">
+                    <div id="textoPreviewWhatsApp" class="whatsapp-bubble"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" style="background: #e2e8f0; color: #334155;" onclick="fecharModalWhatsApp()">Cancelar</button>
+            <button class="btn btn-whatsapp" onclick="dispararEnvioWhatsApp()">
+                <i class="fab fa-whatsapp"></i> Enviar Mensagem
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     let listaEquipamentosGeral = [];
     let listaFiltrada = [];
+    let linkWhatsAppFinal = "";
 
-    // Fechar dropdowns ao clicar fora
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.custom-multiselect')) {
             document.querySelectorAll('.checkboxes-dropdown').forEach(d => d.classList.remove('show'));
@@ -263,7 +298,7 @@
         const selecionados = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
         
         if (checkAll) {
-            checkAll.checked = (selecionados.length === checkboxes.length);
+            checkAll.checked = (selecionados.length === checkboxes.length && checkboxes.length > 0);
         }
 
         const labelSpan = document.getElementById(`label${tipo}`);
@@ -285,12 +320,40 @@
         return checkboxes.filter(cb => cb.checked).map(cb => cb.value);
     }
 
+    // IDENTIFICAÇÃO DE EQUIPAMENTOS (CONTROLE INTERNO vs CLIENTE/WHATSAPP)
     function identificarEquipamento(modelo) {
         const mod = String(modelo || '').toLowerCase().trim();
-        if (mod.includes('chopeira') || mod.includes('chopp')) return { tipo: 'CHOPEIRA', rotulo: 'CHOPEIRA (CHOPP)' };
-        if (mod.includes('sop')) return { tipo: 'SOP', rotulo: 'SOP / SOPI' };
-        if (mod.includes('visa')) return { tipo: 'VISA', rotulo: 'VISA COOLER' };
-        return { tipo: 'OUTRO', rotulo: (modelo ? modelo.toUpperCase() : 'OUTROS') };
+        if (mod.includes('chopeira') || mod.includes('chopp')) {
+            return { 
+                tipo: 'CHOPEIRA', 
+                rotuloInterno: `CHOPP - Chopeira`, 
+                rotuloCliente: 'Chopeira',
+                regraCompra: 'compra de chope'
+            };
+        }
+        if (mod.includes('sop') || mod.includes('sopi')) {
+            return { 
+                tipo: 'SOPI', 
+                rotuloInterno: `SOPI - Cerveja`, 
+                rotuloCliente: 'Freezer de Cerveja',
+                regraCompra: 'compra de cerveja'
+            };
+        }
+        if (mod.includes('visa')) {
+            return { 
+                tipo: 'VISA', 
+                rotuloInterno: `VISA - Nab`, 
+                rotuloCliente: 'Freezer de Refrigerante',
+                regraCompra: 'compra de refrigerante'
+            };
+        }
+        const descOriginal = modelo ? modelo.toUpperCase() : 'OUTROS';
+        return { 
+            tipo: 'OUTRO', 
+            rotuloInterno: descOriginal, 
+            rotuloCliente: modelo ? modelo : 'Outros Equipamentos',
+            regraCompra: 'compra de produtos'
+        };
     }
 
     function validarTemEquipamento(valTemEquip, qtd) {
@@ -365,7 +428,6 @@
                     const real = colReal !== -1 ? parseFloat(row[colReal]) || 0 : 0;
 
                     const temEquipEfetivo = validarTemEquipamento(temEquipRaw, qtd);
-                    
                     const tipoAba = isAbaPrincipal ? 'PRINCIPAL' : 'SECUNDARIA';
                     const chaveUnica = `${tipoAba}_${sheetName}_${setor}_${cod}_${modeloRaw.toUpperCase().trim()}`;
 
@@ -391,19 +453,16 @@
             });
 
             listaEquipamentosGeral = Object.values(mapaEquipamentos);
-
             const setoresOrdenados = Array.from(setoresSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
             
-            // Popula Multi-select de Setor
             const dropdownSetor = document.getElementById('dropdownSetor');
-            let setorHTML = `<label><input type="checkbox" value="ALL" checked onchange="toggleSelectAll('Setor', this)"> <b>[Selecionar Todos]</b></label>`;
+            let setorHTML = `<label><input type="checkbox" value="ALL" onchange="toggleSelectAll('Setor', this)"> <b>[Selecionar Todos]</b></label>`;
             setoresOrdenados.forEach(s => {
-                setorHTML += `<label><input type="checkbox" value="${s}" checked onchange="atualizarMultiSelect('Setor')"> Setor ${s}</label>`;
+                setorHTML += `<label><input type="checkbox" value="${s}" onchange="atualizarMultiSelect('Setor')"> Setor ${s}</label>`;
             });
             dropdownSetor.innerHTML = setorHTML;
             atualizarMultiSelect('Setor');
 
-            // Popula Dia de Visita
             preencherSelect('filtroDiaVisita', Array.from(diasSet));
 
             document.getElementById('excelStatus').innerText = `✓ ${listaEquipamentosGeral.length} registros processados em todas as abas!`;
@@ -417,7 +476,6 @@
         const valorAtual = select.value;
         const textoOriginal = select.options[0].text;
         select.innerHTML = `<option value="">${textoOriginal}</option>`;
-        
         opcoes.forEach(op => {
             select.innerHTML += `<option value="${op}">${op}</option>`;
         });
@@ -427,10 +485,8 @@
     function aplicarFiltros() {
         const metodoLeitura = document.getElementById('filtroMetodoLeitura').value;
         const filtroPosse = document.getElementById('filtroPosseEquipamento').value;
-        
         const setoresSelecionados = obterValoresMultiSelect('Setor');
         const tiposSelecionados = obterValoresMultiSelect('Tipo');
-
         const dia = document.getElementById('filtroDiaVisita').value;
         const statusMeta = document.getElementById('filtroStatusMeta').value;
         const busca = document.getElementById('filtroBuscaTexto').value.toLowerCase().trim();
@@ -438,7 +494,6 @@
         listaFiltrada = listaEquipamentosGeral.filter(item => {
             if (metodoLeitura === 'ATUAL' && item.tipoAba !== 'PRINCIPAL') return false;
             if (metodoLeitura === 'ANTIGA' && item.tipoAba !== 'SECUNDARIA') return false;
-
             if (filtroPosse === 'SIM' && !item.temEquipamento) return false;
             if (filtroPosse === 'NAO' && item.temEquipamento) return false;
 
@@ -446,12 +501,8 @@
             const saldoFalta = item.meta - item.real;
             const bateuMeta = (item.meta === 0 || saldoFalta <= 0);
 
-            // Filtro Múltiplo de Setores
             if (setoresSelecionados.length > 0 && !setoresSelecionados.includes(item.setor)) return false;
-
-            // Filtro Múltiplo de Tipos
             if (tiposSelecionados.length > 0 && !tiposSelecionados.includes(infoEq.tipo)) return false;
-
             if (dia && item.diaVisita !== dia) return false;
             if (statusMeta === 'OK' && !bateuMeta) return false;
             if (statusMeta === 'PENDENTE' && bateuMeta) return false;
@@ -474,14 +525,14 @@
         if (listaFiltrada.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="10" style="text-align: center; color: #64748b; padding: 20px;">
-                        Nenhum equipamento encontrado com o método e filtros selecionados.
+                    <td colspan="11" style="text-align: center; color: #64748b; padding: 20px;">
+                        Nenhum equipamento encontrado. Selecione ao menos um Setor nos filtros acima ou verifique os critérios.
                     </td>
                 </tr>`;
             return;
         }
 
-        tbody.innerHTML = listaFiltrada.map(item => {
+        tbody.innerHTML = listaFiltrada.map((item, index) => {
             const infoEq = identificarEquipamento(item.modelo);
             const saldoFalta = item.meta - item.real;
 
@@ -489,16 +540,16 @@
             let textoFalta = '-';
 
             if (item.meta === 0 || saldoFalta <= 0) {
-                statusBadge = `<span class="badge badge-success">[ OK ] ATINGIDA</span>`;
+                statusBadge = `<span class="badge badge-success">ATINGIDA [OK]</span>`;
                 textoFalta = `R$ 0,00`;
             } else {
-                statusBadge = `<span class="badge badge-danger">[ NÃO OK ] PENDENTE</span>`;
+                statusBadge = `<span class="badge badge-danger">PENDENTE</span>`;
                 textoFalta = `R$ ${saldoFalta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             }
 
             const badgeOrigem = item.tipoAba === 'PRINCIPAL' 
-                ? `<span class="badge badge-origem-ok"><i class="fas fa-check-circle"></i> Aba Principal</span>`
-                : `<span class="badge badge-origem-erro"><i class="fas fa-exclamation-triangle"></i> Base Antiga (${item.nomeAba})</span>`;
+                ? `<span class="badge badge-origem-ok"><i class="fas fa-check-circle"></i> Principal</span>`
+                : `<span class="badge badge-origem-erro"><i class="fas fa-exclamation-triangle"></i> Base Antiga</span>`;
 
             return `
                 <tr style="${saldoFalta > 0 ? 'background-color: #fff5f5;' : ''}">
@@ -506,18 +557,55 @@
                     <td><b>${item.setor}</b></td>
                     <td>${item.diaVisita}</td>
                     <td><b>[${item.cod}]</b> ${item.nome}</td>
-                    <td>${infoEq.rotulo}</td>
+                    <td>${infoEq.rotuloInterno}</td>
                     <td>${item.qtd} UN</td>
                     <td>R$ ${item.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td>R$ ${item.real.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="color: ${saldoFalta > 0 ? '#b91c1c' : '#15803d'}; font-weight: bold;">${textoFalta}</td>
                     <td>${statusBadge}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-whatsapp btn-sm" onclick="abrirModalWhatsAppIndividual(${index})" title="Enviar WhatsApp para este PDV">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                    </td>
                 </tr>
             `;
         }).join('');
     }
 
-    function enviarResumoWhatsApp() {
+    // --- WHATSAPP (COM REGRA DE COMPRA CORRESPONDENTE) ---
+
+    function abrirModalWhatsAppIndividual(index) {
+        const item = listaFiltrada[index];
+        if (!item) return;
+
+        const infoEq = identificarEquipamento(item.modelo);
+        const saldoFalta = item.meta - item.real;
+        
+        let textoStatusMsg = "";
+        if (item.meta === 0 || saldoFalta <= 0) {
+            textoStatusMsg = "🎉 Parabéns! Sua meta de acompanhamento deste equipamento está totalmente atingida!";
+        } else {
+            textoStatusMsg = `⚠️ Para atingir a sua meta deste período, falta o valor de *R$ ${saldoFalta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}* em *${infoEq.regraCompra}*.`;
+        }
+
+        let mensagem = `*${item.nome}* 📌\n\n`;
+        mensagem += `Passando para dar uma olhada no andamento do seu equipamento com a gente:\n\n`;
+        mensagem += `📦 *Equipamento:* ${infoEq.rotuloCliente}\n`;
+        mensagem += `📊 *Meta:* R$ ${item.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+        mensagem += `🎯 *Realizado:* R$ ${item.real.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\n`;
+        mensagem += `${textoStatusMsg}\n\n`;
+        mensagem += `Qualquer dúvida ou para repor produtos, estamos à disposição! 🚀`;
+
+        document.getElementById('inputTelefoneCliente').value = "";
+        document.getElementById('grupoTelefoneCliente').style.display = "block";
+        document.getElementById('textoPreviewWhatsApp').innerText = mensagem;
+        
+        linkWhatsAppFinal = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+        document.getElementById('modalWhatsApp').classList.add('show');
+    }
+
+    function abrirModalWhatsAppGeral() {
         if (listaFiltrada.length === 0) {
             alert('Nenhum dado filtrado para compartilhar.');
             return;
@@ -528,23 +616,43 @@
         const metodoSelect = document.getElementById('filtroMetodoLeitura');
         const metodoTexto = metodoSelect.options[metodoSelect.selectedIndex].text;
 
-        let texto = `*LEVANTAMENTO DE META DE EQUIPAMENTOS*\n`;
-        texto += `⚙️ *Método:* ${metodoTexto}\n`;
-        texto += `📌 *Setores:* ${setores} | *Dia:* ${dia}\n`;
-        texto += `📊 *Total de Clientes/Eq:* ${listaFiltrada.length}\n\n`;
+        let mensagem = `📋 *RESUMO DE ACOMPANHAMENTO DE EQUIPAMENTOS*\n`;
+        mensagem += `⚙️ *Filtro:* ${metodoTexto}\n`;
+        mensagem += `📌 *Setores:* ${setores} | *Dia:* ${dia}\n`;
+        mensagem += `📊 *Total de Registros:* ${listaFiltrada.length}\n\n`;
 
         listaFiltrada.forEach(item => {
             const infoEq = identificarEquipamento(item.modelo);
             const saldo = item.meta - item.real;
-            let status = (saldo <= 0) ? "✅ OK" : `❌ FALTA R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            let tagOrigem = item.tipoAba === 'PRINCIPAL' ? '[Aba Principal]' : `[BASE ANTIGA - ${item.nomeAba}]`;
+            let status = (saldo <= 0) ? "✅ Meta OK" : `❌ Falta R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})} em ${infoEq.regraCompra}`;
 
-            texto += `• ${tagOrigem} *[${item.cod}] ${item.nome}*\n`;
-            texto += `  Equip: ${infoEq.rotulo} | Status: ${status}\n`;
+            mensagem += `• *[${item.cod}] ${item.nome}*\n`;
+            mensagem += `  Eq: ${infoEq.rotuloCliente} | ${status}\n`;
         });
 
-        const link = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
-        window.open(link, '_blank');
+        document.getElementById('grupoTelefoneCliente').style.display = "none";
+        document.getElementById('textoPreviewWhatsApp').innerText = mensagem;
+
+        linkWhatsAppFinal = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+        document.getElementById('modalWhatsApp').classList.add('show');
+    }
+
+    function fecharModalWhatsApp() {
+        document.getElementById('modalWhatsApp').classList.remove('show');
+    }
+
+    function dispararEnvioWhatsApp() {
+        const telefoneInput = document.getElementById('inputTelefoneCliente').value.trim();
+        let urlFinal = linkWhatsAppFinal;
+
+        if (telefoneInput && document.getElementById('grupoTelefoneCliente').style.display !== 'none') {
+            const numeroLimpo = telefoneInput.replace(/\D/g, '');
+            const textoAtual = document.getElementById('textoPreviewWhatsApp').innerText;
+            urlFinal = `https://api.whatsapp.com/send?phone=${numeroLimpo}&text=${encodeURIComponent(textoAtual)}`;
+        }
+
+        window.open(urlFinal, '_blank');
+        fecharModalWhatsApp();
     }
 
     function gerarPDFRelatorio() {
@@ -556,21 +664,19 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
-        // --- CÁLCULOS DOS RESUMOS E METRICAS ---
         const totalGeral = listaFiltrada.length;
         let okGeral = 0;
         let pendenteGeral = 0;
         let metaTotalGeral = 0;
         let realTotalGeral = 0;
         let faltaTotalGeral = 0;
-
         const listaPendentes = [];
 
         const resPorTipo = {
             'CHOPEIRA': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'CHOPEIRAS' },
-            'SOP': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'SOP / SOPI' },
-            'VISA': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'VISA COOLERS' },
-            'OUTRO': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'OUTROS EQUIPAMENTOS' }
+            'SOPI': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'SOPI - CERVEJA' },
+            'VISA': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'VISA - NAB' },
+            'OUTRO': { total: 0, ok: 0, pendente: 0, meta: 0, real: 0, falta: 0, nome: 'OUTROS' }
         };
 
         listaFiltrada.forEach(item => {
@@ -591,7 +697,7 @@
                     cod: item.cod,
                     nome: item.nome,
                     dia: item.diaVisita,
-                    equip: infoEq.rotulo,
+                    equip: infoEq.rotuloInterno,
                     falta: valFalta
                 });
             }
@@ -606,7 +712,6 @@
 
         const pctGeral = totalGeral > 0 ? ((okGeral / totalGeral) * 100).toFixed(1) : '0.0';
 
-        // --- DESENHO DO CABEÇALHO ---
         doc.setFillColor(30, 58, 138);
         doc.rect(0, 0, 210, 24, 'F');
         
@@ -618,14 +723,11 @@
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
         const dataEmissao = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-        
         const setoresSel = obterValoresMultiSelect('Setor').join(', ');
-        const setorFiltroTxt = setoresSel ? (setoresSel.length > 25 ? setoresSel.substring(0, 22) + '...' : setoresSel) : 'Todos';
-        const diaFiltro = document.getElementById('filtroDiaVisita').value || 'Todos';
+        const setorFiltroTxt = setoresSel ? (setoresSel.length > 25 ? setoresSel.substring(0, 22) + '...' : setoresSel) : 'Nenhum';
 
-        doc.text(`Emissão: ${dataEmissao}  |  Setores: ${setorFiltroTxt}  |  Dia: ${diaFiltro}`, 14, 18);
+        doc.text(`Emissão: ${dataEmissao}  |  Setores: ${setorFiltroTxt}`, 14, 18);
 
-        // --- PAINEL GERAL DE INDICADORES ---
         doc.setFillColor(241, 245, 249);
         doc.setDrawColor(203, 213, 225);
         doc.roundedRect(14, 28, 182, 18, 2, 2, 'FD');
@@ -645,13 +747,12 @@
         doc.setTextColor(faltaTotalGeral > 0 ? 185 : 21, faltaTotalGeral > 0 ? 28 : 128, faltaTotalGeral > 0 ? 28 : 61);
         doc.text(`Falta Total: R$ ${faltaTotalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, 110, 41);
 
-        // --- DETALHAMENTO POR TIPO DE EQUIPAMENTO ---
         doc.setFontSize(8.5);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(30, 58, 138);
         doc.text("DETALHAMENTO POR TIPO DE EQUIPAMENTO:", 14, 52);
 
-        const tiposKeys = ['CHOPEIRA', 'SOP', 'VISA', 'OUTRO'];
+        const tiposKeys = ['CHOPEIRA', 'SOPI', 'VISA', 'OUTRO'];
         const cardWidth = 43;
         const cardGap = 3.3;
         let startX = 14;
@@ -679,7 +780,7 @@
             doc.text(`Total: ${item.total} eq.`, posX + 2, cardY + 9);
             
             doc.setFont("helvetica", "bold");
-            doc.setTextColor(16, 185, 129);
+            doc.setTextColor(10, 185, 129);
             doc.text(`OK: ${item.ok}`, posX + 2, cardY + 13);
             
             doc.setTextColor(239, 68, 68);
@@ -693,7 +794,6 @@
             doc.text(`Falta: R$ ${item.falta.toLocaleString('pt-BR', {maximumFractionDigits: 0})}`, posX + 2, cardY + 21);
         });
 
-        // --- RESUMO RÁPIDO DOS CLIENTES PENDENTES ---
         let currentY = 82;
 
         if (listaPendentes.length > 0) {
@@ -703,7 +803,6 @@
             doc.text(`⚠ ATENÇÃO PRIORITÁRIA - PDVs PENDENTES (${listaPendentes.length}):`, 14, currentY);
 
             listaPendentes.sort((a, b) => b.falta - a.falta);
-
             const pndRows = listaPendentes.map(p => [
                 `[${p.cod}] ${p.nome}`,
                 p.dia,
@@ -734,7 +833,6 @@
             currentY = doc.lastAutoTable.finalY + 8;
         }
 
-        // --- TABELA PRINCIPAL COMPLETA ---
         doc.setFontSize(8.5);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(30, 58, 138);
@@ -747,7 +845,7 @@
             
             let statusTxt = pendente ? "PENDENTE" : "OK";
             let faltaTxt = pendente ? `R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : "-";
-            let origemTxt = item.tipoAba === 'PRINCIPAL' ? 'Aba Principal' : `BASE ANTIGA (${item.nomeAba})`;
+            let origemTxt = item.tipoAba === 'PRINCIPAL' ? 'Principal' : `BASE ANTIGA`;
 
             return {
                 data: [
@@ -755,7 +853,7 @@
                     item.setor,
                     item.diaVisita,
                     `[${item.cod}] ${item.nome}`,
-                    infoEq.rotulo,
+                    infoEq.rotuloInterno,
                     `R$ ${item.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`,
                     `R$ ${item.real.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`,
                     faltaTxt,
@@ -777,7 +875,7 @@
                 0: { cellWidth: 26 },
                 1: { cellWidth: 10, halign: 'center' },
                 2: { cellWidth: 12, halign: 'center' },
-                3: { cellWidth: 48 },
+                3: { cellWidth: 50 },
                 4: { cellWidth: 28 },
                 5: { cellWidth: 18, halign: 'right' },
                 6: { cellWidth: 18, halign: 'right' },
@@ -787,7 +885,6 @@
             didParseCell: function(data) {
                 if (data.section === 'body') {
                     const rowObj = tableRows[data.row.index];
-                    
                     if (rowObj && rowObj.isPendente) {
                         data.cell.styles.fillColor = [254, 242, 242];
                         if (data.column.index === 7 || data.column.index === 8) {
@@ -800,16 +897,10 @@
                             data.cell.styles.fontStyle = 'bold';
                         }
                     }
-
-                    if (rowObj && rowObj.isBaseAntiga && data.column.index === 0) {
-                        data.cell.styles.textColor = [185, 28, 28];
-                        data.cell.styles.fontStyle = 'bold';
-                    }
                 }
             }
         });
 
-        // Rodapé
         const pageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
