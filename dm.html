@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Tarefas PDV</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        /* Container principal */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .app-header h2 {
+            color: #2c3e50;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .app-header h2 i {
+            color: #4285f4;
+        }
+        
+        /* Novo Painel Recolhível de Resumo por Cliente */
+        .summary-accordion {
+            background-color: #ffffff;
+            border: 2px solid #4285f4;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .summary-header {
+            background-color: #e8f0fe;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #1a2a6c;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .summary-header:hover {
+            background-color: #d2e3fc;
+        }
+
+        .summary-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .summary-badge {
+            background-color: #4285f4;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .summary-content {
+            display: none;
+            padding: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+            border-top: 1px solid #d6e4ff;
+        }
+
+        .client-summary-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .client-summary-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .client-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .client-pdv {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .edit-client-btn {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .edit-client-btn:hover {
+            background-color: #e68a00;
+        }
+
+        .upload-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        progress {
+            width: 100%;
+            height: 22px;
+            border-radius: 8px;
+        }
+        
+        .filter-section {
+            display: none;
+            margin-top: 25px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+        
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        
+        .filter-group h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #2c3e50;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        
+        select:focus, input:focus {
+            border-color: #4285f4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+        }
+        
+        .autocomplete-container {
+            position: relative;
+        }
+        
+        .autocomplete-items {
+            position: absolute;
+            border: 2px solid #d4d4d4;
+            border-radius: 8px;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .autocomplete-items div {
+            padding: 12px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+            transition: background-color 0.2s;
+        }
+        
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .preview-section {
+            display: none;
+            margin-top: 25px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+        
+        .preview-section h3 {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            font-size: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .preview-table th, .preview-table td {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        .preview-table th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .preview-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .preview-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .task-selected {
+            background-color: #e8f5e9 !important;
+        }
+        
+        .counter-section {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #e8f0fe;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid #d6e4ff;
+        }
+        
+        .counter {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4285f4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .reset-btn {
+            background-color: #f44336;
+        }
+        
+        .reset-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .whatsapp-btn {
+            background-color: #25D366;
+        }
+        
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+        }
+        
+        .status {
+            margin-top: 15px;
+            font-size: 15px;
+            color: #666;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .sheet-selector {
+            margin-bottom: 20px;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .button-group, .action-buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* Backup buttons */
+        .backup-btn {
+            background-color: #9c27b0;
+        }
+        
+        .backup-btn:hover {
+            background-color: #7b1fa2;
+        }
+        
+        .restore-btn {
+            background-color: #4CAF50;
+        }
+        
+        .restore-btn:hover {
+            background-color: #388E3C;
+        }
+        
+        .backup-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        
+        .backup-status.success {
+            background-color: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            display: block;
+        }
+        
+        .backup-status.error {
+            background-color: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+            display: block;
+        }
+        
+        .backup-info {
+            background: #e8f0fe;
+            border-left: 4px solid #4285f4;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .backup-info h4 {
+            margin-bottom: 8px;
+            color: #1565C0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <h2><i class="fas fa-list-check"></i> Controle de Tarefas PDV</h2>
+        </div>
+
+        <!-- Painel de Clientes / Resumo (Pop-up Sanfona) -->
+        <div class="summary-accordion" id="summaryAccordion">
+            <div class="summary-header" id="summaryHeader">
+                <div class="summary-header-title">
+                    <i class="fas fa-store"></i>
+                    <span>Clientes com Tarefas Concluídas</span>
+                    <span class="summary-badge" id="clientCountBadge">0</span>
+                </div>
+                <i class="fas fa-chevron-down" id="accordionIcon"></i>
+            </div>
+            <div class="summary-content" id="summaryContent">
+                <div id="clientListContainer">
+                    <p style="color: #888; text-align: center; padding: 10px;">Nenhuma tarefa realizada ainda.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="upload-section">
+            <div class="button-group">
+                <button id="uploadBtn">
+                    <i class="fas fa-upload"></i>
+                    Upload de Planilha
+                </button>
+                <button id="exportBackupBtn" class="backup-btn">
+                    <i class="fas fa-file-export"></i>
+                    Exportar Backup
+                </button>
+                <button id="importBackupBtn" class="restore-btn">
+                    <i class="fas fa-file-import"></i>
+                    Importar Backup
+                </button>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <progress id="progressBar" value="0" max="100"></progress>
+                <div class="status" id="statusText">0% carregado</div>
+            </div>
+            
+            <div id="backupStatus" class="backup-status"></div>
+            
+            <div class="backup-info">
+                <h4><i class="fas fa-info-circle"></i> Salvamento Automático Ativo</h4>
+                <p>Seus dados são salvos automaticamente neste navegador. Você pode fechar e reabrir a página no GitHub Pages quando quiser. Use os botões de backup caso troque de celular ou computador.</p>
+            </div>
+        </div>
+        
+        <div class="filter-section" id="filterSection">
+            <div class="sheet-selector" id="sheetSelector">
+                <label for="sheetSelect">Selecione a aba:</label>
+                <select id="sheetSelect"></select>
+            </div>
+            
+            <div class="filter-group">
+                <h3><i class="fas fa-filter"></i> Filtros Principais</h3>
+                
+                <label for="rnFilter">RN:</label>
+                <select id="rnFilter">
+                    <option value="">Todos os RNs</option>
+                </select>
+                
+                <label for="visitDayFilter">Dia de Visita:</label>
+                <select id="visitDayFilter">
+                    <option value="">Todos os dias</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <h3><i class="fas fa-search"></i> Pesquisar PDV/Nome</h3>
+                
+                <div class="autocomplete-container">
+                    <label for="pdvFilter">PDV:</label>
+                    <input type="text" id="pdvFilter" placeholder="Digite parte do PDV...">
+                    <div id="pdvAutocomplete" class="autocomplete-items"></div>
+                </div>
+                
+                <div class="autocomplete-container">
+                    <label for="fantasyNameFilter">Nome Fantasia:</label>
+                    <input type="text" id="fantasyNameFilter" placeholder="Digite parte do nome...">
+                    <div id="fantasyNameAutocomplete" class="autocomplete-items"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <h3><i class="fas fa-table"></i> Pré-visualização</h3>
+            <div style="overflow-x: auto;">
+                <table class="preview-table" id="previewTable">
+                    <thead>
+                        <tr>
+                            <th width="50px">Selecionar</th>
+                            <th>PDV</th>
+                            <th>Nome Fantasia</th>
+                            <th>Tarefa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewTableBody">
+                        <!-- Dados serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="counter-section">
+                <div class="counter"><i class="fas fa-check-circle"></i> Total de Tarefas Realizadas: <span id="taskCounter">0</span></div>
+                <div class="action-buttons">
+                    <button id="resetSelectionBtn" class="reset-btn">
+                        <i class="fas fa-eraser"></i>
+                        Zerar Seleção
+                    </button>
+                    <button id="whatsappBtn" class="whatsapp-btn">
+                        <i class="fab fa-whatsapp"></i>
+                        Compartilhar por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status" id="statusMessage"></div>
+    </div>
+
+    <script>
+        // Constantes do sistema
+        const STATE_STORAGE_KEY = "pdvAppState_v2";
+        
+        // Elementos da interface
+        const uploadBtn = document.getElementById('uploadBtn');
+        const exportBackupBtn = document.getElementById('exportBackupBtn');
+        const importBackupBtn = document.getElementById('importBackupBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const statusText = document.getElementById('statusText');
+        const statusMessage = document.getElementById('statusMessage');
+        const backupStatus = document.getElementById('backupStatus');
+        const filterSection = document.getElementById('filterSection');
+        const sheetSelect = document.getElementById('sheetSelect');
+        const rnFilter = document.getElementById('rnFilter');
+        const visitDayFilter = document.getElementById('visitDayFilter');
+        const pdvFilter = document.getElementById('pdvFilter');
+        const fantasyNameFilter = document.getElementById('fantasyNameFilter');
+        const pdvAutocomplete = document.getElementById('pdvAutocomplete');
+        const fantasyNameAutocomplete = document.getElementById('fantasyNameAutocomplete');
+        const previewSection = document.getElementById('previewSection');
+        const previewTableBody = document.getElementById('previewTableBody');
+        const taskCounter = document.getElementById('taskCounter');
+        const resetSelectionBtn = document.getElementById('resetSelectionBtn');
+        const whatsappBtn = document.getElementById('whatsappBtn');
+        
+        // Elementos do Accordion de Resumo
+        const summaryHeader = document.getElementById('summaryHeader');
+        const summaryContent = document.getElementById('summaryContent');
+        const accordionIcon = document.getElementById('accordionIcon');
+        const clientListContainer = document.getElementById('clientListContainer');
+        const clientCountBadge = document.getElementById('clientCountBadge');
+
+        // Variáveis de estado
+        let workbook = null;
+        let currentData = [];
+        let filteredData = [];
+        let columnMapping = {
+            rn: null,
+            visitDay: null,
+            pdv: null,
+            fantasyName: null,
+            tasks: null
+        };
+        let selectedTasks = {};
+
+        // Toggle Accordion do Resumo
+        summaryHeader.addEventListener('click', () => {
+            const isVisible = summaryContent.style.display === 'block';
+            summaryContent.style.display = isVisible ? 'none' : 'block';
+            accordionIcon.className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        });
+
+        // Inicializar o sistema
+        function initializeSystem() {
+            const savedState = loadState();
+            if (savedState) {
+                restoreState(savedState);
+            }
+        }
+        
+        // Identificação automática das colunas
+        function identifyRNColumn(columns, data) {
+            let rnColumn = null;
+            let maxValidCount = 0;
+        
+            columns.forEach(column => {
+                let validCount = 0;
+                data.forEach(item => {
+                    const value = item[column];
+                    const num = Number(value);
+                    if (!isNaN(num) && num >= 100 && num <= 999 && num % 1 === 0) {
+                        validCount++;
+                    }
+                });
+        
+                if (validCount > maxValidCount && validCount > data.length * 0.7) {
+                    maxValidCount = validCount;
+                    rnColumn = column;
+                }
+            });
+        
+            return rnColumn;
+        }
+        
+        function identifyColumns() {
+            if (!currentData || currentData.length === 0) return;
+        
+            const firstRow = currentData[0];
+            const columnNames = Object.keys(firstRow);
+        
+            columnMapping.rn = identifyRNColumn(columnNames, currentData);
+            
+            columnMapping.tasks = columnNames.find(columnName => {
+                return currentData.some(item => {
+                    const value = item[columnName];
+                    return value && String(value).toLowerCase().includes('auxilie');
+                });
+            });
+        
+            columnMapping.visitDay = columnNames.find(key => 
+                key.toLowerCase().includes('data') || 
+                key.toLowerCase().includes('dia') || 
+                key.toLowerCase().includes('visita') || 
+                key.toLowerCase().includes('date')
+            );
+            
+            columnMapping.pdv = columnNames.find(key => 
+                key.toLowerCase().includes('pdv') || 
+                key.toLowerCase().includes('ponto') || 
+                key.toLowerCase().includes('venda') || 
+                key.toLowerCase().includes('codigo') ||
+                key.toLowerCase().includes('código') ||
+                key.toLowerCase().includes('loja')
+            );
+            
+            columnMapping.fantasyName = columnNames.find(key => 
+                key.toLowerCase().includes('fantasia') || 
+                key.toLowerCase().includes('nome') || 
+                key.toLowerCase().includes('estabelecimento') || 
+                key.toLowerCase().includes('name')
+            );
+        }
+        
+        function formatDate(value) {
+            if (value instanceof Date) return value.toLocaleDateString('pt-BR');
+            if (typeof value === 'number') {
+                const date = new Date((value - 25569) * 86400 * 1000);
+                return date.toLocaleDateString('pt-BR');
+            }
+            return value;
+        }
+        
+        function generateTaskId(item) {
+            const pdv = columnMapping.pdv ? item[columnMapping.pdv] : '';
+            const task = columnMapping.tasks ? item[columnMapping.tasks] : '';
+            return `${pdv}-${task}`;
+        }
+        
+        // Evento de upload
+        uploadBtn.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.xlsx, .xls, .csv';
+            
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileUpload(file);
+                }
+            };
+            
+            fileInput.click();
+        });
+        
+        function handleFileUpload(file) {
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+        
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, { type: 'array' });
+                    
+                    sheetSelect.innerHTML = '';
+                    workbook.SheetNames.forEach(sheetName => {
+                        const option = document.createElement('option');
+                        option.value = sheetName;
+                        option.textContent = sheetName;
+                        sheetSelect.appendChild(option);
+                    });
+                    
+                    filterSection.style.display = 'block';
+                    statusText.textContent = 'Planilha carregada com sucesso!';
+                    uploadBtn.disabled = false;
+                    
+                    loadSheetData(workbook.SheetNames[0]);
+                    saveState();
+                    
+                } catch (error) {
+                    console.error('Erro ao processar arquivo:', error);
+                    statusText.textContent = 'Erro ao processar o arquivo';
+                    statusMessage.textContent = 'Formato não suportado ou arquivo corrompido';
+                    uploadBtn.disabled = false;
+                }
+                progressContainer.style.display = 'none';
+            };
+        
+            reader.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 100;
+                    progressBar.value = percent;
+                    statusText.textContent = `${Math.round(percent)}% carregado`;
+                }
+            };
+        
+            reader.onerror = () => {
+                statusText.textContent = 'Erro na leitura do arquivo';
+                statusMessage.textContent = 'Tente novamente com outro arquivo';
+                uploadBtn.disabled = false;
+                progressContainer.style.display = 'none';
+            };
+        
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function loadSheetData(sheetName) {
+            currentData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+            identifyColumns();
+            updateFilters();
+            statusMessage.textContent = `Aba "${sheetName}" carregada com ${currentData.length} registros.`;
+            applyFilters();
+            updateClientSummary();
+            saveState();
+        }
+        
+        function updateFilters() {
+            rnFilter.innerHTML = '<option value="">Todos os RNs</option>';
+            visitDayFilter.innerHTML = '<option value="">Todos os dias</option>';
+        
+            if (columnMapping.rn) {
+                const uniqueRNs = [...new Set(currentData.map(item => item[columnMapping.rn]))]
+                    .filter(rn => rn !== null && rn !== undefined)
+                    .sort((a, b) => String(a).localeCompare(String(b)));
+                
+                uniqueRNs.forEach(rn => {
+                    const option = document.createElement('option');
+                    option.value = rn;
+                    option.textContent = rn;
+                    rnFilter.appendChild(option);
+                });
+            }
+        
+            if (columnMapping.visitDay) {
+                const uniqueVisitDays = [...new Set(currentData.map(item => {
+                    const value = item[columnMapping.visitDay];
+                    return value !== null && value !== undefined ? formatDate(value) : null;
+                }))].filter(day => day !== null);
+                
+                uniqueVisitDays.sort((a, b) => {
+                    const [dayA, monthA, yearA] = a.split('/');
+                    const [dayB, monthB, yearB] = b.split('/');
+                    return new Date(yearA, monthA-1, dayA) - new Date(yearB, monthB-1, dayB);
+                });
+                
+                uniqueVisitDays.forEach(day => {
+                    const option = document.createElement('option');
+                    option.value = day;
+                    option.textContent = day;
+                    visitDayFilter.appendChild(option);
+                });
+            }
+        
+            setupAutocomplete(pdvFilter, pdvAutocomplete, columnMapping.pdv);
+            setupAutocomplete(fantasyNameFilter, fantasyNameAutocomplete, columnMapping.fantasyName);
+        }
+
+        sheetSelect.addEventListener('change', () => {
+            loadSheetData(sheetSelect.value);
+        });
+
+        rnFilter.addEventListener('change', () => { applyFilters(); saveState(); });
+        visitDayFilter.addEventListener('change', () => { applyFilters(); saveState(); });
+        pdvFilter.addEventListener('input', () => { applyFilters(); saveState(); });
+        fantasyNameFilter.addEventListener('input', () => { applyFilters(); saveState(); });
+        
+        function setupAutocomplete(inputElement, containerElement, columnName) {
+            if (!columnName) return;
+            
+            inputElement.addEventListener('input', function() {
+                const input = this.value.toLowerCase();
+                containerElement.innerHTML = '';
+                
+                if (input.length < 2) return;
+                
+                const uniqueValues = [...new Set(currentData.map(item => item[columnName]))]
+                    .filter(value => value && String(value).toLowerCase().includes(input))
+                    .slice(0, 10);
+                
+                uniqueValues.forEach(value => {
+                    const item = document.createElement('div');
+                    item.textContent = value;
+                    item.addEventListener('click', function() {
+                        inputElement.value = value;
+                        containerElement.innerHTML = '';
+                        applyFilters();
+                        saveState();
+                    });
+                    containerElement.appendChild(item);
+                });
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputElement) {
+                    containerElement.innerHTML = '';
+                }
+            });
+        }
+        
+        function applyFilters() {
+            const selectedRN = rnFilter.value;
+            const selectedVisitDay = visitDayFilter.value;
+            const pdvText = pdvFilter.value.toLowerCase();
+            const fantasyNameText = fantasyNameFilter.value.toLowerCase();
+            
+            filteredData = currentData.filter(item => {
+                const rnMatch = !selectedRN || (columnMapping.rn && 
+                    String(item[columnMapping.rn]) === String(selectedRN));
+                
+                const visitDayMatch = !selectedVisitDay || (columnMapping.visitDay && 
+                    formatDate(item[columnMapping.visitDay]) === selectedVisitDay);
+                
+                const pdvMatch = !pdvText || (columnMapping.pdv && 
+                    item[columnMapping.pdv] && 
+                    String(item[columnMapping.pdv]).toLowerCase().includes(pdvText));
+                
+                const nameMatch = !fantasyNameText || (columnMapping.fantasyName && 
+                    item[columnMapping.fantasyName] && 
+                    String(item[columnMapping.fantasyName]).toLowerCase().includes(fantasyNameText));
+                
+                return rnMatch && visitDayMatch && pdvMatch && nameMatch;
+            });
+            
+            if (pdvText || fantasyNameText || selectedRN || selectedVisitDay) {
+                updatePreviewTable();
+                previewSection.style.display = 'block';
+            } else {
+                previewSection.style.display = 'none';
+            }
+        }
+        
+        function updatePreviewTable() {
+            previewTableBody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" class="no-results">Nenhum resultado encontrado com os filtros atuais</td>`;
+                previewTableBody.appendChild(row);
+                return;
+            }
+            
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                const taskId = generateTaskId(item);
+                const isSelected = selectedTasks[taskId] || false;
+        
+                if (isSelected) row.classList.add('task-selected');
+        
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = isSelected;
+                checkbox.addEventListener('change', function() {
+                    selectedTasks[taskId] = this.checked;
+                    if (!this.checked) delete selectedTasks[taskId];
+                    row.classList.toggle('task-selected', this.checked);
+                    updateTaskCounter();
+                    updateClientSummary();
+                    saveState();
+                });
+        
+                const checkboxCell = document.createElement('td');
+                checkboxCell.appendChild(checkbox);
+                row.appendChild(checkboxCell);
+        
+                const pdvCell = document.createElement('td');
+                pdvCell.textContent = columnMapping.pdv ? item[columnMapping.pdv] : '-';
+                row.appendChild(pdvCell);
+        
+                const nameCell = document.createElement('td');
+                nameCell.textContent = columnMapping.fantasyName ? item[columnMapping.fantasyName] : '-';
+                row.appendChild(nameCell);
+        
+                const tasksCell = document.createElement('td');
+                tasksCell.textContent = columnMapping.tasks ? item[columnMapping.tasks] : 'Tarefa realizada';
+                row.appendChild(tasksCell);
+        
+                previewTableBody.appendChild(row);
+            });
+            
+            updateTaskCounter();
+        }
+        
+        function updateTaskCounter() {
+            const count = Object.keys(selectedTasks).length;
+            taskCounter.textContent = count;
+        }
+
+        // Atualiza a lista dentro do Pop-up Sanfona no topo
+        function updateClientSummary() {
+            const tasksByPDV = {};
+
+            currentData.forEach(item => {
+                const taskId = generateTaskId(item);
+                if (selectedTasks[taskId]) {
+                    const pdv = columnMapping.pdv ? item[columnMapping.pdv] : 'Sem PDV';
+                    const name = columnMapping.fantasyName ? item[columnMapping.fantasyName] : pdv;
+                    
+                    if (!tasksByPDV[pdv]) {
+                        tasksByPDV[pdv] = { name: name, count: 0 };
+                    }
+                    tasksByPDV[pdv].count++;
+                }
+            });
+
+            const pdvKeys = Object.keys(tasksByPDV);
+            clientCountBadge.textContent = pdvKeys.length;
+            clientListContainer.innerHTML = '';
+
+            if (pdvKeys.length === 0) {
+                clientListContainer.innerHTML = '<p style="color: #888; text-align: center; padding: 10px;">Nenhuma tarefa realizada ainda.</p>';
+                return;
+            }
+
+            pdvKeys.forEach(pdv => {
+                const client = tasksByPDV[pdv];
+                const card = document.createElement('div');
+                card.className = 'client-summary-card';
+                card.innerHTML = `
+                    <div class="client-summary-info">
+                        <span class="client-name">${client.name}</span>
+                        <span class="client-pdv">PDV: ${pdv} | <b>${client.count} tarefa(s) concluída(s)</b></span>
+                    </div>
+                    <button class="edit-client-btn" onclick="editClientTasks('${pdv}', '${client.name.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                `;
+                clientListContainer.appendChild(card);
+            });
+        }
+
+        // Função global para o botão "Editar" de um cliente
+        window.editClientTasks = function(pdv, name) {
+            fantasyNameFilter.value = '';
+            pdvFilter.value = pdv;
+            applyFilters();
+            
+            // Rola suavemente até a tabela de tarefas
+            previewSection.scrollIntoView({ behavior: 'smooth' });
+        };
+        
+        resetSelectionBtn.addEventListener('click', function() {
+            if (confirm('Tem certeza que deseja zerar todas as tarefas selecionadas?')) {
+                selectedTasks = {};
+                updateTaskCounter();
+                updateClientSummary();
+                previewTableBody.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.closest('tr').classList.remove('task-selected');
+                });
+                saveState();
+            }
+        });
+        
+        whatsappBtn.addEventListener('click', function() {
+            const selectedTaskIds = Object.keys(selectedTasks);
+            if (selectedTaskIds.length === 0) {
+                alert('Nenhuma tarefa selecionada para compartilhar.');
+                return;
+            }
+        
+            const tasksByPDV = {};
+            currentData.forEach(item => {
+                const taskId = generateTaskId(item);
+                if (selectedTasks[taskId]) {
+                    const pdv = columnMapping.pdv ? item[columnMapping.pdv] : 'Sem PDV';
+                    const name = columnMapping.fantasyName ? item[columnMapping.fantasyName] : pdv;
+                    const task = columnMapping.tasks ? item[columnMapping.tasks] : 'Tarefa realizada';
+                    
+                    if (!tasksByPDV[pdv]) {
+                        tasksByPDV[pdv] = { name: name, tasks: [], count: 0 };
+                    }
+                    
+                    tasksByPDV[pdv].tasks.push(task);
+                    tasksByPDV[pdv].count++;
+                }
+            });
+        
+            let message = `*Resumo de Tarefas Realizadas:*\n\n`;
+            let total = 0;
+            
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                message += `*PDV:* ${pdv} - ${data.name}\n*Tarefas:*\n`;
+                data.tasks.forEach(task => message += `- ${task}\n`);
+                message += `*Total no PDV:* ${data.count}\n\n`;
+                total += data.count;
+            }
+            
+            message += `*Total Geral:* ${total}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+        
+        // Exportar backup
+        exportBackupBtn.addEventListener('click', function() {
+            const state = getCurrentState();
+            const stateJSON = JSON.stringify(state);
+            const blob = new Blob([stateJSON], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pdv_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            backupStatus.textContent = "Backup exportado com sucesso!";
+            backupStatus.className = "backup-status success";
+        });
+        
+        // Importar backup
+        importBackupBtn.addEventListener('click', function() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        try {
+                            const state = JSON.parse(e.target.result);
+                            restoreState(state);
+                            saveState();
+                            
+                            backupStatus.textContent = "Backup importado com sucesso!";
+                            backupStatus.className = "backup-status success";
+                        } catch (error) {
+                            console.error('Erro ao importar backup:', error);
+                            backupStatus.textContent = "Erro ao importar backup - Formato inválido";
+                            backupStatus.className = "backup-status error";
+                        }
+                    };
+                    
+                    reader.onerror = () => {
+                        backupStatus.textContent = "Erro ao ler o arquivo de backup";
+                        backupStatus.className = "backup-status error";
+                    };
+                    
+                    reader.readAsText(file);
+                }
+            };
+            
+            fileInput.click();
+        });
+        
+        // Obter estado atual da aplicação
+        function getCurrentState() {
+            const state = {
+                selectedTasks: selectedTasks,
+                filters: {
+                    rn: rnFilter.value,
+                    visitDay: visitDayFilter.value,
+                    pdv: pdvFilter.value,
+                    fantasyName: fantasyNameFilter.value,
+                    sheet: sheetSelect.value
+                }
+            };
+            
+            if (workbook) {
+                try {
+                    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                    let binary = '';
+                    const bytes = new Uint8Array(wbout);
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    state.workbookData = btoa(binary);
+                } catch (error) {
+                    console.error('Erro ao salvar planilha:', error);
+                }
+            }
+            
+            return state;
+        }
+        
+        // Salvar estado no localStorage
+        function saveState() {
+            try {
+                const state = getCurrentState();
+                localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn("Falha ao salvar no localStorage (planilha muito grande?):", e);
+            }
+        }
+        
+        // Carregar estado do localStorage
+        function loadState() {
+            try {
+                const stateJSON = localStorage.getItem(STATE_STORAGE_KEY);
+                return stateJSON ? JSON.parse(stateJSON) : null;
+            } catch (e) {
+                console.error("Erro ao carregar estado do localStorage:", e);
+                return null;
+            }
+        }
+        
+        // Restaurar o estado da aplicação
+        function restoreState(state) {
+            if (!state) return;
+            
+            if (state.selectedTasks) {
+                selectedTasks = state.selectedTasks;
+            }
+            
+            if (state.workbookData) {
+                try {
+                    const binaryString = atob(state.workbookData);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    
+                    workbook = XLSX.read(bytes, { type: 'array' });
+                    
+                    sheetSelect.innerHTML = '';
+                    workbook.SheetNames.forEach(sheetName => {
+                        const option = document.createElement('option');
+                        option.value = sheetName;
+                        option.textContent = sheetName;
+                        sheetSelect.appendChild(option);
+                    });
+                    
+                    if (state.filters && state.filters.sheet) {
+                        sheetSelect.value = state.filters.sheet;
+                    }
+                    
+                    loadSheetData(sheetSelect.value);
+                    
+                    if (state.filters) {
+                        if (state.filters.rn) rnFilter.value = state.filters.rn;
+                        if (state.filters.visitDay) visitDayFilter.value = state.filters.visitDay;
+                        if (state.filters.pdv) pdvFilter.value = state.filters.pdv;
+                        if (state.filters.fantasyName) fantasyNameFilter.value = state.filters.fantasyName;
+                    }
+                    
+                    filterSection.style.display = 'block';
+                    uploadBtn.disabled = false;
+                    statusMessage.textContent = "Sessão e planilha restauradas automaticamente!";
+                } catch (error) {
+                    console.error('Erro ao restaurar planilha:', error);
+                }
+            }
+
+            applyFilters();
+            updateTaskCounter();
+            updateClientSummary();
+        }
+        
+        // Salvar estado automaticamente ao sair
+        window.addEventListener('beforeunload', function() {
+            saveState();
+        });
+        
+        // Inicializar o sistema ao carregar a página
+        window.addEventListener('DOMContentLoaded', initializeSystem);
+    </script>
+</body>
+</html>
