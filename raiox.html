@@ -108,8 +108,8 @@
     <!-- 1. BASE DE DADOS EXCEL -->
     <div class="top-excel-bar">
         <div class="excel-info">
-            <h3><i class="fas fa-database"></i> Banco de Dados (Planilha de Faturamento / Equipamentos)</h3>
-            <p>Anexe a planilha para habilitar a busca automática por Pop-up e o carregamento das metas.</p>
+            <h3><i class="fas fa-database"></i> Banco de Dados (Planilha Principal / Secundária)</h3>
+            <p>Anexe a planilha para habilitar a busca inteligente por abas e filtragem refinada de equipamentos.</p>
         </div>
         <div>
             <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="carregarExcel(this)">
@@ -298,7 +298,7 @@
 
 <script>
     // DADOS E ESTADO DA APLICAÇÃO
-    let basePDVs = {}; // PDVs agrupados por Código
+    let basePDVs = {}; 
     let pdvSelecionado = null;
     let listaEstoque = [];
     
@@ -321,7 +321,7 @@
         }
     }
 
-    // LEITURA E DEDUPLICAÇÃO INTELIGENTE DA PLANILHA EXCEL
+    // LEITURA E FILTRAGEM REFINADA DA PLANILHA (SEPARAÇÃO DE ABAS/PLANILHAS E DEDUPLICAÇÃO ROBUSTA)
     function carregarExcel(input) {
         const file = input.files[0];
         if (!file) return;
@@ -333,15 +333,16 @@
             
             basePDVs = {};
 
+            // Analisa cada aba (permite separar planilha principal, secundária, nova ou antiga)
             workbook.SheetNames.forEach(sheetName => {
                 const sheet = workbook.Sheets[sheetName];
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                 if (rows.length < 2) return;
 
                 let headerIdx = -1;
-                for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                for (let i = 0; i < Math.min(rows.length, 12); i++) {
                     const rStr = rows[i].map(c => String(c).toLowerCase()).join(' ');
-                    if (rStr.includes('codigo') || rStr.includes('cliente') || rStr.includes('fantasia')) {
+                    if (rStr.includes('codigo') || rStr.includes('cliente') || rStr.includes('fantasia') || rStr.includes('equipamento')) {
                         headerIdx = i;
                         break;
                     }
@@ -351,76 +352,88 @@
 
                 const headers = rows[headerIdx].map(h => String(h || '').trim());
                 
-                const colCod = headers.findIndex(h => h.toLowerCase().includes('codigo cliente') || h.toLowerCase().includes('código'));
-                const colNome = headers.findIndex(h => h.toLowerCase().includes('nome fantasia') || h.toLowerCase().includes('nome'));
-                const colEquip = headers.findIndex(h => h.toLowerCase().includes('modelo de equipamento') || h.toLowerCase().includes('modelo'));
-                const colTemEquip = headers.findIndex(h => h.toLowerCase().includes('tem equipamento'));
-                const colQtd = headers.findIndex(h => h.toLowerCase().includes('qtd'));
-                const colMeta = headers.findIndex(h => h.toLowerCase().includes('meta'));
-                const colReal = headers.findIndex(h => h.toLowerCase().includes('real'));
+                // Mapeamento flexível de colunas para suportar planilhas novas e antigas/secundárias
+                const colCod = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('codigo cliente') || l.includes('cod cli') || l.includes('código') || l.includes('cliente'); });
+                const colNome = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('nome fantasia') || l.includes('razao') || l.includes('razão') || l.includes('nome'); });
+                const colEquip = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('modelo de equipamento') || l.includes('modelo equip') || l.includes('equipamento') || l.includes('modelo'); });
+                const colTemEquip = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('tem equipamento') || l.includes('possui') || l.includes('ativo'); });
+                const colQtd = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('qtd') || l.includes('quantidade'); });
+                const colMeta = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('meta') || l.includes('objetivo'); });
+                const colReal = headers.findIndex(h => { const l = h.toLowerCase(); return l.includes('real') || l.includes('atingido') || l.includes('faturamento') || l.includes('comprado'); });
+
+                if (colCod === -1) return; // Se não achar coluna de código válida na aba, pula
 
                 for (let i = headerIdx + 1; i < rows.length; i++) {
                     const row = rows[i];
                     if (!row || !row[colCod]) continue;
 
                     const cod = String(row[colCod]).trim();
-                    const nome = String(row[colNome] || 'PDV Sem Nome').trim();
+                    const nome = colNome !== -1 ? String(row[colNome] || 'PDV Sem Nome').trim() : 'PDV Sem Nome';
                     
-                    if (!cod || cod === 'undefined' || cod === '0') continue;
+                    if (!cod || cod === 'undefined' || cod === '0' || cod === 'NaN') continue;
 
                     if (!basePDVs[cod]) {
                         basePDVs[cod] = {
                             codigo: cod,
-                            nome: nome,
-                            equipamentosMap: {} // Mapeamento para evitar duplicidade
+                            nome: nome !== 'PDV Sem Nome' ? nome : (basePDVs[cod]?.nome || 'PDV Sem Nome'),
+                            equipamentosMap: {} 
                         };
+                    } else if (nome !== 'PDV Sem Nome' && basePDVs[cod].nome === 'PDV Sem Nome') {
+                        basePDVs[cod].nome = nome;
                     }
 
-                    const modeloRaw = colEquip !== -1 ? String(row[colEquip] || 'GERAL').trim() : 'GERAL';
-                    const temEquip = colTemEquip !== -1 ? String(row[colTemEquip] || 'NÃO').trim().toUpperCase() : 'NÃO';
-                    const qtd = colQtd !== -1 ? parseInt(row[colQtd]) || 0 : 0;
-                    const meta = colMeta !== -1 ? parseFloat(row[colMeta]) || 0 : 0;
-                    const real = colReal !== -1 ? parseFloat(row[colReal]) || 0 : 0;
+                    const modeloRaw = colEquip !== -1 ? String(row[colEquip] || '').trim() : '';
+                    if (!modeloRaw || modeloRaw.toLowerCase() === 'undefined' || modeloRaw === '0') continue;
 
-                    // NORMALIZAÇÃO DO NOME DO EQUIPAMENTO
+                    let temEquipStr = colTemEquip !== -1 ? String(row[colTemEquip] || '').trim().toUpperCase() : '';
+                    let temEquip = false;
+                    
+                    if (temEquipStr === 'SIM' || temEquipStr === 'S' || temEquipStr === 'TRUE' || temEquipStr === '1') {
+                        temEquip = true;
+                    } else if (temEquipStr === 'NÃO' || temEquipStr === 'NAO' || temEquipStr === 'N' || temEquipStr === 'FALSE' || temEquipStr === '0') {
+                        temEquip = false;
+                    } else {
+                        // Se a coluna de "tem equipamento" estiver ausente ou inconclusiva, infere pelo modelo/quantidade
+                        temEquip = true; 
+                    }
+
+                    const qtd = colQtd !== -1 ? parseInt(row[colQtd]) || 1 : 1;
+                    const meta = colMeta !== -1 ? parseFloat(String(row[colMeta]).replace(',', '.')) || 0 : 0;
+                    const real = colReal !== -1 ? parseFloat(String(row[colReal]).replace(',', '.')) || 0 : 0;
+
                     const modeloNormalizado = modeloRaw.toUpperCase().trim();
                     const chaveEquip = `${modeloNormalizado}`;
 
-                    // DEDUPLICAÇÃO INTELIGENTE
+                    // Filtragem e Deduplicação Inteligente (consolida dados secundários e principais sem duplicar registros)
                     if (!basePDVs[cod].equipamentosMap[chaveEquip]) {
                         basePDVs[cod].equipamentosMap[chaveEquip] = {
                             modelo: modeloRaw,
-                            temEquipamento: temEquip === 'SIM',
+                            temEquipamento: temEquip,
                             qtd: qtd,
                             meta: meta,
                             real: real,
                             compradoVisita: 0
                         };
                     } else {
-                        // Se a linha for do mesmo equipamento já lido, acumula/atualiza
                         const equipExistente = basePDVs[cod].equipamentosMap[chaveEquip];
-                        if (temEquip === 'SIM') equipExistente.temEquipamento = true;
-                        
-                        // Garante que a quantidade seja a maior ou somada de forma coerente
+                        if (temEquip) equipExistente.temEquipamento = true;
                         equipExistente.qtd = Math.max(equipExistente.qtd, qtd);
-                        
-                        // Caso a planilha tenha metas/reais divididos em várias linhas, consolida
                         if (meta > equipExistente.meta) equipExistente.meta = meta;
                         if (real > equipExistente.real) equipExistente.real = real;
                     }
                 }
             });
 
-            // Converte os mapeamentos deduplicados para arrays
+            // Converte mapas para arrays finais limpos
             Object.keys(basePDVs).forEach(cod => {
                 basePDVs[cod].equipamentos = Object.values(basePDVs[cod].equipamentosMap);
             });
 
             const totalPdvs = Object.keys(basePDVs).length;
             if (totalPdvs > 0) {
-                document.getElementById('excelStatus').innerText = `✓ Planilha Carregada! (${totalPdvs} PDVs consolidados sem duplicidades)`;
+                document.getElementById('excelStatus').innerText = `✓ Planilhas Filtradas e Consolidadas! (${totalPdvs} PDVs carregados com sucesso)`;
             } else {
-                alert('Não foi possível identificar as colunas da planilha. Verifique o arquivo.');
+                alert('Aviso: Nenhum dado de PDV válido foi encontrado. Verifique se o arquivo possui as colunas esperadas.');
             }
         };
         reader.readAsArrayBuffer(file);
@@ -489,13 +502,12 @@
         pdvHeaderStatus.innerText = `${pdvSelecionado.codigo} - ${pdvSelecionado.nome}`;
         pdvHeaderStatus.className = "badge badge-success";
 
-        // FILTRA APENAS EQUIPAMENTOS REALMENTE EXISTENTES (SEM DUPLICIDADES)
         const equipamentosPosso = pdvSelecionado.equipamentos.filter(eq => eq.temEquipamento);
 
         if (equipamentosPosso.length === 0) {
             containerLista.innerHTML = `
                 <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 8px; text-align: center; color: #64748b; font-size: 14px;">
-                    <i class="fas fa-info-circle" style="color: #0284c7;"></i> PDV sem equipamentos cadastrados.
+                    <i class="fas fa-info-circle" style="color: #0284c7;"></i> PDV sem equipamentos ativos cadastrados.
                 </div>
             `;
             return;
@@ -532,7 +544,6 @@
 
         containerLista.innerHTML = htmlEquips;
 
-        // Recalcula o status individual de cada equipamento
         equipamentosPosso.forEach((eq, index) => {
             calcularMetaItem(index);
         });
@@ -548,7 +559,7 @@
         }
     }
 
-    // CÁLCULO INDIVIDUAL COM NOMENCLATURA ESPECÍFICA (SOP, CHOPEIRA, VISA COOLER)
+    // CÁLCULO INDIVIDUAL CORRIGIDO (VALIDAÇÃO CORRETA DE META ATINGIDA VS PENDENTE)
     function calcularMetaItem(index) {
         if (!pdvSelecionado) return;
         const eqPosso = pdvSelecionado.equipamentos.filter(e => e.temEquipamento);
@@ -562,29 +573,12 @@
         const totalComprado = eq.real + valorVisita;
         const saldoFalta = eq.meta - totalComprado;
 
-        // SE FOR SOP OU CHOPEIRA -> META ATINGIDA AUTOMATICAMENTE
-        if (infoEq.ehSop || infoEq.ehChopeira) {
-            const rotuloEspecifico = infoEq.ehSop ? "SOP" : "CHOPEIRA (CHOPP)";
-
-            boxStatus.className = "box-meta-status meta-ok";
-            boxStatus.innerHTML = `
-                <div style="font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-check-circle" style="font-size: 18px; color: #166534;"></i>
-                    <span>[ OK ] ${rotuloEspecifico} - META ATINGIDA AUTOMATICAMENTE</span>
-                </div>
-                ${valorVisita > 0 ? `<div style="font-size: 12px; margin-top: 3px;">Comprado na visita: R$ ${valorVisita.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>` : ''}
-            `;
-            return;
-        }
-
-        // DEMAS EQUIPAMENTOS (VISA COOLERS E DEMAIS MODELOS)
         const rotuloEquip = infoEq.labelExibicao;
 
         if (eq.meta === 0) {
             boxStatus.className = "box-meta-status meta-ok";
             boxStatus.innerHTML = `<i class="fas fa-check-circle"></i> <b>[ OK ] ${rotuloEquip} - Sem meta atribuída para este equipamento.</b>`;
         } else if (saldoFalta <= 0) {
-            // META BATIDA - VERDE CLARO
             const superou = Math.abs(saldoFalta);
             boxStatus.className = "box-meta-status meta-ok";
             boxStatus.innerHTML = `
@@ -598,7 +592,6 @@
                 </div>
             `;
         } else {
-            // META PENDENTE - VERMELHO CLARO
             boxStatus.className = "box-meta-status meta-nok";
             boxStatus.innerHTML = `
                 <div style="font-weight: bold; display: flex; align-items: center; gap: 8px;">
@@ -736,7 +729,7 @@
         `).join('');
     }
 
-    // GERADOR DE PDF COM NOMENCLATURA EXATA
+    // GERADOR DE PDF
     async function gerarPDFRaioX() {
         if (typeof window.jspdf === 'undefined') {
             alert('Aguarde o carregamento do gerador de PDF.');
@@ -753,7 +746,6 @@
         const dataStr = dataHoraObj.toLocaleDateString('pt-BR').replace(/\//g, '-');
         const horaStr = dataHoraObj.toLocaleTimeString('pt-BR');
 
-        // Cabeçalho
         doc.setFillColor(30, 58, 138);
         doc.rect(0, 0, 210, 26, 'F');
         doc.setFontSize(16);
@@ -764,7 +756,6 @@
 
         let y = 35;
 
-        // PDV
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(13);
         doc.setFont("helvetica", "bold");
@@ -796,14 +787,7 @@
                     doc.text(`  Meta: R$ ${e.meta.toLocaleString('pt-BR', {minimumFractionDigits:2})} | Acumulado: R$ ${e.real.toLocaleString('pt-BR', {minimumFractionDigits:2})} | Visita: R$ ${(e.compradoVisita||0).toLocaleString('pt-BR', {minimumFractionDigits:2})}`, 16, y);
                     y += 5;
 
-                    // CAIXA DE STATUS NO PDF COM NOMENCLATURA CLARA
-                    if (infoEq.ehSop || infoEq.ehChopeira) {
-                        const txtRotulo = infoEq.ehSop ? "SOP" : "CHOPEIRA (CHOPP)";
-                        doc.setFillColor(220, 252, 231); doc.setDrawColor(134, 239, 172);
-                        doc.roundedRect(16, y, 178, 10, 1, 1, 'FD');
-                        doc.setTextColor(20, 83, 45); doc.setFont("helvetica", "bold");
-                        doc.text(`[ OK ] ${txtRotulo} - META ATINGIDA AUTOMATICAMENTE`, 19, y + 6.5);
-                    } else if (saldoFalta <= 0) {
+                    if (saldoFalta <= 0) {
                         doc.setFillColor(220, 252, 231); doc.setDrawColor(134, 239, 172);
                         doc.roundedRect(16, y, 178, 10, 1, 1, 'FD');
                         doc.setTextColor(20, 83, 45); doc.setFont("helvetica", "bold");
@@ -819,12 +803,11 @@
                 });
             } else {
                 doc.setFont("helvetica", "normal");
-                doc.text("• Nenhum equipamento cadastrado para este PDV.", 16, y);
+                doc.text("• Nenhum equipamento ativo cadastrado para este PDV.", 16, y);
                 y += 8;
             }
         }
 
-        // TAREFAS
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
         const tarefasInputs = document.querySelectorAll('.input-tarefa');
@@ -847,7 +830,6 @@
         }
         y += 4;
 
-        // ESTOQUE
         if (document.getElementById('chkEstoque').checked && listaEstoque.length > 0) {
             doc.setFont("helvetica", "bold");
             doc.text("Levantamento de Estoque:", 14, y);
@@ -864,7 +846,6 @@
             y = doc.lastAutoTable.finalY + 10;
         }
 
-        // FOTOS
         const adicionarFotosPDF = (titulo, fotosArr) => {
             if (!fotosArr.length) return;
             if (y > 200) { doc.addPage(); y = 20; }
