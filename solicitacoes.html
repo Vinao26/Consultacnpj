@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solicitação de Janela de Entrega</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 25px 30px;
+      border-radius: 10px;
+      max-width: 1000px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+      text-align: center;
+    }
+
+    .radios {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .radios label {
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      color: #444;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      padding: 8px 15px;
+      border-radius: 6px;
+      background: #f5f7fa;
+      border: 1px solid #e1e5eb;
+    }
+
+    .radios input[type="radio"] {
+      accent-color: #4a90e2;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .radios label:hover {
+      background: #e8f0fe;
+      color: #4a90e2;
+    }
+
+    input[type="radio"]:checked + span {
+      color: #4a90e2;
+    }
+
+    #formulario {
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 320px;
+      box-shadow: inset 0 0 8px #eee;
+      margin-bottom: 25px;
+    }
+
+    .section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px 25px;
+    }
+
+    .check-group {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .check-group label {
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .check-group input[type="text"],
+    .check-group input[type="number"],
+    .check-group input[type="date"],
+    .check-group input[type="file"],
+    .check-group select {
+      padding: 8px 12px;
+      border: 1.8px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      outline-offset: 2px;
+      transition: border-color 0.25s ease;
+    }
+
+    .check-group input[type="text"]:focus,
+    .check-group input[type="number"]:focus,
+    .check-group input[type="date"]:focus,
+    .check-group input[type="file"]:focus,
+    .check-group select:focus {
+      border-color: #4a90e2;
+      box-shadow: 0 0 8px rgba(74,144,226,0.3);
+    }
+
+    .check-group input[type="checkbox"] {
+      margin-top: 6px;
+      width: 18px;
+      height: 18px;
+      accent-color: #4a90e2;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 10px rgba(74,144,226,0.3);
+      user-select: none;
+    }
+
+    button:hover {
+      background: #357ABD;
+      box-shadow: 0 5px 14px rgba(53,122,189,0.5);
+    }
+
+    .btn-direct-wa {
+      background-color: #25D366;
+      box-shadow: 0 4px 10px rgba(37,211,102,0.3);
+    }
+
+    .btn-direct-wa:hover {
+      background-color: #1ebc57;
+      box-shadow: 0 5px 14px rgba(30,188,87,0.5);
+    }
+
+    .btn-limpar {
+      background-color: #6c757d;
+      box-shadow: 0 4px 10px rgba(108,117,125,0.3);
+    }
+
+    .btn-limpar:hover {
+      background-color: #5a6268;
+    }
+
+    .output {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px 20px;
+      border: 1px solid #ddd;
+      max-height: 250px;
+      overflow-y: auto;
+      box-shadow: inset 0 0 8px #eee;
+    }
+
+    .item-container {
+      background: #e8f0fe;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      position: relative;
+      white-space: pre-line;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .item-container button {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: #ff6b6b;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-weight: 700;
+      padding: 0;
+      line-height: 22px;
+      box-shadow: none;
+      font-size: 14px;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .item-container button:hover {
+      background: #e03e3e;
+    }
+
+    .produto-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .produto-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+
+    .produto-botoes {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+
+    .btn-adicionar, .btn-remover {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-adicionar {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-adicionar:hover {
+      background-color: #218838;
+    }
+
+    .btn-remover {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-remover:hover {
+      background-color: #c82333;
+    }
+
+    .nome-aba-input {
+      width: 120px;
+      padding: 4px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-left: 5px;
+    }
+
+    .custom-field-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .custom-field-name {
+      width: 150px;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .btn-remove-field {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-remove-field:hover {
+      background: #c82333;
+    }
+
+    .btn-add-field {
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-top: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-add-field:hover {
+      background: #218838;
+    }
+
+    .custom-field-type {
+      width: 100px;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Solicitação de Janela de Entrega</h2>
+
+    <div class="radios">
+      <label><input type="radio" name="formType" value="janela" onchange="renderForm()" checked> Janela de Entrega</label>
+      <label><input type="radio" name="formType" value="bonificacao" onchange="renderForm()"> Bonificação</label>
+      <label><input type="radio" name="formType" value="desconto" onchange="renderForm()"> Desconto</label>
+      <label><input type="radio" name="formType" value="limite" onchange="renderForm()"> Limite</label>
+      <label><input type="radio" name="formType" value="ativacao" onchange="renderForm()"> 
+        <input type="text" id="nome-aba-ativacao" class="nome-aba-input" value="Ativação" placeholder="Nome da aba">
+      </label>
+      <label><input type="radio" name="formType" value="custom" onchange="renderForm()"> 
+        <input type="text" id="nome-aba-custom" class="nome-aba-input" value="Custom" placeholder="Nome da aba">
+      </label>
+    </div>
+
+    <div id="formulario">
+      <!-- Conteúdo dinâmico -->
+    </div>
+
+    <div class="buttons">
+      <button class="btn-direct-wa" onclick="enviarDiretoWhatsApp()">Enviar este para o WhatsApp</button>
+      <button onclick="adicionarItem()">Adicionar ao Lote</button>
+      <button onclick="gerarWhatsapp()">Compartilhar Lote no WhatsApp</button>
+    </div>
+
+    <div class="output" id="saida"></div>
+  </div>
+
+  <script>
+    const itens = [];
+    let produtoCount = 1;
+    let nomeAbaAtivacao = "Ativação";
+    let nomeAbaCustom = "Custom";
+    let customFields = [];
+
+    function formatarData(data) {
+      if (!data) return '';
+      const partes = data.split('-');
+      if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+      return data;
+    }
+
+    function calcularTTV() {
+      const custo = parseFloat(document.getElementById('custo-desc').value) || 0;
+      const desconto = parseFloat(document.getElementById('desconto-desc').value) || 0;
+      const ttvFinal = custo - (custo * (desconto / 100));
+      document.getElementById('ttv-desc').value = ttvFinal.toFixed(2);
+    }
+
+    function getFotoFieldHTML(prefix) {
+      return `
+        <div class="check-group" style="grid-column: 1 / -1;">
+          <label>Foto do Cadastro / Anexo:</label>
+          <input type="file" id="foto-${prefix}" accept="image/*" />
+        </div>
+      `;
+    }
+
+    function renderForm() {
+      const selected = document.querySelector('input[name="formType"]:checked');
+      const div = document.getElementById('formulario');
+      div.innerHTML = '';
+      if (!selected) return;
+
+      const nomeAbaInputAtivacao = document.getElementById('nome-aba-ativacao');
+      if (nomeAbaInputAtivacao) nomeAbaAtivacao = nomeAbaInputAtivacao.value || "Ativação";
+
+      const nomeAbaInputCustom = document.getElementById('nome-aba-custom');
+      if (nomeAbaInputCustom) nomeAbaCustom = nomeAbaInputCustom.value || "Custom";
+
+      if (selected.value === 'janela') {
+        div.innerHTML = `
+          <div class="section" id="janela">
+            <div class="check-group"><label>Operação:</label><input type="text" id="op-janela" value="1031538" /><input type="checkbox" id="chk-op-janela" checked /></div>
+            <div class="check-group"><label>Filial:</label><input type="text" id="filial-janela" value="Vilhena" /><input type="checkbox" id="chk-filial-janela" checked /></div>
+            <div class="check-group"><label>Rn:</label><input type="text" id="rn-janela" value="414" /><input type="checkbox" id="chk-rn-janela" checked /></div>
+            <div class="check-group"><label>Nome Fantasia:</label><input type="text" id="nome-janela" /><input type="checkbox" id="chk-nome-janela" checked /></div>
+            <div class="check-group"><label>Cod PDV:</label><input type="text" id="codpdv-janela" /><input type="checkbox" id="chk-codpdv-janela" checked /></div>
+            <div class="check-group"><label>Data de Entrega:</label><input type="date" id="data-janela" /><input type="checkbox" id="chk-data-janela" checked /></div>
+            <div class="check-group"><label>Motivo:</label><input type="text" id="motivo-janela" /><input type="checkbox" id="chk-motivo-janela" checked /></div>
+            <div class="check-group"><label>Cidade:</label><input type="text" id="cidade-janela" value="Cerejeiras" /><input type="checkbox" id="chk-cidade-janela" checked /></div>
+            ${getFotoFieldHTML('janela')}
+          </div>`;
+      }
+
+      if (selected.value === 'bonificacao') {
+        produtoCount = 1;
+        div.innerHTML = `
+          <div class="section" id="bonificacao">
+            <div class="check-group"><label>Operação:</label><input type="text" id="op-boni" value="1031538" /><input type="checkbox" id="chk-op-boni" checked /></div>
+            <div class="check-group"><label>Filial:</label><input type="text" id="filial-boni" value="Vilhena" /><input type="checkbox" id="chk-filial-boni" checked /></div>
+            <div class="check-group"><label>Rn:</label><input type="text" id="rn-boni" value="414" /><input type="checkbox" id="chk-rn-boni" checked /></div>
+            <div class="check-group"><label>Cod PDV:</label><input type="text" id="codpdv-boni" /><input type="checkbox" id="chk-codpdv-boni" checked /></div>
+            <div class="check-group"><label>Nome Fantasia:</label><input type="text" id="nome-boni" /><input type="checkbox" id="chk-nome-boni" checked /></div>
+            
+            <div class="check-group produto-container" id="produtos-container">
+              <label>Produtos:</label>
+              <div class="produto-item">
+                <div class="check-group"><label>Produto:</label><input type="text" id="produto-boni-0" /><input type="checkbox" id="chk-produto-boni-0" checked /></div>
+                <div class="check-group"><label>Código Produto:</label><input type="text" id="codigo-boni-0" /><input type="checkbox" id="chk-codigo-boni-0" checked /></div>
+                <div class="check-group"><label>Quantidade:</label><input type="text" id="quantidade-boni-0" /><input type="checkbox" id="chk-quantidade-boni-0" checked /></div>
+                <div class="produto-botoes"><button class="btn-adicionar" onclick="adicionarProduto('produtos-container')">Adicionar (+)</button></div>
+              </div>
+            </div>
+            
+            <div class="check-group"><label>Data de entrega:</label><input type="date" id="data-boni" /><input type="checkbox" id="chk-data-boni" checked /></div>
+            <div class="check-group"><label>Motivo:</label><input type="text" id="motivo-boni" /><input type="checkbox" id="chk-motivo-boni" checked /></div>
+            <div class="check-group"><label>Cidade:</label><input type="text" id="cidade-boni" value="Cerejeiras" /><input type="checkbox" id="chk-cidade-boni" checked /></div>
+            ${getFotoFieldHTML('boni')}
+          </div>`;
+      }
+
+      if (selected.value === 'desconto') {
+        div.innerHTML = `
+          <div class="section" id="desconto">
+            <div class="check-group"><label>Operação:</label><input type="text" id="op-desc" value="1031538" /><input type="checkbox" id="chk-op-desc" checked /></div>
+            <div class="check-group"><label>Rn:</label><input type="text" id="rn-desc" value="414" /><input type="checkbox" id="chk-rn-desc" checked /></div>
+            <div class="check-group"><label>Produto:</label><input type="text" id="produto-desc" /><input type="checkbox" id="chk-produto-desc" checked /></div>
+            <div class="check-group"><label>Código:</label><input type="text" id="codigo-desc" /><input type="checkbox" id="chk-codigo-desc" checked /></div>
+            <div class="check-group"><label>Quantidade:</label><input type="text" id="quantidade-desc" /><input type="checkbox" id="chk-quantidade-desc" checked /></div>
+            <div class="check-group"><label>Desconto (%):</label><input type="number" step="0.01" id="desconto-desc" onchange="calcularTTV()" /><input type="checkbox" id="chk-desconto-desc" checked /></div>
+            <div class="check-group"><label>Custo (R$):</label><input type="number" step="0.01" id="custo-desc" onchange="calcularTTV()" /><input type="checkbox" id="chk-custo-desc" checked /></div>
+            <div class="check-group"><label>TTV Final (R$):</label><input type="number" step="0.01" id="ttv-desc" readonly /><input type="checkbox" id="chk-ttv-desc" checked /></div>
+            ${getFotoFieldHTML('desc')}
+          </div>`;
+      }
+
+      if (selected.value === 'limite') {
+        div.innerHTML = `
+          <div class="section" id="limite">
+            <div class="check-group"><label>Operação:</label><input type="text" id="op-limite" value="1031538" /><input type="checkbox" id="chk-op-limite" checked /></div>
+            <div class="check-group"><label>Filial:</label><input type="text" id="filial-limite" value="Vilhena" /><input type="checkbox" id="chk-filial-limite" checked /></div>
+            <div class="check-group"><label>Rn:</label><input type="text" id="rn-limite" value="414" /><input type="checkbox" id="chk-rn-limite" checked /></div>
+            <div class="check-group"><label>Cod PDV:</label><input type="text" id="codpdv-limite" /><input type="checkbox" id="chk-codpdv-limite" checked /></div>
+            <div class="check-group"><label>Nome Fantasia:</label><input type="text" id="nome-limite" /><input type="checkbox" id="chk-nome-limite" checked /></div>
+            <div class="check-group"><label>Limite:</label><input type="text" id="valor-limite" /><input type="checkbox" id="chk-valor-limite" checked /></div>
+            <div class="check-group"><label>Motivo:</label><input type="text" id="motivo-limite" /><input type="checkbox" id="chk-motivo-limite" checked /></div>
+            <div class="check-group">
+              <label>Forma de Pagamento:</label>
+              <select id="pagamento-limite">
+                <option value="">Selecione</option>
+                <option value="PIX">PIX</option>
+                <option value="Boleto 3 dias com ADF">Boleto 3 dias com ADF</option>
+              </select>
+              <input type="checkbox" id="chk-pagamento-limite" checked />
+            </div>
+            ${getFotoFieldHTML('limite')}
+          </div>`;
+      }
+
+      if (selected.value === 'ativacao') {
+        div.innerHTML = `
+          <div class="section" id="ativacao">
+            <div class="check-group"><label>Operação:</label><input type="text" id="op-ativacao" value="1031538" /><input type="checkbox" id="chk-op-ativacao" checked /></div>
+            <div class="check-group"><label>Filial:</label><input type="text" id="filial-ativacao" value="Vilhena" /><input type="checkbox" id="chk-filial-ativacao" checked /></div>
+            <div class="check-group"><label>Rn:</label><input type="text" id="rn-ativacao" value="414" /><input type="checkbox" id="chk-rn-ativacao" checked /></div>
+            <div class="check-group"><label>Cod PDV:</label><input type="text" id="codpdv-ativacao" /><input type="checkbox" id="chk-codpdv-ativacao" checked /></div>
+            <div class="check-group"><label>Nome Fantasia:</label><input type="text" id="nome-ativacao" /><input type="checkbox" id="chk-nome-ativacao" checked /></div>
+            <div class="check-group">
+              <label>Dia de Visita:</label>
+              <select id="dia-visita-ativacao">
+                <option value="">Selecione</option>
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+                <option value="Sábado">Sábado</option>
+                <option value="Domingo">Domingo</option>
+              </select>
+              <input type="checkbox" id="chk-dia-visita-ativacao" checked />
+            </div>
+            <div class="check-group">
+              <label>Dia de Entrega:</label>
+              <select id="dia-entrega-ativacao">
+                <option value="">Selecione</option>
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+                <option value="Sábado">Sábado</option>
+                <option value="Domingo">Domingo</option>
+              </select>
+              <input type="checkbox" id="chk-dia-entrega-ativacao" checked />
+            </div>
+            <div class="check-group"><label>Limite:</label><input type="text" id="limite-ativacao" /><input type="checkbox" id="chk-limite-ativacao" checked /></div>
+            <div class="check-group">
+              <label>Forma de Pagamento:</label>
+              <select id="pagamento-ativacao">
+                <option value="">Selecione</option>
+                <option value="PIX">PIX</option>
+                <option value="Boleto 3 dias com ADF">Boleto 3 dias com ADF</option>
+              </select>
+              <input type="checkbox" id="chk-pagamento-ativacao" checked />
+            </div>
+            <div class="check-group"><label>Cidade:</label><input type="text" id="cidade-ativacao" value="Cerejeiras" /><input type="checkbox" id="chk-cidade-ativacao" checked /></div>
+            ${getFotoFieldHTML('ativacao')}
+          </div>`;
+      }
+
+      if (selected.value === 'custom') {
+        let customHTML = `<div class="section" id="custom">`;
+        customHTML += `${getFotoFieldHTML('custom')}</div>`;
+        div.innerHTML = customHTML;
+      }
+    }
+
+    function getChecked(id) {
+      const checkbox = document.getElementById('chk-' + id);
+      return checkbox && checkbox.checked;
+    }
+
+    function gerarTextoAtual() {
+      const selected = document.querySelector('input[name="formType"]:checked');
+      if (!selected) return '';
+
+      let texto = '';
+      if (selected.value === 'bonificacao') {
+        texto += 'Bonificação:\n';
+        if (getChecked('op-boni')) texto += `*Operação:* ${document.getElementById('op-boni').value}\n`;
+        if (getChecked('filial-boni')) texto += `*Filial:* ${document.getElementById('filial-boni').value}\n`;
+        if (getChecked('rn-boni')) texto += `*Rn:* ${document.getElementById('rn-boni').value}\n`;
+        if (getChecked('codpdv-boni')) texto += `*Cod PDV:* ${document.getElementById('codpdv-boni').value}\n`;
+        if (getChecked('nome-boni')) texto += `*Nome Fantasia:* ${document.getElementById('nome-boni').value}\n`;
+        
+        const produtos = document.querySelectorAll('#produtos-container .produto-item');
+        if (produtos.length > 0) {
+          texto += `*Produtos:*\n`;
+          produtos.forEach((produto, index) => {
+            const produtoVal = produto.querySelector(`[id^="produto-boni-"]`).value;
+            const codigoVal = produto.querySelector(`[id^="codigo-boni-"]`).value;
+            const quantidadeVal = produto.querySelector(`[id^="quantidade-boni-"]`).value;
+            
+            if (produtoVal || codigoVal || quantidadeVal) {
+              texto += `  Produto ${index + 1}:\n`;
+              if (produtoVal) texto += `    - Produto: ${produtoVal}\n`;
+              if (codigoVal) texto += `    - Código: ${codigoVal}\n`;
+              if (quantidadeVal) texto += `    - Quantidade: ${quantidadeVal}\n`;
+            }
+          });
+        }
+        
+        if (getChecked('data-boni')) texto += `*Data de Entrega:* ${formatarData(document.getElementById('data-boni').value)}\n`;
+        if (getChecked('motivo-boni')) texto += `*Motivo:* ${document.getElementById('motivo-boni').value}\n`;
+        if (getChecked('cidade-boni')) texto += `*Cidade:* ${document.getElementById('cidade-boni').value}\n`;
+      }
+
+      if (selected.value === 'desconto') {
+        texto += 'Desconto:\n';
+        if (getChecked('op-desc')) texto += `*Operação:* ${document.getElementById('op-desc').value}\n`;
+        if (getChecked('rn-desc')) texto += `*Rn:* ${document.getElementById('rn-desc').value}\n`;
+        if (getChecked('produto-desc')) texto += `*Produto:* ${document.getElementById('produto-desc').value}\n`;
+        if (getChecked('codigo-desc')) texto += `*Código:* ${document.getElementById('codigo-desc').value}\n`;
+        if (getChecked('quantidade-desc')) texto += `*Quantidade:* ${document.getElementById('quantidade-desc').value}\n`;
+        if (getChecked('desconto-desc')) texto += `*Desconto (%):* ${document.getElementById('desconto-desc').value}\n`;
+        if (getChecked('custo-desc')) texto += `*Custo (R$):* ${document.getElementById('custo-desc').value}\n`;
+        if (getChecked('ttv-desc')) texto += `*TTV Final (R$):* ${document.getElementById('ttv-desc').value}\n`;
+      }
+
+      if (selected.value === 'janela') {
+        texto += 'Janela de entrega:\n';
+        if (getChecked('op-janela')) texto += `*Operação:* ${document.getElementById('op-janela').value}\n`;
+        if (getChecked('filial-janela')) texto += `*Filial:* ${document.getElementById('filial-janela').value}\n`;
+        if (getChecked('rn-janela')) texto += `*Rn:* ${document.getElementById('rn-janela').value}\n`;
+        if (getChecked('nome-janela')) texto += `*Nome Fantasia:* ${document.getElementById('nome-janela').value}\n`;
+        if (getChecked('codpdv-janela')) texto += `*Cod PDV:* ${document.getElementById('codpdv-janela').value}\n`;
+        if (getChecked('data-janela')) texto += `*Data de Entrega:* ${formatarData(document.getElementById('data-janela').value)}\n`;
+        if (getChecked('motivo-janela')) texto += `*Motivo:* ${document.getElementById('motivo-janela').value}\n`;
+        if (getChecked('cidade-janela')) texto += `*Cidade:* ${document.getElementById('cidade-janela').value}\n`;
+      }
+
+      if (selected.value === 'limite') {
+        texto += 'Limite:\n';
+        if (getChecked('op-limite')) texto += `*Operação:* ${document.getElementById('op-limite').value}\n`;
+        if (getChecked('filial-limite')) texto += `*Filial:* ${document.getElementById('filial-limite').value}\n`;
+        if (getChecked('rn-limite')) texto += `*Rn:* ${document.getElementById('rn-limite').value}\n`;
+        if (getChecked('codpdv-limite')) texto += `*Cod PDV:* ${document.getElementById('codpdv-limite').value}\n`;
+        if (getChecked('nome-limite')) texto += `*Nome Fantasia:* ${document.getElementById('nome-limite').value}\n`;
+        if (getChecked('valor-limite')) texto += `*Limite:* ${document.getElementById('valor-limite').value}\n`;
+        if (getChecked('motivo-limite')) texto += `*Motivo:* ${document.getElementById('motivo-limite').value}\n`;
+        if (getChecked('pagamento-limite')) {
+          const pagamento = document.getElementById('pagamento-limite');
+          texto += `*Forma de Pagamento:* ${pagamento.options[pagamento.selectedIndex].text}\n`;
+        }
+      }
+
+      if (selected.value === 'ativacao') {
+        texto += `${nomeAbaAtivacao}:\n`;
+        if (getChecked('op-ativacao')) texto += `*Operação:* ${document.getElementById('op-ativacao').value}\n`;
+        if (getChecked('filial-ativacao')) texto += `*Filial:* ${document.getElementById('filial-ativacao').value}\n`;
+        if (getChecked('rn-ativacao')) texto += `*Rn:* ${document.getElementById('rn-ativacao').value}\n`;
+        if (getChecked('codpdv-ativacao')) texto += `*Cod PDV:* ${document.getElementById('codpdv-ativacao').value}\n`;
+        if (getChecked('nome-ativacao')) texto += `*Nome Fantasia:* ${document.getElementById('nome-ativacao').value}\n`;
+        if (getChecked('dia-visita-ativacao')) {
+          const diaVisita = document.getElementById('dia-visita-ativacao');
+          texto += `*Dia de Visita:* ${diaVisita.options[diaVisita.selectedIndex].text}\n`;
+        }
+        if (getChecked('dia-entrega-ativacao')) {
+          const diaEntrega = document.getElementById('dia-entrega-ativacao');
+          texto += `*Dia de Entrega:* ${diaEntrega.options[diaEntrega.selectedIndex].text}\n`;
+        }
+        if (getChecked('limite-ativacao')) texto += `*Limite:* ${document.getElementById('limite-ativacao').value}\n`;
+        if (getChecked('pagamento-ativacao')) {
+          const pagamento = document.getElementById('pagamento-ativacao');
+          texto += `*Forma de Pagamento:* ${pagamento.options[pagamento.selectedIndex].text}\n`;
+        }
+        if (getChecked('cidade-ativacao')) texto += `*Cidade:* ${document.getElementById('cidade-ativacao').value}\n`;
+      }
+
+      return texto;
+    }
+
+    // Função aprimorada para Android
+    async function enviarDiretoWhatsApp() {
+      const texto = gerarTextoAtual();
+      if (!texto.trim()) {
+        alert('Preencha os campos antes de enviar.');
+        return;
+      }
+
+      const selected = document.querySelector('input[name="formType"]:checked');
+      let idPrefix = selected.value === 'bonificacao' ? 'boni' : (selected.value === 'desconto' ? 'desc' : selected.value);
+      const inputFoto = document.getElementById(`foto-${idPrefix}`);
+      const arquivoFoto = (inputFoto && inputFoto.files) ? inputFoto.files[0] : null;
+
+      // 1. Tenta usar o compartilhamento nativo do Android (Foto + Legenda juntos)
+      if (arquivoFoto && navigator.canShare && navigator.canShare({ files: [arquivoFoto] })) {
+        try {
+          await navigator.share({
+            text: texto,
+            files: [arquivoFoto]
+          });
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          console.log('Fallback para área de transferência...');
+        }
+      }
+
+      // 2. Se não houver suporte ao envio combinado, copia a imagem para a Área de Transferência
+      if (arquivoFoto && navigator.clipboard && window.ClipboardItem) {
+        try {
+          const item = new ClipboardItem({ [arquivoFoto.type]: arquivoFoto });
+          await navigator.clipboard.write([item]);
+          alert('Imagem copiada para o seu teclado! Ela vai aparecer acima do teclado para colar.');
+        } catch (e) {
+          console.log('Não foi possível copiar foto para a área de transferência:', e);
+        }
+      }
+
+      // 3. Abre o WhatsApp pré-preenchido com o texto
+      const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      window.open(url, '_blank');
+    }
+
+    function adicionarItem() {
+      const texto = gerarTextoAtual();
+      if (!texto.trim()) {
+        alert('Por favor, preencha pelo menos um campo marcado.');
+        return;
+      }
+
+      itens.push({ texto });
+      atualizarSaida();
+    }
+
+    function atualizarSaida() {
+      const saida = document.getElementById('saida');
+      saida.innerHTML = '';
+
+      itens.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.classList.add('item-container');
+        div.textContent = item.texto;
+        const btn = document.createElement('button');
+        btn.textContent = 'X';
+        btn.onclick = () => {
+          itens.splice(i, 1);
+          atualizarSaida();
+        };
+        div.appendChild(btn);
+        saida.appendChild(div);
+      });
+    }
+
+    function gerarWhatsapp() {
+      if (itens.length === 0) {
+        alert('Adicione pelo menos um item antes de compartilhar.');
+        return;
+      }
+      const texto = itens.map(i => i.texto).join('\n---\n');
+      const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      window.open(url, '_blank');
+    }
+
+    window.onload = () => {
+      document.querySelector('input[value="janela"]').checked = true;
+      renderForm();
+    };
+  </script>
+</body>
+</html>
