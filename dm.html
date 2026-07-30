@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Tarefas PDV</title>
+    <!-- XLSX para ler planilhas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF e AutoTable para gerar PDF formatado -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- FontAwesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -24,7 +30,6 @@
             color: #333;
         }
         
-        /* Container principal */
         .container {
             max-width: 1200px;
             width: 100%;
@@ -57,8 +62,36 @@
         .app-header h2 i {
             color: #4285f4;
         }
-        
-        /* Novo Painel Recolhível de Resumo por Cliente */
+
+        .global-actions-bar {
+            background-color: #e8f0fe;
+            border: 2px solid #4285f4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+        }
+
+        .counter {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a2a6c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .summary-accordion {
             background-color: #ffffff;
             border: 2px solid #4285f4;
@@ -69,7 +102,7 @@
         }
 
         .summary-header {
-            background-color: #e8f0fe;
+            background-color: #f0f4fe;
             padding: 15px 20px;
             cursor: pointer;
             display: flex;
@@ -329,34 +362,6 @@
             background-color: #e8f5e9 !important;
         }
         
-        .counter-section {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #e8f0fe;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            border: 1px solid #d6e4ff;
-        }
-        
-        .counter {
-            font-size: 20px;
-            font-weight: bold;
-            color: #4285f4;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
         .reset-btn {
             background-color: #f44336;
         }
@@ -371,6 +376,14 @@
         
         .whatsapp-btn:hover {
             background-color: #128C7E;
+        }
+
+        .pdf-btn {
+            background-color: #e74c3c;
+        }
+
+        .pdf-btn:hover {
+            background-color: #c0392b;
         }
         
         .status {
@@ -390,31 +403,10 @@
             font-size: 18px;
         }
         
-        .hidden {
-            display: none;
-        }
-        
         .sheet-selector {
             margin-bottom: 20px;
         }
         
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .button-group, .action-buttons {
-                flex-direction: column;
-            }
-            
-            button {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-        
-        /* Backup buttons */
         .backup-btn {
             background-color: #9c27b0;
         }
@@ -469,12 +461,50 @@
             align-items: center;
             gap: 8px;
         }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .button-group, .action-buttons, .global-actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="app-header">
             <h2><i class="fas fa-list-check"></i> Controle de Tarefas PDV</h2>
+        </div>
+
+        <!-- Barra Global Permanente de Ações e Contagem -->
+        <div class="global-actions-bar">
+            <div class="counter">
+                <i class="fas fa-check-circle" style="color: #4285f4;"></i>
+                <span>Tarefas Concluídas: <strong id="taskCounter" style="color: #25D366; font-size: 24px;">0</strong></span>
+            </div>
+            <div class="action-buttons">
+                <button id="pdfBtn" class="pdf-btn">
+                    <i class="fas fa-file-pdf"></i>
+                    Gerar PDF
+                </button>
+                <button id="whatsappBtn" class="whatsapp-btn">
+                    <i class="fab fa-whatsapp"></i>
+                    WhatsApp
+                </button>
+                <button id="resetSelectionBtn" class="reset-btn">
+                    <i class="fas fa-eraser"></i>
+                    Zerar Seleção
+                </button>
+            </div>
         </div>
 
         <!-- Painel de Clientes / Resumo (Pop-up Sanfona) -->
@@ -519,7 +549,7 @@
             
             <div class="backup-info">
                 <h4><i class="fas fa-info-circle"></i> Salvamento Automático Ativo</h4>
-                <p>Seus dados são salvos automaticamente neste navegador. Você pode fechar e reabrir a página no GitHub Pages quando quiser. Use os botões de backup caso troque de celular ou computador.</p>
+                <p>Seus dados são salvos automaticamente. Você pode navegar livremente e fechar o site quando quiser sem perder suas seleções.</p>
             </div>
         </div>
         
@@ -561,35 +591,20 @@
         </div>
         
         <div class="preview-section" id="previewSection">
-            <h3><i class="fas fa-table"></i> Pré-visualização</h3>
+            <h3><i class="fas fa-table"></i> Lista de Tarefas do Cliente</h3>
             <div style="overflow-x: auto;">
                 <table class="preview-table" id="previewTable">
                     <thead>
                         <tr>
-                            <th width="50px">Selecionar</th>
+                            <th width="50px">Status</th>
                             <th>PDV</th>
                             <th>Nome Fantasia</th>
                             <th>Tarefa</th>
                         </tr>
                     </thead>
                     <tbody id="previewTableBody">
-                        <!-- Dados serão inseridos aqui -->
                     </tbody>
                 </table>
-            </div>
-            
-            <div class="counter-section">
-                <div class="counter"><i class="fas fa-check-circle"></i> Total de Tarefas Realizadas: <span id="taskCounter">0</span></div>
-                <div class="action-buttons">
-                    <button id="resetSelectionBtn" class="reset-btn">
-                        <i class="fas fa-eraser"></i>
-                        Zerar Seleção
-                    </button>
-                    <button id="whatsappBtn" class="whatsapp-btn">
-                        <i class="fab fa-whatsapp"></i>
-                        Compartilhar por WhatsApp
-                    </button>
-                </div>
             </div>
         </div>
         
@@ -597,10 +612,8 @@
     </div>
 
     <script>
-        // Constantes do sistema
         const STATE_STORAGE_KEY = "pdvAppState_v2";
         
-        // Elementos da interface
         const uploadBtn = document.getElementById('uploadBtn');
         const exportBackupBtn = document.getElementById('exportBackupBtn');
         const importBackupBtn = document.getElementById('importBackupBtn');
@@ -622,15 +635,14 @@
         const taskCounter = document.getElementById('taskCounter');
         const resetSelectionBtn = document.getElementById('resetSelectionBtn');
         const whatsappBtn = document.getElementById('whatsappBtn');
+        const pdfBtn = document.getElementById('pdfBtn');
         
-        // Elementos do Accordion de Resumo
         const summaryHeader = document.getElementById('summaryHeader');
         const summaryContent = document.getElementById('summaryContent');
         const accordionIcon = document.getElementById('accordionIcon');
         const clientListContainer = document.getElementById('clientListContainer');
         const clientCountBadge = document.getElementById('clientCountBadge');
 
-        // Variáveis de estado
         let workbook = null;
         let currentData = [];
         let filteredData = [];
@@ -643,14 +655,12 @@
         };
         let selectedTasks = {};
 
-        // Toggle Accordion do Resumo
         summaryHeader.addEventListener('click', () => {
             const isVisible = summaryContent.style.display === 'block';
             summaryContent.style.display = isVisible ? 'none' : 'block';
             accordionIcon.className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
         });
 
-        // Inicializar o sistema
         function initializeSystem() {
             const savedState = loadState();
             if (savedState) {
@@ -658,7 +668,6 @@
             }
         }
         
-        // Identificação automática das colunas
         function identifyRNColumn(columns, data) {
             let rnColumn = null;
             let maxValidCount = 0;
@@ -736,7 +745,6 @@
             return `${pdv}-${task}`;
         }
         
-        // Evento de upload
         uploadBtn.addEventListener('click', () => {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -795,13 +803,6 @@
                 }
             };
         
-            reader.onerror = () => {
-                statusText.textContent = 'Erro na leitura do arquivo';
-                statusMessage.textContent = 'Tente novamente com outro arquivo';
-                uploadBtn.disabled = false;
-                progressContainer.style.display = 'none';
-            };
-        
             reader.readAsArrayBuffer(file);
         }
         
@@ -856,10 +857,7 @@
             setupAutocomplete(fantasyNameFilter, fantasyNameAutocomplete, columnMapping.fantasyName);
         }
 
-        sheetSelect.addEventListener('change', () => {
-            loadSheetData(sheetSelect.value);
-        });
-
+        sheetSelect.addEventListener('change', () => { loadSheetData(sheetSelect.value); });
         rnFilter.addEventListener('change', () => { applyFilters(); saveState(); });
         visitDayFilter.addEventListener('change', () => { applyFilters(); saveState(); });
         pdvFilter.addEventListener('input', () => { applyFilters(); saveState(); });
@@ -935,7 +933,7 @@
             
             if (filteredData.length === 0) {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="4" class="no-results">Nenhum resultado encontrado com os filtros atuais</td>`;
+                row.innerHTML = `<td colspan="4" class="no-results">Nenhum cliente/tarefa encontrado para os filtros pesquisados</td>`;
                 previewTableBody.appendChild(row);
                 return;
             }
@@ -986,7 +984,6 @@
             taskCounter.textContent = count;
         }
 
-        // Atualiza a lista dentro do Pop-up Sanfona no topo
         function updateClientSummary() {
             const tasksByPDV = {};
 
@@ -1021,7 +1018,7 @@
                         <span class="client-name">${client.name}</span>
                         <span class="client-pdv">PDV: ${pdv} | <b>${client.count} tarefa(s) concluída(s)</b></span>
                     </div>
-                    <button class="edit-client-btn" onclick="editClientTasks('${pdv}', '${client.name.replace(/'/g, "\\'")}')">
+                    <button class="edit-client-btn" onclick="editClientTasks('${pdv}')">
                         <i class="fas fa-edit"></i> Editar
                     </button>
                 `;
@@ -1029,25 +1026,30 @@
             });
         }
 
-        // Função global para o botão "Editar" de um cliente
-        window.editClientTasks = function(pdv, name) {
+        window.editClientTasks = function(pdv) {
             fantasyNameFilter.value = '';
             pdvFilter.value = pdv;
             applyFilters();
-            
-            // Rola suavemente até a tabela de tarefas
             previewSection.scrollIntoView({ behavior: 'smooth' });
         };
         
         resetSelectionBtn.addEventListener('click', function() {
+            const total = Object.keys(selectedTasks).length;
+            if (total === 0) {
+                alert('Não há nenhuma tarefa selecionada no momento.');
+                return;
+            }
+
             if (confirm('Tem certeza que deseja zerar todas as tarefas selecionadas?')) {
                 selectedTasks = {};
                 updateTaskCounter();
                 updateClientSummary();
-                previewTableBody.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.checked = false;
-                    checkbox.closest('tr').classList.remove('task-selected');
-                });
+                if (previewTableBody) {
+                    previewTableBody.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                        checkbox.closest('tr').classList.remove('task-selected');
+                    });
+                }
                 saveState();
             }
         });
@@ -1090,8 +1092,138 @@
             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         });
-        
-        // Exportar backup
+
+        // GERAÇÃO DE PDF REFINADA E COMPLETA
+        pdfBtn.addEventListener('click', function() {
+            const selectedTaskIds = Object.keys(selectedTasks);
+            if (selectedTaskIds.length === 0) {
+                alert('Nenhuma tarefa selecionada para gerar o PDF.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const fileName = `Tarefas_de_Rotina_${day}-${month}-${year}.pdf`;
+
+            // Agrupando dados por PDV
+            const tasksByPDV = {};
+            let totalTasksGeral = 0;
+
+            currentData.forEach(item => {
+                const taskId = generateTaskId(item);
+                if (selectedTasks[taskId]) {
+                    const pdv = columnMapping.pdv ? item[columnMapping.pdv] : 'Sem PDV';
+                    const name = columnMapping.fantasyName ? item[columnMapping.fantasyName] : 'Cliente Sem Nome';
+                    const task = columnMapping.tasks ? item[columnMapping.tasks] : 'Tarefa realizada';
+
+                    if (!tasksByPDV[pdv]) {
+                        tasksByPDV[pdv] = { name: name, tasks: [], count: 0 };
+                    }
+                    tasksByPDV[pdv].tasks.push(task);
+                    tasksByPDV[pdv].count++;
+                    totalTasksGeral++;
+                }
+            });
+
+            const totalPDVs = Object.keys(tasksByPDV).length;
+
+            // Cabeçalho Principal
+            doc.setFillColor(26, 42, 108); // Azul escuro
+            doc.rect(0, 0, 210, 28, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.text('Relatorio Diario de Atividades / Rotina PDV', 14, 15);
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Data de Emissao: ${dateStr} as ${timeStr}`, 14, 22);
+
+            // Bloco de Métricas Gerais
+            doc.setFillColor(240, 244, 254);
+            doc.roundedRect(14, 33, 182, 18, 2, 2, 'F');
+            
+            doc.setTextColor(44, 62, 80);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Total de PDVs Visitados: ${totalPDVs}`, 20, 44);
+            doc.text(`Total Geral de Tarefas Concluidas: ${totalTasksGeral}`, 110, 44);
+
+            // TABELA 1: Resumo numérico por PDV
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(26, 42, 108);
+            doc.text('1. Resumo de Atendimento por PDV', 14, 58);
+
+            const summaryRows = [];
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                summaryRows.push([
+                    String(pdv),
+                    data.name,
+                    `${data.count} tarefa(s)`
+                ]);
+            }
+
+            doc.autoTable({
+                startY: 62,
+                head: [['PDV', 'Nome Fantasia', 'Qtd. Tarefas Concluidas']],
+                body: summaryRows,
+                theme: 'striped',
+                headStyles: { fillColor: [66, 133, 244], textColor: 255, fontStyle: 'bold' },
+                styles: { fontSize: 9, cellPadding: 2.5 },
+                columnStyles: {
+                    0: { cellWidth: 35, fontStyle: 'bold' },
+                    1: { cellWidth: 105 },
+                    2: { cellWidth: 42, halign: 'center', fontStyle: 'bold' }
+                }
+            });
+
+            // TABELA 2: Detalhamento de Tarefas Realizadas
+            const nextY = doc.lastAutoTable.finalY + 12;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(26, 42, 108);
+            doc.text('2. Detalhamento das Tarefas Realizadas', 14, nextY);
+
+            const detailRows = [];
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                data.tasks.forEach((task, index) => {
+                    detailRows.push([
+                        index === 0 ? String(pdv) : '',
+                        index === 0 ? data.name : '',
+                        task
+                    ]);
+                });
+            }
+
+            doc.autoTable({
+                startY: nextY + 4,
+                head: [['PDV', 'Nome Fantasia', 'Descricao da Tarefa']],
+                body: detailRows,
+                theme: 'grid',
+                headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
+                styles: { fontSize: 8.5, cellPadding: 2.5 },
+                columnStyles: {
+                    0: { cellWidth: 30, fontStyle: 'bold' },
+                    1: { cellWidth: 55 },
+                    2: { cellWidth: 'auto' }
+                }
+            });
+
+            // Salvar arquivo com a nomenclatura informada
+            doc.save(fileName);
+        });
+
+        // Backup e Restauração
         exportBackupBtn.addEventListener('click', function() {
             const state = getCurrentState();
             const stateJSON = JSON.stringify(state);
@@ -1110,7 +1242,6 @@
             backupStatus.className = "backup-status success";
         });
         
-        // Importar backup
         importBackupBtn.addEventListener('click', function() {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -1131,14 +1262,9 @@
                             backupStatus.className = "backup-status success";
                         } catch (error) {
                             console.error('Erro ao importar backup:', error);
-                            backupStatus.textContent = "Erro ao importar backup - Formato inválido";
+                            backupStatus.textContent = "Erro ao importar backup - Arquivo inválido";
                             backupStatus.className = "backup-status error";
                         }
-                    };
-                    
-                    reader.onerror = () => {
-                        backupStatus.textContent = "Erro ao ler o arquivo de backup";
-                        backupStatus.className = "backup-status error";
                     };
                     
                     reader.readAsText(file);
@@ -1148,7 +1274,6 @@
             fileInput.click();
         });
         
-        // Obter estado atual da aplicação
         function getCurrentState() {
             const state = {
                 selectedTasks: selectedTasks,
@@ -1171,35 +1296,32 @@
                     }
                     state.workbookData = btoa(binary);
                 } catch (error) {
-                    console.error('Erro ao salvar planilha:', error);
+                    console.error('Erro ao salvar planilha no estado:', error);
                 }
             }
             
             return state;
         }
         
-        // Salvar estado no localStorage
         function saveState() {
             try {
                 const state = getCurrentState();
                 localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
             } catch (e) {
-                console.warn("Falha ao salvar no localStorage (planilha muito grande?):", e);
+                console.warn("Falha ao salvar no localStorage:", e);
             }
         }
         
-        // Carregar estado do localStorage
         function loadState() {
             try {
                 const stateJSON = localStorage.getItem(STATE_STORAGE_KEY);
                 return stateJSON ? JSON.parse(stateJSON) : null;
             } catch (e) {
-                console.error("Erro ao carregar estado do localStorage:", e);
+                console.error("Erro ao ler localStorage:", e);
                 return null;
             }
         }
         
-        // Restaurar o estado da aplicação
         function restoreState(state) {
             if (!state) return;
             
@@ -1240,9 +1362,9 @@
                     
                     filterSection.style.display = 'block';
                     uploadBtn.disabled = false;
-                    statusMessage.textContent = "Sessão e planilha restauradas automaticamente!";
+                    statusMessage.textContent = "Sessão restaurada com sucesso!";
                 } catch (error) {
-                    console.error('Erro ao restaurar planilha:', error);
+                    console.error('Erro ao restaurar estado:', error);
                 }
             }
 
@@ -1251,12 +1373,7 @@
             updateClientSummary();
         }
         
-        // Salvar estado automaticamente ao sair
-        window.addEventListener('beforeunload', function() {
-            saveState();
-        });
-        
-        // Inicializar o sistema ao carregar a página
+        window.addEventListener('beforeunload', saveState);
         window.addEventListener('DOMContentLoaded', initializeSystem);
     </script>
 </body>
