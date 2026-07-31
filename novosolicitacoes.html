@@ -122,22 +122,23 @@
     }
     .btn-clear-db:hover { background: #fecaca; }
 
-    /* Tabs Nav */
+    /* Tabs Nav (Otimizado para Toque Mobile) */
     .tabs-nav {
       display: flex;
-      gap: 6px;
+      gap: 10px;
       border-bottom: 2px solid var(--border-color);
       margin-bottom: 25px;
       overflow-x: auto;
-      padding-bottom: 2px;
+      padding-bottom: 8px;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
     }
 
     .tab-btn {
-      background: transparent;
-      border: none;
-      padding: 10px 14px;
-      font-size: 13px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 14px 18px; /* Área de clique ampliada */
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
@@ -145,23 +146,36 @@
       align-items: center;
       gap: 8px;
       border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
       white-space: nowrap;
-      border-radius: 8px 8px 0 0;
+      border-radius: 10px;
+      min-height: 48px; /* Altura mínima recomendada para mobile */
+      transition: all 0.2s ease;
+      user-select: none;
     }
 
-    .tab-btn:hover { color: var(--primary); background: #f8fafc; }
-    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: #eff6ff; }
+    .tab-btn:hover { color: var(--primary); background: #f1f5f9; }
+    .tab-btn.active { 
+      color: var(--primary); 
+      border-color: var(--primary); 
+      background: #eff6ff; 
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+    }
 
     .tab-title-input {
       border: none;
       background: transparent;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 14px;
       color: inherit;
-      width: 75px;
+      width: 110px;
       border-bottom: 1px dashed var(--text-muted);
       outline: none;
+    }
+
+    .tab-btn .fa-pen {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-left: 2px;
     }
 
     /* Form Area */
@@ -200,8 +214,8 @@
     }
 
     .check-group input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       accent-color: var(--primary);
       cursor: pointer;
     }
@@ -213,10 +227,10 @@
     .check-group select,
     .check-group textarea {
       width: 100%;
-      padding: 9px 12px;
+      padding: 10px 12px;
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      font-size: 13.5px;
+      font-size: 14px;
       background: #fff;
     }
 
@@ -243,9 +257,9 @@
     }
 
     .autocomplete-items div {
-      padding: 9px 12px;
+      padding: 10px 12px;
       cursor: pointer;
-      font-size: 12.5px;
+      font-size: 13px;
       border-bottom: 1px solid #f1f5f9;
     }
 
@@ -290,7 +304,7 @@
       .produto-fields-grid { grid-template-columns: 2fr 1fr 1fr; }
     }
 
-    /* --- ESTILOS DA ABA POSITIVAÇÃO --- */
+    /* Estilos Positivação */
     .positivacao-panel { display: flex; flex-direction: column; gap: 20px; }
 
     .exec-summary-box {
@@ -535,10 +549,10 @@
 
     button.btn-action {
       border: none;
-      padding: 11px 18px;
+      padding: 12px 20px;
       border-radius: 10px;
       font-weight: 600;
-      font-size: 13.5px;
+      font-size: 14px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -628,30 +642,48 @@
       </div>
     </div>
 
-    <!-- Navegação por Abas (Tabs) -->
+    <!-- Navegação por Abas Editáveis e com Clique Ampliado -->
     <div class="tabs-nav">
       <button class="tab-btn active" onclick="switchTab('janela', this)">
-        <i class="fa-regular fa-calendar-check"></i> Janela de Entrega
+        <i class="fa-regular fa-calendar-check"></i>
+        <input type="text" id="nome-aba-janela" class="tab-title-input" value="Janela de Entrega" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
+
       <button class="tab-btn" onclick="switchTab('bonificacao', this)">
-        <i class="fa-solid fa-gift"></i> Bonificação
+        <i class="fa-solid fa-gift"></i>
+        <input type="text" id="nome-aba-bonificacao" class="tab-title-input" value="Bonificação" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
+
       <button class="tab-btn" onclick="switchTab('desconto', this)">
-        <i class="fa-solid fa-percent"></i> Desconto
+        <i class="fa-solid fa-percent"></i>
+        <input type="text" id="nome-aba-desconto" class="tab-title-input" value="Desconto" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
+
       <button class="tab-btn" onclick="switchTab('limite', this)">
-        <i class="fa-solid fa-wallet"></i> Limite
+        <i class="fa-solid fa-wallet"></i>
+        <input type="text" id="nome-aba-limite" class="tab-title-input" value="Limite" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
+
       <button class="tab-btn" onclick="switchTab('ativacao', this)">
         <i class="fa-solid fa-bolt"></i> 
         <input type="text" id="nome-aba-ativacao" class="tab-title-input" value="Ativação" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
+
       <button class="tab-btn" onclick="switchTab('custom', this)">
         <i class="fa-solid fa-sliders"></i> 
         <input type="text" id="nome-aba-custom" class="tab-title-input" value="Custom" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
+
       <button class="tab-btn" onclick="switchTab('positivacao', this)">
-        <i class="fa-solid fa-chart-pie"></i> Positivação (Setor)
+        <i class="fa-solid fa-chart-pie"></i>
+        <input type="text" id="nome-aba-positivacao" class="tab-title-input" value="Positivação (Setor)" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+        <i class="fa-solid fa-pen"></i>
       </button>
     </div>
 
@@ -705,7 +737,7 @@
   </div>
 
   <script>
-    // --- PERSISTÊNCIA LOCAL (IndexedDB para Planilhas Grandes) ---
+    // --- PERSISTÊNCIA LOCAL (IndexedDB) ---
     const DB_NAME = 'BI_Planner_DB';
     const DB_VERSION = 1;
     let dbInstance = null;
@@ -828,7 +860,7 @@
       document.getElementById('loading-overlay').style.display = 'none';
     }
 
-    // --- CARREGAMENTO E VARREDURA DE TODAS AS ABAS DA PLANILHA ---
+    // --- PROCESSAMENTO DA PLANILHA (Inclusão de Dia de Visita / Frequência) ---
     function iniciarProcessamentoPlanilha(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -916,7 +948,7 @@
                 if (codCandidate && nomeCandidate && !isNaN(codCandidate)) {
                   if (setorFiltro === 'TODOS' || setorCandidate === setorFiltro) {
                     state.dbPDVs.push({
-                      frequencia: String(row[1] || 'SEG/SAB'),
+                      frequencia: String(row[1] || row[0] || 'N/A').trim(), // Captura Dia de Visita / Rota
                       gv: String(row[2] || ''),
                       setor: setorCandidate || '414',
                       codigo: String(codCandidate).trim(),
@@ -975,7 +1007,7 @@
           salvarPlanilhaNoDB(state.dbPDVs, state.dbProdutos, state.setoresDisponiveis);
 
           ocultarSpinner();
-          alert(`Importação Concluída!\n${state.dbPDVs.length} PDVs e ${state.dbProdutos.length} Produtos unificados de todas as abas.`);
+          alert(`Importação Concluída!\n${state.dbPDVs.length} PDVs e ${state.dbProdutos.length} Produtos unificados com dia de visita.`);
           
           if (state.currentTab === 'positivacao') renderForm();
         } catch (err) {
@@ -985,7 +1017,7 @@
       }, 50);
     }
 
-    // --- Persistência de Lotes e Nomes de Abas ---
+    // --- Persistência de Lotes e Nomes de TODAS as Abas ---
     function salvarLoteStorage() {
       localStorage.setItem('BI_PLANNER_LOTE', JSON.stringify(state.itens));
     }
@@ -1001,20 +1033,37 @@
     }
 
     function salvarNomesAbas() {
-      const ativ = document.getElementById('nome-aba-ativacao').value;
-      const cust = document.getElementById('nome-aba-custom').value;
-      localStorage.setItem('BI_PLANNER_ABAS', JSON.stringify({ ativ, cust }));
+      const abas = {
+        janela: document.getElementById('nome-aba-janela')?.value || 'Janela de Entrega',
+        bonificacao: document.getElementById('nome-aba-bonificacao')?.value || 'Bonificação',
+        desconto: document.getElementById('nome-aba-desconto')?.value || 'Desconto',
+        limite: document.getElementById('nome-aba-limite')?.value || 'Limite',
+        ativacao: document.getElementById('nome-aba-ativacao')?.value || 'Ativação',
+        custom: document.getElementById('nome-aba-custom')?.value || 'Custom',
+        positivacao: document.getElementById('nome-aba-positivacao')?.value || 'Positivação (Setor)'
+      };
+      localStorage.setItem('BI_PLANNER_ABAS_V2', JSON.stringify(abas));
     }
 
     function carregarNomesAbas() {
-      const saved = localStorage.getItem('BI_PLANNER_ABAS');
+      const saved = localStorage.getItem('BI_PLANNER_ABAS_V2');
       if (saved) {
         try {
-          const { ativ, cust } = JSON.parse(saved);
-          if (ativ) document.getElementById('nome-aba-ativacao').value = ativ;
-          if (cust) document.getElementById('nome-aba-custom').value = cust;
+          const abas = JSON.parse(saved);
+          if (abas.janela) document.getElementById('nome-aba-janela').value = abas.janela;
+          if (abas.bonificacao) document.getElementById('nome-aba-bonificacao').value = abas.bonificacao;
+          if (abas.desconto) document.getElementById('nome-aba-desconto').value = abas.desconto;
+          if (abas.limite) document.getElementById('nome-aba-limite').value = abas.limite;
+          if (abas.ativacao) document.getElementById('nome-aba-ativacao').value = abas.ativacao;
+          if (abas.custom) document.getElementById('nome-aba-custom').value = abas.custom;
+          if (abas.positivacao) document.getElementById('nome-aba-positivacao').value = abas.positivacao;
         } catch(e){}
       }
+    }
+
+    function getNomeAbaAtual() {
+      const el = document.getElementById(`nome-aba-${state.currentTab}`);
+      return el ? el.value : 'Relatório';
     }
 
     // --- Autocomplete ---
@@ -1354,7 +1403,7 @@
       setupAutocomplete(document.getElementById(`codigo-boni-${idx}`), document.getElementById(`produto-boni-${idx}`), 'prod');
     }
 
-    // --- ABA DE POSITIVAÇÃO REFORMULADA (VISUALIZAÇÃO COMPLETA & FILTROS EM TEMPO REAL NAS COLUNAS) ---
+    // --- ABA DE POSITIVAÇÃO COM DIA DE VISITA E ROTA ---
     function renderPositivacaoPanel(container) {
       const freqs = [...new Set(state.dbPDVs.map(p => p.frequencia).filter(Boolean))].sort();
       const setores = state.setoresDisponiveis.length ? state.setoresDisponiveis : ['414', '415', '416', '417'];
@@ -1367,7 +1416,7 @@
           <!-- AÇÕES E TÍTULO DA TABELA -->
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:5px;">
             <div style="font-weight:700; font-size:14px; color:var(--text-main);">
-              <i class="fa-solid fa-table" style="color:var(--primary);"></i> Pré-Visualização Completa da Planilha
+              <i class="fa-solid fa-table" style="color:var(--primary);"></i> Pré-Visualização Completa com Rota / Dia de Visita
               <span style="font-size:12px; font-weight:normal; color:var(--text-muted); margin-left:8px;" id="lbl-total-pos-filtrados">(0 registros visíveis)</span>
             </div>
             <div style="display:flex; gap:10px;">
@@ -1391,9 +1440,9 @@
                     <input type="text" class="th-filter-select" id="pos-filter-nome" placeholder="Filtrar Nome..." oninput="atualizarFiltrosPositivacao()">
                   </th>
                   <th>
-                    Frequência / Dia
+                    Dia / Visita (Rota)
                     <select class="th-filter-select" id="pos-filter-freq" onchange="atualizarFiltrosPositivacao()">
-                      <option value="TODOS">Todas</option>
+                      <option value="TODOS">Todas as Rotas</option>
                       ${freqs.map(f => `<option value="${f}">${f}</option>`).join('')}
                     </select>
                   </th>
@@ -1501,7 +1550,6 @@
         return true;
       });
 
-      // Recalcular métricas dinamicamente com base no filtro ativo
       const totalPDVs = pdvsFiltrados.length || 1;
 
       const calcCat = (key) => {
@@ -1512,7 +1560,7 @@
       };
 
       const metrics = [
-        { key: 'produtos_tt', name: 'PRODUTOS TT', ...calcCat('produtos_tt') },
+        { key: 'produtos_tt', name: 'COMPRADORES PRODUTOS TT', ...calcCat('produtos_tt') },
         { key: 'cerveja', name: 'Cerveja', ...calcCat('cerveja') },
         { key: 'nab', name: 'NAB', ...calcCat('nab') },
         { key: 'mkt', name: 'Marketplace', ...calcCat('mkt') },
@@ -1525,12 +1573,12 @@
         metricsContainer.innerHTML = `
           <div class="exec-summary-box">
             <div>
-              <div class="title">PAINEL EXECUTIVO (RECALCULADO EM TEMPO REAL)</div>
-              <div style="font-size:14px; margin-top:4px;">Setor Filtro: <strong>${setor}</strong> | PDVs Exibidos: <strong>${pdvsFiltrados.length}</strong></div>
+              <div class="title">PAINEL COMPRADORES AMBEV (RECALCULADO EM TEMPO REAL)</div>
+              <div style="font-size:14px; margin-top:4px;">Setor Filtro: <strong>${setor}</strong> | Rota / Dia: <strong>${freq}</strong> | PDVs Exibidos: <strong>${pdvsFiltrados.length}</strong></div>
               <div style="font-size:12.5px; color:#cbd5e1; margin-top:2px;">Bateram Meta TT: <strong style="color:#4ade80;">${metrics[0].okCount}</strong> | Pendentes TT: <strong style="color:#f87171;">${metrics[0].nokCount}</strong></div>
             </div>
             <div style="text-align:right;">
-              <div class="title">Atingimento Global (TT)</div>
+              <div class="title">Atingimento Geral (TT)</div>
               <div class="value-main">${metrics[0].pct}%</div>
             </div>
           </div>
@@ -1571,7 +1619,7 @@
         tr.innerHTML = `
           <td><strong>[${p.codigo}]</strong></td>
           <td>${p.nome}</td>
-          <td>${p.frequencia || '-'}</td>
+          <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:600;">${p.frequencia || '-'}</span></td>
           <td>Setor ${p.setor || '-'}</td>
           <td><span class="tag-status ${p.produtos_tt === 'OK' ? 'ok' : 'nok'}">${p.produtos_tt}</span></td>
           <td><span class="tag-status ${p.cerveja === 'OK' ? 'ok' : 'nok'}">${p.cerveja}</span></td>
@@ -1584,7 +1632,7 @@
       });
     }
 
-    // --- GERADOR DE PDF DAS FILTRAGENS DA ABA DE POSITIVAÇÃO ---
+    // --- RELATÓRIO PDF DA POSITIVAÇÃO COM DIA DE VISITA ---
     function gerarRelatorioPDFVisivel() {
       const { codigo, nome, freq, setor, produtos_tt, cerveja, nab, mkt, stela_pg, florestal } = state.posFilters;
 
@@ -1615,13 +1663,15 @@
       const nokTT = pdvsFiltrados.length - okTT;
       const pctTT = Math.round((okTT / totalPDVs) * 100);
 
+      const nomeRelatorio = getNomeAbaAtual();
+
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <!DOCTYPE html>
         <html lang="pt-BR">
         <head>
           <meta charset="UTF-8">
-          <title>RELATÓRIO DE POSITIVAÇÃO FILTRADO</title>
+          <title>${nomeRelatorio.toUpperCase()}</title>
           <style>
             body { font-family: 'Inter', Arial, sans-serif; padding: 20px; color: #0f172a; background: #fff; font-size: 11px; }
             .header-title { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px; }
@@ -1648,8 +1698,8 @@
         </head>
         <body>
           <div class="header-title">
-            <h1>RELATÓRIO EXECUTIVO DE POSITIVAÇÃO (FILTRADO)</h1>
-            <p>Emissão: ${dataHoje} às ${horaHoje} | Setor: ${setor} | Frequência: ${freq}</p>
+            <h1>RELATÓRIO: ${nomeRelatorio.toUpperCase()}</h1>
+            <p>Emissão: ${dataHoje} às ${horaHoje} | Setor: ${setor} | Dia Visita / Rota: ${freq}</p>
           </div>
 
           <div class="summary-card">
@@ -1679,7 +1729,7 @@
             <thead>
               <tr>
                 <th>RN</th>
-                <th>Dia/Freq</th>
+                <th>Dia Visita / Rota</th>
                 <th>Cliente / PDV</th>
                 <th>PRODUTOS TT</th>
                 <th>CERVEJA</th>
@@ -1693,7 +1743,7 @@
               ${pdvsFiltrados.map(p => `
                 <tr>
                   <td>${p.setor}</td>
-                  <td>${p.frequencia || '-'}</td>
+                  <td><strong>${p.frequencia || '-'}</strong></td>
                   <td>[${p.codigo}] ${p.nome}</td>
                   <td class="${p.produtos_tt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.produtos_tt}</td>
                   <td class="${p.cerveja === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.cerveja}</td>
@@ -1717,7 +1767,7 @@
       printWindow.document.close();
     }
 
-    // --- WhatsApp Direct / Lote ---
+    // --- WhatsApp Direct / Lote (Com Nomes Dinâmicos das Abas) ---
     function getChecked(id) {
       const chk = document.getElementById('chk-' + id);
       return chk ? chk.checked : true;
@@ -1725,10 +1775,10 @@
 
     function gerarTextoAtual() {
       const tab = state.currentTab;
-      let texto = '';
+      const tituloAba = getNomeAbaAtual();
+      let texto = `${tituloAba}:\n`;
 
       if (tab === 'bonificacao') {
-        texto += 'Bonificação:\n';
         if (getChecked('op-boni')) texto += `*Operação:* ${document.getElementById('op-boni').value}\n`;
         if (getChecked('filial-boni')) texto += `*Filial:* ${document.getElementById('filial-boni').value}\n`;
         if (getChecked('rn-boni')) texto += `*Rn:* ${document.getElementById('rn-boni').value}\n`;
@@ -1756,7 +1806,6 @@
       }
 
       if (tab === 'janela') {
-        texto += 'Janela de entrega:\n';
         if (getChecked('op-janela')) texto += `*Operação:* ${document.getElementById('op-janela').value}\n`;
         if (getChecked('filial-janela')) texto += `*Filial:* ${document.getElementById('filial-janela').value}\n`;
         if (getChecked('rn-janela')) texto += `*Rn:* ${document.getElementById('rn-janela').value}\n`;
@@ -1768,7 +1817,6 @@
       }
 
       if (tab === 'desconto') {
-        texto += 'Desconto:\n';
         if (getChecked('op-desc')) texto += `*Operação:* ${document.getElementById('op-desc').value}\n`;
         if (getChecked('rn-desc')) texto += `*Rn:* ${document.getElementById('rn-desc').value}\n`;
         if (getChecked('produto-desc')) texto += `*Produto:* ${document.getElementById('produto-desc').value}\n`;
@@ -1780,7 +1828,6 @@
       }
 
       if (tab === 'limite') {
-        texto += 'Limite:\n';
         if (getChecked('op-limite')) texto += `*Operação:* ${document.getElementById('op-limite').value}\n`;
         if (getChecked('filial-limite')) texto += `*Filial:* ${document.getElementById('filial-limite').value}\n`;
         if (getChecked('rn-limite')) texto += `*Rn:* ${document.getElementById('rn-limite').value}\n`;
@@ -1795,8 +1842,6 @@
       }
 
       if (tab === 'ativacao') {
-        const titleAtiv = document.getElementById('nome-aba-ativacao').value || 'Ativação';
-        texto += `${titleAtiv}:\n`;
         if (getChecked('op-ativacao')) texto += `*Operação:* ${document.getElementById('op-ativacao').value}\n`;
         if (getChecked('filial-ativacao')) texto += `*Filial:* ${document.getElementById('filial-ativacao').value}\n`;
         if (getChecked('rn-ativacao')) texto += `*Rn:* ${document.getElementById('rn-ativacao').value}\n`;
@@ -1819,8 +1864,6 @@
       }
 
       if (tab === 'custom') {
-        const titleCust = document.getElementById('nome-aba-custom').value || 'Custom';
-        texto += `${titleCust}:\n`;
         if (getChecked('op-custom')) texto += `*Operação:* ${document.getElementById('op-custom').value}\n`;
         if (getChecked('filial-custom')) texto += `*Filial:* ${document.getElementById('filial-custom').value}\n`;
         if (getChecked('rn-custom')) texto += `*Rn:* ${document.getElementById('rn-custom').value}\n`;
