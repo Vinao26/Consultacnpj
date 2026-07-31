@@ -6,7 +6,7 @@
   <title>Planejador & Central de Positivação BI</title>
   
   <!-- Fontes & Ícones -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Leitor de Excel XLSX -->
@@ -14,17 +14,17 @@
 
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --secondary: #06b6d4;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --bg-color: #f3f4f6;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #0891b2;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --bg-color: #f1f5f9;
       --card-bg: #ffffff;
-      --text-main: #1f2937;
-      --text-muted: #6b7280;
-      --border-color: #e5e7eb;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,7 +43,7 @@
       background: var(--card-bg);
       padding: 25px;
       border-radius: 16px;
-      max-width: 1100px;
+      max-width: 1280px;
       width: 100%;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
@@ -151,7 +151,7 @@
     }
 
     .tab-btn:hover { color: var(--primary); background: #f8fafc; }
-    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: #e0e7ff33; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: #eff6ff; }
 
     .tab-title-input {
       border: none;
@@ -223,7 +223,7 @@
     .check-group input:focus, .check-group select:focus, .check-group textarea:focus {
       border-color: var(--primary);
       outline: none;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
     /* Autocomplete */
@@ -249,7 +249,7 @@
       border-bottom: 1px solid #f1f5f9;
     }
 
-    .autocomplete-items div:hover { background-color: #e0e7ff; color: var(--primary); }
+    .autocomplete-items div:hover { background-color: #eff6ff; color: var(--primary); }
 
     /* Layout Vertical de Produtos na Bonificação */
     .produto-vertical-container {
@@ -290,84 +290,144 @@
       .produto-fields-grid { grid-template-columns: 2fr 1fr 1fr; }
     }
 
-    /* Dashboard de Positivação */
+    /* --- ESTILOS DA ABA POSITIVAÇÃO --- */
     .positivacao-panel { display: flex; flex-direction: column; gap: 20px; }
 
-    .filter-bar {
+    .exec-summary-box {
+      background: #1e293b;
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
       display: flex;
-      align-items: center;
-      gap: 15px;
-      background: #f8fafc;
-      padding: 15px;
-      border-radius: 10px;
-      border: 1px solid var(--border-color);
       flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    .kpi-grid {
+    .exec-summary-box .title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .exec-summary-box .value-main {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    .kpi-grid-exec {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
+      gap: 12px;
     }
 
-    .kpi-card {
+    .kpi-card-exec {
       background: #fff;
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 15px;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-      cursor: pointer;
-      transition: all 0.2s ease;
+      padding: 12px 15px;
+      position: relative;
     }
 
-    .kpi-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 15px rgba(79, 70, 229, 0.1);
-      border-color: var(--primary);
-    }
-
-    .kpi-card .val {
-      font-size: 1.7rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin: 5px 0;
-    }
-
-    .kpi-card .lbl {
+    .kpi-card-exec .lbl {
       font-size: 11px;
       color: var(--text-muted);
       text-transform: uppercase;
-      font-weight: 600;
+      font-weight: 700;
+    }
+
+    .kpi-card-exec .val-percent {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 2px 0;
+    }
+
+    .kpi-card-exec .sub-details {
+      font-size: 11px;
+      color: #475569;
+      display: flex;
+      justify-content: space-between;
     }
 
     .progress-bar-bg {
       background: #e2e8f0;
       border-radius: 8px;
-      height: 8px;
+      height: 6px;
       overflow: hidden;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
     .progress-bar-fill {
       background: var(--success);
       height: 100%;
       width: 0%;
-      transition: width 0.4s ease;
+      transition: width 0.3s ease;
     }
 
-    .card-click-hint {
-      font-size: 10px;
-      color: var(--primary);
-      margin-top: 8px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
+    /* Estilo de Filtragem por Colunas tipo Excel */
+    .excel-table-container {
+      max-height: 520px;
+      overflow-x: auto;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: #fff;
     }
 
-    /* Modais */
+    .excel-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .excel-table th, .excel-table td {
+      padding: 9px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      border-right: 1px solid #f1f5f9;
+    }
+
+    .excel-table th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #334155;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .th-filter-select {
+      margin-top: 5px;
+      display: block;
+      width: 100%;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      font-weight: normal;
+    }
+
+    .tag-status {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .tag-status.ok { background: #dcfce7; color: #166534; }
+    .tag-status.nok { background: #fee2e2; color: #991b1b; }
+
+    /* Modais Gerais */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -391,9 +451,8 @@
     .modal-container {
       background: #ffffff;
       border-radius: 16px;
-      max-width: 800px;
+      max-width: 500px;
       width: 100%;
-      max-height: 90vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
@@ -431,71 +490,14 @@
       flex: 1;
     }
 
-    .modal-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-
-    .modal-filter-pills {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .pill-btn {
-      border: 1px solid var(--border-color);
-      background: #fff;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 11.5px;
-      font-weight: 600;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-
-    .pill-btn.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    .modal-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-    }
-
-    .modal-table th, .modal-table td {
-      padding: 9px 10px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .modal-table th { background: #f8fafc; font-weight: 600; color: #475569; }
-
-    .tag-status {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 12px;
-      font-size: 10.5px;
-      font-weight: 700;
-    }
-
-    .tag-status.ok { background: #dcfce7; color: #166534; }
-    .tag-status.nok { background: #fee2e2; color: #991b1b; }
-
     .modal-footer {
       padding: 14px 20px;
       background: #f8fafc;
       border-top: 1px solid var(--border-color);
       display: flex;
       justify-content: flex-end;
+      align-items: center;
       gap: 10px;
-      flex-wrap: wrap;
     }
 
     /* Loading Overlay */
@@ -678,14 +680,14 @@
 
   <!-- MODAL DE PRÉ-FILTRO DE IMPORTAÇÃO -->
   <div class="modal-overlay" id="modal-pre-filtro">
-    <div class="modal-container" style="max-width:450px;">
+    <div class="modal-container">
       <div class="modal-header">
         <h3><i class="fa-solid fa-filter"></i> Pré-Filtro de Importação</h3>
         <button class="modal-close" onclick="fecharModalPreFiltro()">&times;</button>
       </div>
       <div class="modal-body">
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
-          Selecione o setor específico para acelerar a leitura ou carregue todos os dados da planilha.
+          Foram varridas <strong>todas as abas da planilha</strong>. Selecione o setor para filtrar ou importe todos.
         </p>
         <div class="check-group">
           <label>Filtrar Setor na Importação:</label>
@@ -696,54 +698,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn-action btn-add" style="width:100%; justify-content:center;" onclick="confirmarImportacaoComFiltro()">
-          <i class="fa-solid fa-check"></i> Importar Dados
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL / POP-UP DE EXPANSÃO DE CATEGORIA -->
-  <div class="modal-overlay" id="modal-categoria">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3 id="modal-title"><i class="fa-solid fa-list-check"></i> Detalhes da Categoria</h3>
-        <button class="modal-close" onclick="fecharModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-controls">
-          <div class="modal-filter-pills">
-            <button class="pill-btn active" id="pill-todos" onclick="filtrarModalStatus('TODOS')">Todos</button>
-            <button class="pill-btn" id="pill-ok" onclick="filtrarModalStatus('OK')">Compradores (OK)</button>
-            <button class="pill-btn" id="pill-nok" onclick="filtrarModalStatus('NOK')">Não Compradores (NOK)</button>
-          </div>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <label style="font-size:12px; font-weight:600; cursor:pointer;">
-              <input type="checkbox" id="chk-select-all-modal" onchange="toggleSelectAllModal(this.checked)" checked> Selecionar Todos
-            </label>
-          </div>
-        </div>
-
-        <table class="modal-table">
-          <thead>
-            <tr>
-              <th style="width: 40px;">Sel.</th>
-              <th>Cód PDV</th>
-              <th>Nome Fantasia</th>
-              <th>Frequência</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="modal-tbody">
-            <!-- Linhas preenchidas via JS -->
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-action btn-wa-direct" style="padding: 8px 16px; font-size: 13px;" onclick="enviarModalWhatsApp()">
-          <i class="fa-brands fa-whatsapp"></i> WhatsApp Específico
-        </button>
-        <button class="btn-action btn-pdf" style="padding: 8px 16px; font-size: 13px;" onclick="gerarPDFModalEspecfico()">
-          <i class="fa-solid fa-file-pdf"></i> PDF Específico
+          <i class="fa-solid fa-check"></i> Importar Dados das Abas
         </button>
       </div>
     </div>
@@ -838,11 +793,17 @@
       dbProdutos: [],
       setoresDisponiveis: [],
       tempWorkbookRaw: null,
-      modalData: {
-        categoryKey: '',
-        categoryName: '',
-        filterStatus: 'TODOS',
-        pdvs: []
+      posFilters: {
+        codigo: '',
+        nome: '',
+        freq: 'TODOS',
+        setor: 'TODOS',
+        produtos_tt: 'TODOS',
+        cerveja: 'TODOS',
+        nab: 'TODOS',
+        mkt: 'TODOS',
+        stela_pg: 'TODOS',
+        florestal: 'TODOS'
       }
     };
 
@@ -857,7 +818,6 @@
       }
     }
 
-    // --- Carregamento e Pré-Filtro da Planilha ---
     function mostrarSpinner(msg = 'Carregando...') {
       const el = document.getElementById('loading-overlay');
       document.getElementById('loading-text').textContent = msg;
@@ -868,11 +828,12 @@
       document.getElementById('loading-overlay').style.display = 'none';
     }
 
+    // --- CARREGAMENTO E VARREDURA DE TODAS AS ABAS DA PLANILHA ---
     function iniciarProcessamentoPlanilha(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      mostrarSpinner("Lendo estrutura da planilha...");
+      mostrarSpinner("Varrendo todas as abas da planilha...");
 
       setTimeout(() => {
         const reader = new FileReader();
@@ -882,19 +843,25 @@
             const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
             state.tempWorkbookRaw = workbook;
 
-            const sheetPainelName = workbook.SheetNames.find(n => n.toUpperCase().includes('PAINEL')) || workbook.SheetNames[0];
-            const sheetPainel = workbook.Sheets[sheetPainelName];
-
             const setoresSet = new Set();
-            if (sheetPainel) {
-              const json = XLSX.utils.sheet_to_json(sheetPainel, { header: 1 });
-              json.forEach((row, idx) => {
-                if (idx >= 2 && row && row[3]) {
-                  const s = String(row[3]).trim();
-                  if (s) setoresSet.add(s);
+
+            workbook.SheetNames.forEach(sheetName => {
+              const sheet = workbook.Sheets[sheetName];
+              const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+              
+              json.forEach((row) => {
+                if (row && row.length > 0) {
+                  row.forEach(cell => {
+                    if (cell !== undefined && cell !== null) {
+                      const strVal = String(cell).trim();
+                      if (/^\d{3,4}$/.test(strVal) && (strVal.startsWith('4') || strVal.startsWith('1'))) {
+                        setoresSet.add(strVal);
+                      }
+                    }
+                  });
                 }
               });
-            }
+            });
 
             const selectImport = document.getElementById('select-setor-importacao');
             selectImport.innerHTML = '<option value="TODOS">Carregar Todos os Setores</option>';
@@ -930,59 +897,68 @@
 
       if (!workbook) return;
 
-      mostrarSpinner("Processando e otimizando dados...");
+      mostrarSpinner("Processando dados de todas as abas...");
 
       setTimeout(() => {
         try {
           state.dbPDVs = [];
-          const sheetPainelName = workbook.SheetNames.find(n => n.toUpperCase().includes('PAINEL')) || workbook.SheetNames[0];
-          const sheetPainel = workbook.Sheets[sheetPainelName];
+          
+          workbook.SheetNames.forEach(sheetName => {
+            const sheet = workbook.Sheets[sheetName];
+            const jsonPainel = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          if (sheetPainel) {
-            const jsonPainel = XLSX.utils.sheet_to_json(sheetPainel, { header: 1 });
             jsonPainel.forEach((row, idx) => {
-              if (idx >= 2 && row && row[4] && row[5]) {
-                const setorRow = String(row[3] || '').trim();
-                
-                if (setorFiltro === 'TODOS' || setorRow === setorFiltro) {
-                  state.dbPDVs.push({
-                    frequencia: String(row[1] || ''),
-                    gv: String(row[2] || ''),
-                    setor: setorRow,
-                    codigo: String(row[4]).trim(),
-                    nome: String(row[5]).trim(),
-                    produtos_tt: String(row[6] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
-                    nab: String(row[7] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
-                    cerveja: String(row[8] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
-                    mkt: String(row[9] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
-                    stela_pg: String(row[10] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
-                    florestal: String(row[11] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK'
-                  });
+              if (idx >= 1 && row && row.length >= 6) {
+                const codCandidate = row[4] || row[0];
+                const nomeCandidate = row[5] || row[1];
+                const setorCandidate = String(row[3] || row[2] || '').trim();
+
+                if (codCandidate && nomeCandidate && !isNaN(codCandidate)) {
+                  if (setorFiltro === 'TODOS' || setorCandidate === setorFiltro) {
+                    state.dbPDVs.push({
+                      frequencia: String(row[1] || 'SEG/SAB'),
+                      gv: String(row[2] || ''),
+                      setor: setorCandidate || '414',
+                      codigo: String(codCandidate).trim(),
+                      nome: String(nomeCandidate).trim(),
+                      produtos_tt: String(row[6] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                      nab: String(row[7] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                      cerveja: String(row[8] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                      mkt: String(row[9] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                      stela_pg: String(row[10] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                      florestal: String(row[11] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK'
+                    });
+                  }
                 }
               }
             });
-          }
+          });
+
+          const pdvMap = new Map();
+          state.dbPDVs.forEach(item => {
+            if (!pdvMap.has(item.codigo)) {
+              pdvMap.set(item.codigo, item);
+            }
+          });
+          state.dbPDVs = Array.from(pdvMap.values());
 
           state.setoresDisponiveis = [...new Set(state.dbPDVs.map(p => p.setor).filter(Boolean))].sort();
 
-          // --- LEITURA DE PRODUTOS AGRUPADOS (SEM DUPLICADOS) ---
           state.dbProdutos = [];
-          const produtosUnicosMap = new Map(); // Garante registros únicos
+          const produtosUnicosMap = new Map();
 
-          const sheetProdName = workbook.SheetNames.find(n => n.toUpperCase().includes('VILHENA') && !n.toUpperCase().includes('PAINEL')) || workbook.SheetNames[1];
-          const sheetProd = workbook.Sheets[sheetProdName];
+          workbook.SheetNames.forEach(sheetName => {
+            const sheet = workbook.Sheets[sheetName];
+            const jsonProd = XLSX.utils.sheet_to_json(sheet);
 
-          if (sheetProd) {
-            const jsonProd = XLSX.utils.sheet_to_json(sheetProd);
             jsonProd.forEach(row => {
-              const cod = row['Cod.Produto'] || row['Codigo'] || row['PRODUTO TOTAL'];
-              const desc = row['Desc.Produto'] || row['Descrição'] || row['Descricao'];
+              const cod = row['Cod.Produto'] || row['Codigo'] || row['PRODUTO TOTAL'] || row['CODIGO'];
+              const desc = row['Desc.Produto'] || row['Descrição'] || row['Descricao'] || row['PRODUTO'];
               
               if (cod && desc) {
                 const codigoLimpo = String(cod).trim();
                 const nomeLimpo = String(desc).trim();
 
-                // Usa o código do produto como chave para desduplicar
                 if (!produtosUnicosMap.has(codigoLimpo)) {
                   produtosUnicosMap.set(codigoLimpo, {
                     codigo: codigoLimpo,
@@ -991,16 +967,15 @@
                 }
               }
             });
+          });
 
-            // Converte o Map em array
-            state.dbProdutos = Array.from(produtosUnicosMap.values());
-          }
+          state.dbProdutos = Array.from(produtosUnicosMap.values());
 
           atualizarBadgesUpload();
           salvarPlanilhaNoDB(state.dbPDVs, state.dbProdutos, state.setoresDisponiveis);
 
           ocultarSpinner();
-          alert(`Planilha carregada com sucesso!\n${state.dbPDVs.length} PDVs e ${state.dbProdutos.length} Produtos (únicos) processados.`);
+          alert(`Importação Concluída!\n${state.dbPDVs.length} PDVs e ${state.dbProdutos.length} Produtos unificados de todas as abas.`);
           
           if (state.currentTab === 'positivacao') renderForm();
         } catch (err) {
@@ -1144,7 +1119,7 @@
       `;
     }
 
-    // Renderização dos Formulários
+    // Renderização dos Formulários Padrão
     function renderForm() {
       const div = document.getElementById('formulario');
       div.innerHTML = '';
@@ -1347,7 +1322,6 @@
       }
     }
 
-    // --- Adiciona Produto Vertical na Bonificação ---
     let prodCountVert = 1;
     function adicionarLinhaProdutoVertical() {
       const container = document.getElementById('produtos-vertical-list');
@@ -1380,323 +1354,266 @@
       setupAutocomplete(document.getElementById(`codigo-boni-${idx}`), document.getElementById(`produto-boni-${idx}`), 'prod');
     }
 
-    // --- ABA DE POSITIVAÇÃO & DASHBOARD BI ---
+    // --- ABA DE POSITIVAÇÃO REFORMULADA (VISUALIZAÇÃO COMPLETA & FILTROS EM TEMPO REAL NAS COLUNAS) ---
     function renderPositivacaoPanel(container) {
+      const freqs = [...new Set(state.dbPDVs.map(p => p.frequencia).filter(Boolean))].sort();
       const setores = state.setoresDisponiveis.length ? state.setoresDisponiveis : ['414', '415', '416', '417'];
-      
+
       container.innerHTML = `
         <div class="positivacao-panel">
-          <div class="filter-bar">
-            <label style="font-weight:700;"><i class="fa-solid fa-filter"></i> Filtrar por Setor:</label>
-            <select id="select-setor-pos" onchange="atualizarDashboardPositivacao()" style="max-width:200px; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color);">
-              <option value="TODOS">Todos os Setores</option>
-              ${setores.map(s => `<option value="${s}">Setor ${s}</option>`).join('')}
-            </select>
-            <button class="btn-action btn-pdf" style="margin-left:auto;" onclick="gerarRelatorioPDFGeral()">
-              <i class="fa-solid fa-file-pdf"></i> Imprimir Relatório Geral PDF
-            </button>
+          <!-- QUADRO DE PERCENTUAIS E RESUMO EM TEMPO REAL -->
+          <div id="metrics-summary-container"></div>
+
+          <!-- AÇÕES E TÍTULO DA TABELA -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:5px;">
+            <div style="font-weight:700; font-size:14px; color:var(--text-main);">
+              <i class="fa-solid fa-table" style="color:var(--primary);"></i> Pré-Visualização Completa da Planilha
+              <span style="font-size:12px; font-weight:normal; color:var(--text-muted); margin-left:8px;" id="lbl-total-pos-filtrados">(0 registros visíveis)</span>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="btn-action btn-pdf" style="padding:8px 14px; font-size:12.5px;" onclick="gerarRelatorioPDFVisivel()">
+                <i class="fa-solid fa-file-pdf"></i> Imprimir PDF dos Filtrados
+              </button>
+            </div>
           </div>
 
-          <div id="metrics-content">
-            <!-- Métricas -->
+          <!-- TABELA INTERATIVA TIPO EXCEL COM FILTROS NAS COLUNAS -->
+          <div class="excel-table-container">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>
+                    Cód. PDV
+                    <input type="text" class="th-filter-select" id="pos-filter-cod" placeholder="Filtrar Cód..." oninput="atualizarFiltrosPositivacao()">
+                  </th>
+                  <th>
+                    Nome Fantasia
+                    <input type="text" class="th-filter-select" id="pos-filter-nome" placeholder="Filtrar Nome..." oninput="atualizarFiltrosPositivacao()">
+                  </th>
+                  <th>
+                    Frequência / Dia
+                    <select class="th-filter-select" id="pos-filter-freq" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todas</option>
+                      ${freqs.map(f => `<option value="${f}">${f}</option>`).join('')}
+                    </select>
+                  </th>
+                  <th>
+                    RN / Setor
+                    <select class="th-filter-select" id="pos-filter-setor" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      ${setores.map(s => `<option value="${s}">Setor ${s}</option>`).join('')}
+                    </select>
+                  </th>
+                  <th>
+                    PRODUTOS TT
+                    <select class="th-filter-select" id="pos-filter-tt" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      <option value="OK">OK</option>
+                      <option value="NOK">NOK</option>
+                    </select>
+                  </th>
+                  <th>
+                    Cerveja
+                    <select class="th-filter-select" id="pos-filter-cerveja" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      <option value="OK">OK</option>
+                      <option value="NOK">NOK</option>
+                    </select>
+                  </th>
+                  <th>
+                    NAB
+                    <select class="th-filter-select" id="pos-filter-nab" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      <option value="OK">OK</option>
+                      <option value="NOK">NOK</option>
+                    </select>
+                  </th>
+                  <th>
+                    MKT
+                    <select class="th-filter-select" id="pos-filter-mkt" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      <option value="OK">OK</option>
+                      <option value="NOK">NOK</option>
+                    </select>
+                  </th>
+                  <th>
+                    Stella / PG
+                    <select class="th-filter-select" id="pos-filter-stela" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      <option value="OK">OK</option>
+                      <option value="NOK">NOK</option>
+                    </select>
+                  </th>
+                  <th>
+                    Florestal
+                    <select class="th-filter-select" id="pos-filter-florestal" onchange="atualizarFiltrosPositivacao()">
+                      <option value="TODOS">Todos</option>
+                      <option value="OK">OK</option>
+                      <option value="NOK">NOK</option>
+                    </select>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="pos-table-tbody">
+                <!-- Preenchido via JS -->
+              </tbody>
+            </table>
           </div>
         </div>
       `;
 
-      atualizarDashboardPositivacao();
+      atualizarFiltrosPositivacao();
     }
 
-    function atualizarDashboardPositivacao() {
-      const selectSetor = document.getElementById('select-setor-pos');
-      if (!selectSetor) return;
+    function atualizarFiltrosPositivacao() {
+      const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : 'TODOS';
       
-      const setorSel = selectSetor.value;
-      const pdvsFiltrados = setorSel === 'TODOS' 
-        ? state.dbPDVs 
-        : state.dbPDVs.filter(p => p.setor === setorSel);
-
-      const totalPDVs = pdvsFiltrados.length || 1;
-
-      const calcCategory = (key) => {
-        const okCount = pdvsFiltrados.filter(p => p[key] === 'OK').length;
-        const pct = Math.round((okCount / totalPDVs) * 100);
-        return { count: okCount, pct };
+      state.posFilters = {
+        codigo: (document.getElementById('pos-filter-cod')?.value || '').toLowerCase().trim(),
+        nome: (document.getElementById('pos-filter-nome')?.value || '').toLowerCase().trim(),
+        freq: getVal('pos-filter-freq'),
+        setor: getVal('pos-filter-setor'),
+        produtos_tt: getVal('pos-filter-tt'),
+        cerveja: getVal('pos-filter-cerveja'),
+        nab: getVal('pos-filter-nab'),
+        mkt: getVal('pos-filter-mkt'),
+        stela_pg: getVal('pos-filter-stela'),
+        florestal: getVal('pos-filter-florestal')
       };
 
-      const cats = [
-        { key: 'produtos_tt', name: 'PRODUTOS TT (Compradores)', ...calcCategory('produtos_tt') },
-        { key: 'cerveja', name: 'Cerveja', ...calcCategory('cerveja') },
-        { key: 'nab', name: 'NAB (Não Alcoólicos)', ...calcCategory('nab') },
-        { key: 'mkt', name: 'Marketplace (MKT)', ...calcCategory('mkt') },
-        { key: 'stela_pg', name: 'Stella / PG', ...calcCategory('stela_pg') },
-        { key: 'florestal', name: 'Florestal', ...calcCategory('florestal') }
-      ];
-
-      const metricsDiv = document.getElementById('metrics-content');
-      metricsDiv.innerHTML = `
-        <div class="kpi-grid">
-          <div class="kpi-card" style="border-top: 4px solid var(--primary); cursor:default;">
-            <div class="lbl">Total Clientes na Carteira</div>
-            <div class="val">${pdvsFiltrados.length}</div>
-            <div style="font-size:11px; color:var(--text-muted);">Setor Selecionado: ${setorSel}</div>
-          </div>
-        </div>
-
-        <h3 style="margin-top:20px; font-size:15px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
-          <i class="fa-solid fa-hand-pointer" style="color:var(--primary);"></i> Clique em uma categoria para expandir, filtrar e exportar
-        </h3>
-
-        <div class="kpi-grid" style="margin-top:10px;">
-          ${cats.map(c => `
-            <div class="kpi-card" onclick="abrirModalCategoria('${c.key}', '${c.name}')">
-              <div class="lbl">${c.name}</div>
-              <div class="val">${c.pct}%</div>
-              <div style="font-size:12px; font-weight:600; color:var(--text-muted);">${c.count} de ${pdvsFiltrados.length} PDVs</div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" style="width: ${c.pct}%;"></div>
-              </div>
-              <div class="card-click-hint"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> Expandir Lista</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      renderPositivacaoData();
     }
 
-    // --- LÓGICA DO MODAL DE CATEGORIA ---
-    function abrirModalCategoria(key, name) {
-      const selectSetor = document.getElementById('select-setor-pos');
-      const setorSel = selectSetor ? selectSetor.value : 'TODOS';
-      
-      const pdvsSetor = setorSel === 'TODOS' 
-        ? state.dbPDVs 
-        : state.dbPDVs.filter(p => p.setor === setorSel);
+    function renderPositivacaoData() {
+      const { codigo, nome, freq, setor, produtos_tt, cerveja, nab, mkt, stela_pg, florestal } = state.posFilters;
 
-      state.modalData.categoryKey = key;
-      state.modalData.categoryName = name;
-      state.modalData.filterStatus = 'TODOS';
-      state.modalData.pdvs = pdvsSetor.map(p => ({
-        pdv: p,
-        status: p[key] || 'NOK',
-        selected: true
-      }));
-
-      document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-list-check"></i> ${name} - Setor ${setorSel}`;
-      document.getElementById('chk-select-all-modal').checked = true;
-
-      filtrarModalStatus('TODOS');
-      document.getElementById('modal-categoria').classList.add('active');
-    }
-
-    function fecharModal() {
-      document.getElementById('modal-categoria').classList.remove('active');
-    }
-
-    function filtrarModalStatus(status) {
-      state.modalData.filterStatus = status;
-
-      document.getElementById('pill-todos').classList.toggle('active', status === 'TODOS');
-      document.getElementById('pill-ok').classList.toggle('active', status === 'OK');
-      document.getElementById('pill-nok').classList.toggle('active', status === 'NOK');
-
-      renderModalTable();
-    }
-
-    function renderModalTable() {
-      const tbody = document.getElementById('modal-tbody');
-      tbody.innerHTML = '';
-
-      const statusFiltro = state.modalData.filterStatus;
-      const pdvsExibicao = state.modalData.pdvs.filter(item => {
-        if (statusFiltro === 'TODOS') return true;
-        return item.status === statusFiltro;
+      const pdvsFiltrados = state.dbPDVs.filter(p => {
+        if (codigo && !String(p.codigo).toLowerCase().includes(codigo)) return false;
+        if (nome && !String(p.nome).toLowerCase().includes(nome)) return false;
+        if (freq !== 'TODOS' && p.frequencia !== freq) return false;
+        if (setor !== 'TODOS' && p.setor !== setor) return false;
+        if (produtos_tt !== 'TODOS' && p.produtos_tt !== produtos_tt) return false;
+        if (cerveja !== 'TODOS' && p.cerveja !== cerveja) return false;
+        if (nab !== 'TODOS' && p.nab !== nab) return false;
+        if (mkt !== 'TODOS' && p.mkt !== mkt) return false;
+        if (stela_pg !== 'TODOS' && p.stela_pg !== stela_pg) return false;
+        if (florestal !== 'TODOS' && p.florestal !== florestal) return false;
+        return true;
       });
 
-      if (pdvsExibicao.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Nenhum PDV encontrado para este filtro.</td></tr>`;
+      // Recalcular métricas dinamicamente com base no filtro ativo
+      const totalPDVs = pdvsFiltrados.length || 1;
+
+      const calcCat = (key) => {
+        const okCount = pdvsFiltrados.filter(p => p[key] === 'OK').length;
+        const nokCount = pdvsFiltrados.length - okCount;
+        const pct = Math.round((okCount / totalPDVs) * 100);
+        return { okCount, nokCount, pct };
+      };
+
+      const metrics = [
+        { key: 'produtos_tt', name: 'PRODUTOS TT', ...calcCat('produtos_tt') },
+        { key: 'cerveja', name: 'Cerveja', ...calcCat('cerveja') },
+        { key: 'nab', name: 'NAB', ...calcCat('nab') },
+        { key: 'mkt', name: 'Marketplace', ...calcCat('mkt') },
+        { key: 'stela_pg', name: 'Stella / PG', ...calcCat('stela_pg') },
+        { key: 'florestal', name: 'Florestal', ...calcCat('florestal') }
+      ];
+
+      const metricsContainer = document.getElementById('metrics-summary-container');
+      if (metricsContainer) {
+        metricsContainer.innerHTML = `
+          <div class="exec-summary-box">
+            <div>
+              <div class="title">PAINEL EXECUTIVO (RECALCULADO EM TEMPO REAL)</div>
+              <div style="font-size:14px; margin-top:4px;">Setor Filtro: <strong>${setor}</strong> | PDVs Exibidos: <strong>${pdvsFiltrados.length}</strong></div>
+              <div style="font-size:12.5px; color:#cbd5e1; margin-top:2px;">Bateram Meta TT: <strong style="color:#4ade80;">${metrics[0].okCount}</strong> | Pendentes TT: <strong style="color:#f87171;">${metrics[0].nokCount}</strong></div>
+            </div>
+            <div style="text-align:right;">
+              <div class="title">Atingimento Global (TT)</div>
+              <div class="value-main">${metrics[0].pct}%</div>
+            </div>
+          </div>
+
+          <div class="kpi-grid-exec" style="margin-top:12px;">
+            ${metrics.map(m => `
+              <div class="kpi-card-exec">
+                <div class="lbl">${m.name}</div>
+                <div class="val-percent">${m.pct}%</div>
+                <div class="sub-details">
+                  <span>OK: <strong>${m.okCount}</strong></span>
+                  <span style="color:var(--danger);">NOK: <strong>${m.nokCount}</strong></span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" style="width: ${m.pct}%;"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // Renderizar tabela de visualização
+      const tbody = document.getElementById('pos-table-tbody');
+      const lblTotal = document.getElementById('lbl-total-pos-filtrados');
+      if (lblTotal) lblTotal.textContent = `(${pdvsFiltrados.length} PDVs visíveis)`;
+
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (pdvsFiltrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--text-muted);">Nenhum cliente/PDV corresponde aos filtros selecionados.</td></tr>`;
         return;
       }
 
-      pdvsExibicao.forEach((item) => {
+      pdvsFiltrados.forEach(p => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>
-            <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItemModal('${item.pdv.codigo}', this.checked)" />
-          </td>
-          <td><strong>${item.pdv.codigo}</strong></td>
-          <td>${item.pdv.nome}</td>
-          <td>${item.pdv.frequencia || '-'}</td>
-          <td><span class="tag-status ${item.status === 'OK' ? 'ok' : 'nok'}">${item.status}</span></td>
+          <td><strong>[${p.codigo}]</strong></td>
+          <td>${p.nome}</td>
+          <td>${p.frequencia || '-'}</td>
+          <td>Setor ${p.setor || '-'}</td>
+          <td><span class="tag-status ${p.produtos_tt === 'OK' ? 'ok' : 'nok'}">${p.produtos_tt}</span></td>
+          <td><span class="tag-status ${p.cerveja === 'OK' ? 'ok' : 'nok'}">${p.cerveja}</span></td>
+          <td><span class="tag-status ${p.nab === 'OK' ? 'ok' : 'nok'}">${p.nab}</span></td>
+          <td><span class="tag-status ${p.mkt === 'OK' ? 'ok' : 'nok'}">${p.mkt}</span></td>
+          <td><span class="tag-status ${p.stela_pg === 'OK' ? 'ok' : 'nok'}">${p.stela_pg}</span></td>
+          <td><span class="tag-status ${p.florestal === 'OK' ? 'ok' : 'nok'}">${p.florestal}</span></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function toggleItemModal(codigo, isChecked) {
-      const item = state.modalData.pdvs.find(i => i.pdv.codigo === codigo);
-      if (item) item.selected = isChecked;
-    }
+    // --- GERADOR DE PDF DAS FILTRAGENS DA ABA DE POSITIVAÇÃO ---
+    function gerarRelatorioPDFVisivel() {
+      const { codigo, nome, freq, setor, produtos_tt, cerveja, nab, mkt, stela_pg, florestal } = state.posFilters;
 
-    function toggleSelectAllModal(isChecked) {
-      const statusFiltro = state.modalData.filterStatus;
-      state.modalData.pdvs.forEach(item => {
-        if (statusFiltro === 'TODOS' || item.status === statusFiltro) {
-          item.selected = isChecked;
-        }
+      const pdvsFiltrados = state.dbPDVs.filter(p => {
+        if (codigo && !String(p.codigo).toLowerCase().includes(codigo)) return false;
+        if (nome && !String(p.nome).toLowerCase().includes(nome)) return false;
+        if (freq !== 'TODOS' && p.frequencia !== freq) return false;
+        if (setor !== 'TODOS' && p.setor !== setor) return false;
+        if (produtos_tt !== 'TODOS' && p.produtos_tt !== produtos_tt) return false;
+        if (cerveja !== 'TODOS' && p.cerveja !== cerveja) return false;
+        if (nab !== 'TODOS' && p.nab !== nab) return false;
+        if (mkt !== 'TODOS' && p.mkt !== mkt) return false;
+        if (stela_pg !== 'TODOS' && p.stela_pg !== stela_pg) return false;
+        if (florestal !== 'TODOS' && p.florestal !== florestal) return false;
+        return true;
       });
-      renderModalTable();
-    }
-
-    function enviarModalWhatsApp() {
-      const statusFiltro = state.modalData.filterStatus;
-      const selecionados = state.modalData.pdvs.filter(item => 
-        item.selected && (statusFiltro === 'TODOS' || item.status === statusFiltro)
-      );
-
-      if (selecionados.length === 0) {
-        alert('Nenhum PDV selecionado.');
-        return;
-      }
-
-      let text = `*Relatório de Positivação:* ${state.modalData.categoryName}\n`;
-      text += `*Filtro:* ${statusFiltro} | *Total PDVs:* ${selecionados.length}\n`;
-      text += `------------------------------------\n`;
-
-      selecionados.forEach(item => {
-        text += `• [${item.pdv.codigo}] ${item.pdv.nome} - *${item.status}*\n`;
-      });
-
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-    }
-
-    function gerarPDFModalEspecfico() {
-      const statusFiltro = state.modalData.filterStatus;
-      const selecionados = state.modalData.pdvs.filter(item => 
-        item.selected && (statusFiltro === 'TODOS' || item.status === statusFiltro)
-      );
-
-      if (selecionados.length === 0) {
-        alert('Nenhum PDV selecionado para imprimir no PDF.');
-        return;
-      }
-
-      const selectSetor = document.getElementById('select-setor-pos');
-      const setorSel = selectSetor ? selectSetor.value : 'TODOS';
-      const dataHoje = new Date().toLocaleDateString('pt-BR');
-
-      const totalFiltro = selecionados.length;
-      const okCount = selecionados.filter(i => i.status === 'OK').length;
-      const pctOK = Math.round((okCount / (totalFiltro || 1)) * 100);
-
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-          <meta charset="UTF-8">
-          <title>Relatório - ${state.modalData.categoryName}</title>
-          <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #1e293b; background: #fff; }
-            .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
-            .pdf-header h1 { font-size: 20px; color: #4f46e5; margin: 0; }
-            .pdf-header p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
-            
-            .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; }
-            .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; flex: 1; text-align: center; }
-            .kpi-card .val { font-size: 20px; font-weight: bold; color: #4f46e5; }
-            .kpi-card .lbl { font-size: 11px; color: #64748b; text-transform: uppercase; }
-
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-            th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; }
-            th { background-color: #f1f5f9; color: #334155; font-weight: 700; }
-            tr:nth-child(even) { background-color: #f8fafc; }
-            
-            .badge-ok { background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 10px; }
-            .badge-nok { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 10px; }
-          </style>
-        </head>
-        <body>
-          <div class="pdf-header">
-            <div>
-              <h1>Relatório Específico: ${state.modalData.categoryName}</h1>
-              <p>Setor: <strong>${setorSel}</strong> | Filtro Aplicado: <strong>${statusFiltro}</strong></p>
-            </div>
-            <div style="text-align: right;">
-              <p>Data: <strong>${dataHoje}</strong></p>
-            </div>
-          </div>
-
-          <div class="kpi-container">
-            <div class="kpi-card">
-              <div class="lbl">PDVs Selecionados</div>
-              <div class="val">${totalFiltro}</div>
-            </div>
-            <div class="kpi-card">
-              <div class="lbl">Positivados (OK)</div>
-              <div class="val" style="color:#10b981;">${okCount}</div>
-            </div>
-            <div class="kpi-card">
-              <div class="lbl">Taxa de Cobertura</div>
-              <div class="val">${pctOK}%</div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 15%;">Código PDV</th>
-                <th style="width: 50%;">Nome Fantasia</th>
-                <th style="width: 20%;">Frequência Visita</th>
-                <th style="width: 15%;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${selecionados.map(item => `
-                <tr>
-                  <td><strong>${item.pdv.codigo}</strong></td>
-                  <td>${item.pdv.nome}</td>
-                  <td>${item.pdv.frequencia || '-'}</td>
-                  <td><span class="${item.status === 'OK' ? 'badge-ok' : 'badge-nok'}">${item.status}</span></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <script>
-            window.onload = function() { window.print(); };
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
-
-    function gerarRelatorioPDFGeral() {
-      const selectSetor = document.getElementById('select-setor-pos');
-      const setorSel = selectSetor ? selectSetor.value : 'TODOS';
-      const pdvsFiltrados = setorSel === 'TODOS' ? state.dbPDVs : state.dbPDVs.filter(p => p.setor === setorSel);
 
       if (pdvsFiltrados.length === 0) {
-        alert('Nenhum dado encontrado para gerar o relatório PDF.');
+        alert('Nenhum cliente visível para gerar o relatório PDF.');
         return;
       }
 
       const dataHoje = new Date().toLocaleDateString('pt-BR');
+      const horaHoje = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
       const totalPDVs = pdvsFiltrados.length || 1;
-
-      const calcCategory = (key) => {
-        const okCount = pdvsFiltrados.filter(p => p[key] === 'OK').length;
-        const pct = Math.round((okCount / totalPDVs) * 100);
-        return { count: okCount, pct };
-      };
-
-      const cats = {
-        produtos_tt: { name: 'PRODUTOS TT', ...calcCategory('produtos_tt') },
-        cerveja: { name: 'Cerveja', ...calcCategory('cerveja') },
-        nab: { name: 'NAB', ...calcCategory('nab') },
-        mkt: { name: 'Marketplace', ...calcCategory('mkt') },
-        stela_pg: { name: 'Stella / PG', ...calcCategory('stela_pg') },
-        florestal: { name: 'Florestal', ...calcCategory('florestal') }
-      };
+      const okTT = pdvsFiltrados.filter(p => p.produtos_tt === 'OK').length;
+      const nokTT = pdvsFiltrados.length - okTT;
+      const pctTT = Math.round((okTT / totalPDVs) * 100);
 
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
@@ -1704,96 +1621,92 @@
         <html lang="pt-BR">
         <head>
           <meta charset="UTF-8">
-          <title>Relatório Executivo de Positivação</title>
+          <title>RELATÓRIO DE POSITIVAÇÃO FILTRADO</title>
           <style>
-            body { font-family: 'Inter', system-ui, sans-serif; padding: 25px; color: #0f172a; background: #fff; }
-            
-            .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
-            .header-bar h1 { font-size: 22px; color: #4f46e5; margin: 0; }
-            .header-bar p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
-            
-            .kpi-section-title { font-size: 14px; font-weight: bold; color: #334155; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+            body { font-family: 'Inter', Arial, sans-serif; padding: 20px; color: #0f172a; background: #fff; font-size: 11px; }
+            .header-title { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px; }
+            .header-title h1 { font-size: 16px; font-weight: 800; text-transform: uppercase; margin: 0; }
+            .header-title p { font-size: 11px; color: #475569; margin-top: 3px; }
 
-            .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
-            .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
-            .kpi-card .lbl { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; }
-            .kpi-card .val { font-size: 20px; font-weight: bold; color: #4f46e5; margin: 4px 0; }
-            
-            .progress-bg { background: #e2e8f0; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px; }
-            .progress-fill { background: #10b981; height: 100%; }
+            .summary-card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; margin-bottom: 15px; }
+            .summary-card h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; color: #1e293b; }
 
-            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-            th, td { border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; }
-            th { background-color: #f1f5f9; color: #1e293b; font-weight: bold; }
+            .kpi-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
+            .kpi-box { text-align: center; flex: 1; }
+            .kpi-box .val { font-size: 15px; font-weight: 800; color: #2563eb; }
+            .kpi-box .lbl { font-size: 10px; color: #64748b; text-transform: uppercase; }
+
+            table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 8px; }
+            th, td { border: 1px solid #cbd5e1; padding: 5px 6px; text-align: left; }
+            th { background-color: #f1f5f9; color: #0f172a; font-weight: 700; text-transform: uppercase; }
             tr:nth-child(even) { background-color: #f8fafc; }
 
-            .badge-ok { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
-            .badge-nok { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+            .badge-ok { color: #15803d; font-weight: bold; }
+            .badge-nok { color: #b91c1c; font-weight: bold; }
+            .footer-info { margin-top: 15px; font-size: 9px; color: #94a3b8; text-align: right; border-top: 1px dashed #cbd5e1; padding-top: 4px; }
           </style>
         </head>
         <body>
-          <div class="header-bar">
-            <div>
-              <h1>Dashboard de Positivação & Cobertura</h1>
-              <p>Relatório Consolidado de Desempenho por Setor</p>
-            </div>
-            <div style="text-align: right;">
-              <p>Setor: <strong>${setorSel}</strong></p>
-              <p>Emissão: <strong>${dataHoje}</strong></p>
-            </div>
+          <div class="header-title">
+            <h1>RELATÓRIO EXECUTIVO DE POSITIVAÇÃO (FILTRADO)</h1>
+            <p>Emissão: ${dataHoje} às ${horaHoje} | Setor: ${setor} | Frequência: ${freq}</p>
           </div>
 
-          <div class="kpi-section-title">Resumo dos Indicadores principais</div>
-          <div class="kpi-grid">
-            <div class="kpi-card" style="border-left: 4px solid #4f46e5;">
-              <div class="lbl">Total Clientes Carteira</div>
-              <div class="val">${pdvsFiltrados.length}</div>
-              <div style="font-size:10px; color:#64748b;">Setor ${setorSel}</div>
-            </div>
-            ${Object.values(cats).map(c => `
-              <div class="kpi-card">
-                <div class="lbl">${c.name}</div>
-                <div class="val">${c.pct}%</div>
-                <div style="font-size:10px; color:#64748b;">${c.count} de ${pdvsFiltrados.length} PDVs</div>
-                <div class="progress-bg">
-                  <div class="progress-fill" style="width: ${c.pct}%;"></div>
-                </div>
+          <div class="summary-card">
+            <h2>RESUMO DA FILTRAGEM ATIVA</h2>
+            <div class="kpi-row">
+              <div class="kpi-box">
+                <div class="lbl">Total Exibidos</div>
+                <div class="val" style="color:#0f172a;">${pdvsFiltrados.length}</div>
               </div>
-            `).join('')}
+              <div class="kpi-box">
+                <div class="lbl">Compradores TT (OK)</div>
+                <div class="val" style="color:#16a34a;">${okTT}</div>
+              </div>
+              <div class="kpi-box">
+                <div class="lbl">Pendentes TT (NOK)</div>
+                <div class="val" style="color:#dc2626;">${nokTT}</div>
+              </div>
+              <div class="kpi-box">
+                <div class="lbl">Atingimento (TT)</div>
+                <div class="val">${pctTT}%</div>
+              </div>
+            </div>
           </div>
 
-          <div class="kpi-section-title">Detalhamento dos Clientes (PDVs)</div>
+          <h2 style="font-size: 11px; text-transform: uppercase; margin-top: 15px; margin-bottom: 5px;">LISTAGEM COMPLETA DOS CLIENTES FILTRADOS:</h2>
           <table>
             <thead>
               <tr>
-                <th>Cód PDV</th>
-                <th>Nome Fantasia</th>
-                <th>Setor</th>
+                <th>RN</th>
+                <th>Dia/Freq</th>
+                <th>Cliente / PDV</th>
                 <th>PRODUTOS TT</th>
                 <th>CERVEJA</th>
                 <th>NAB</th>
                 <th>MKT</th>
-                <th>STELLA PG</th>
+                <th>STELLA/PG</th>
                 <th>FLORESTAL</th>
               </tr>
             </thead>
             <tbody>
-              ${pdvsFiltrados.slice(0, 150).map(p => `
+              ${pdvsFiltrados.map(p => `
                 <tr>
-                  <td><strong>${p.codigo}</strong></td>
-                  <td>${p.nome}</td>
                   <td>${p.setor}</td>
-                  <td><span class="${p.produtos_tt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.produtos_tt}</span></td>
-                  <td><span class="${p.cerveja === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.cerveja}</span></td>
-                  <td><span class="${p.nab === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.nab}</span></td>
-                  <td><span class="${p.mkt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.mkt}</span></td>
-                  <td><span class="${p.stela_pg === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.stela_pg}</span></td>
-                  <td><span class="${p.florestal === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.florestal}</span></td>
+                  <td>${p.frequencia || '-'}</td>
+                  <td>[${p.codigo}] ${p.nome}</td>
+                  <td class="${p.produtos_tt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.produtos_tt}</td>
+                  <td class="${p.cerveja === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.cerveja}</td>
+                  <td class="${p.nab === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.nab}</td>
+                  <td class="${p.mkt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.mkt}</td>
+                  <td class="${p.stela_pg === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.stela_pg}</td>
+                  <td class="${p.florestal === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.florestal}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
-          ${pdvsFiltrados.length > 150 ? `<p style="font-size:10px; color:#94a3b8; margin-top:8px;">* Exibindo os primeiros 150 PDVs no relatório impresso.</p>` : ''}
+
+          <div class="footer-info">Relatório Interno de Gestão de Vendas - Página 1 de 1</div>
 
           <script>
             window.onload = function() { window.print(); };
