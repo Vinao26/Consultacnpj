@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planejador & Central de Positivação BI</title>
+  
+  <!-- Fontes & Ícones -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leitor de Excel XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --secondary: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 16px;
+      max-width: 1100px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .header h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Upload Card */
+    .db-card {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 25px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .db-info { display: flex; align-items: center; gap: 12px; }
+    .db-info i { font-size: 24px; color: var(--primary); }
+    .db-status { font-size: 13px; font-weight: 500; }
+
+    .db-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .db-badge.active { background: #dcfce7; color: #15803d; }
+
+    .upload-btn {
+      background: var(--primary);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .upload-btn:hover { background: var(--primary-hover); }
+    .upload-btn input[type="file"] { display: none; }
+
+    .btn-clear-db {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-clear-db:hover { background: #fecaca; }
+
+    /* Tabs Nav */
+    .tabs-nav {
+      display: flex;
+      gap: 6px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 25px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      white-space: nowrap;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .tab-btn:hover { color: var(--primary); background: #f8fafc; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: #e0e7ff33; }
+
+    .tab-title-input {
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-size: 13px;
+      color: inherit;
+      width: 75px;
+      border-bottom: 1px dashed var(--text-muted);
+      outline: none;
+    }
+
+    /* Form Area */
+    #formulario {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .check-group {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .check-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .check-group label {
+      font-weight: 600;
+      font-size: 12px;
+      color: #374151;
+      text-transform: uppercase;
+    }
+
+    .check-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .check-group input[type="text"],
+    .check-group input[type="number"],
+    .check-group input[type="date"],
+    .check-group input[type="file"],
+    .check-group select,
+    .check-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 13.5px;
+      background: #fff;
+    }
+
+    .check-group input:focus, .check-group select:focus, .check-group textarea:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    /* Autocomplete */
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid var(--border-color);
+      border-top: none;
+      z-index: 99;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: #fff;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .autocomplete-items div {
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 12.5px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .autocomplete-items div:hover { background-color: #e0e7ff; color: var(--primary); }
+
+    /* Layout Vertical de Produtos na Bonificação */
+    .produto-vertical-container {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .produto-card-vertical {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .produto-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--primary);
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .produto-fields-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media (min-width: 640px) {
+      .produto-fields-grid { grid-template-columns: 2fr 1fr 1fr; }
+    }
+
+    /* Dashboard de Positivação */
+    .positivacao-panel { display: flex; flex-direction: column; gap: 20px; }
+
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .kpi-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 15px rgba(79, 70, 229, 0.1);
+      border-color: var(--primary);
+    }
+
+    .kpi-card .val {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 5px 0;
+    }
+
+    .kpi-card .lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      background: #e2e8f0;
+      border-radius: 8px;
+      height: 8px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar-fill {
+      background: var(--success);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .card-click-hint {
+      font-size: 10px;
+      color: var(--primary);
+      margin-top: 8px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* Modais */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 15px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-container {
+      background: #ffffff;
+      border-radius: 16px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .modal-filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      border: 1px solid var(--border-color);
+      background: #fff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .pill-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .modal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .modal-table th, .modal-table td {
+      padding: 9px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-table th { background: #f8fafc; font-weight: 600; color: #475569; }
+
+    .tag-status {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .tag-status.ok { background: #dcfce7; color: #166534; }
+    .tag-status.nok { background: #fee2e2; color: #991b1b; }
+
+    .modal-footer {
+      padding: 14px 20px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Loading Overlay */
+    #loading-overlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(255,255,255,0.88);
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Buttons */
+    .buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    button.btn-action {
+      border: none;
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-wa-direct { background: #25D366; color: white; }
+    .btn-wa-direct:hover { background: #1ebc57; }
+    .btn-add { background: var(--primary); color: white; }
+    .btn-add:hover { background: var(--primary-hover); }
+    .btn-share { background: var(--secondary); color: white; }
+    .btn-pdf { background: #dc2626; color: white; }
+    .btn-pdf:hover { background: #b91c1c; }
+
+    /* Output Section */
+    .output-section { margin-top: 20px; }
+    .output-header { font-weight: 600; font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+    .output {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .item-container {
+      background: #ffffff;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      position: relative;
+      white-space: pre-line;
+      font-family: monospace;
+      font-size: 12.5px;
+    }
+
+    .item-container .btn-del {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: #fee2e2;
+      color: var(--danger);
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Overlay de Carregamento -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">Processando dados otimizados...</div>
+  </div>
+
+  <div class="container" id="app-container">
+    <div class="header">
+      <h2><i class="fa-solid fa-chart-line"></i> Planejador & Gestão de Positivação</h2>
+    </div>
+
+    <!-- Upload Banco de Dados (Planilha) -->
+    <div class="db-card">
+      <div class="db-info">
+        <i class="fa-solid fa-file-excel"></i>
+        <div>
+          <div style="font-weight: 600; font-size: 14.5px;">Banco de Dados da Planilha</div>
+          <div class="db-status">
+            PDVs/Setores: <span id="count-pdv" class="db-badge">0 reg</span> | 
+            Produtos: <span id="count-prod" class="db-badge">0 reg</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label class="upload-btn">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Upload Planilha Excel
+          <input type="file" id="excel-file-input" accept=".xlsx, .xls" onchange="iniciarProcessamentoPlanilha(event)">
+        </label>
+        <button class="btn-clear-db" onclick="limparBancoDeDados()" title="Limpar dados salvos no navegador">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navegação por Abas (Tabs) -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('janela', this)">
+        <i class="fa-regular fa-calendar-check"></i> Janela de Entrega
+      </button>
+      <button class="tab-btn" onclick="switchTab('bonificacao', this)">
+        <i class="fa-solid fa-gift"></i> Bonificação
+      </button>
+      <button class="tab-btn" onclick="switchTab('desconto', this)">
+        <i class="fa-solid fa-percent"></i> Desconto
+      </button>
+      <button class="tab-btn" onclick="switchTab('limite', this)">
+        <i class="fa-solid fa-wallet"></i> Limite
+      </button>
+      <button class="tab-btn" onclick="switchTab('ativacao', this)">
+        <i class="fa-solid fa-bolt"></i> 
+        <input type="text" id="nome-aba-ativacao" class="tab-title-input" value="Ativação" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+      </button>
+      <button class="tab-btn" onclick="switchTab('custom', this)">
+        <i class="fa-solid fa-sliders"></i> 
+        <input type="text" id="nome-aba-custom" class="tab-title-input" value="Custom" onclick="event.stopPropagation()" onchange="salvarNomesAbas()">
+      </button>
+      <button class="tab-btn" onclick="switchTab('positivacao', this)">
+        <i class="fa-solid fa-chart-pie"></i> Positivação (Setor)
+      </button>
+    </div>
+
+    <!-- Formulário / Conteúdo Dinâmico -->
+    <div id="formulario"></div>
+
+    <!-- Botões de Ação Principais -->
+    <div class="buttons" id="main-buttons">
+      <button class="btn-action btn-wa-direct" onclick="enviarDiretoWhatsApp()">
+        <i class="fa-brands fa-whatsapp"></i> Enviar este para WhatsApp
+      </button>
+      <button class="btn-action btn-add" onclick="adicionarItem()">
+        <i class="fa-solid fa-plus"></i> Adicionar ao Lote
+      </button>
+      <button class="btn-action btn-share" onclick="gerarWhatsapp()">
+        <i class="fa-solid fa-share-nodes"></i> Compartilhar Lote no WhatsApp
+      </button>
+    </div>
+
+    <!-- Saída do Lote -->
+    <div class="output-section" id="output-section">
+      <div class="output-header"><i class="fa-solid fa-layer-group"></i> Itens no Lote:</div>
+      <div class="output" id="saida"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE PRÉ-FILTRO DE IMPORTAÇÃO -->
+  <div class="modal-overlay" id="modal-pre-filtro">
+    <div class="modal-container" style="max-width:450px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-filter"></i> Pré-Filtro de Importação</h3>
+        <button class="modal-close" onclick="fecharModalPreFiltro()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">
+          Selecione o setor específico para acelerar a leitura ou carregue todos os dados da planilha.
+        </p>
+        <div class="check-group">
+          <label>Filtrar Setor na Importação:</label>
+          <select id="select-setor-importacao">
+            <option value="TODOS">Carregar Todos os Setores</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action btn-add" style="width:100%; justify-content:center;" onclick="confirmarImportacaoComFiltro()">
+          <i class="fa-solid fa-check"></i> Importar Dados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL / POP-UP DE EXPANSÃO DE CATEGORIA -->
+  <div class="modal-overlay" id="modal-categoria">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-title"><i class="fa-solid fa-list-check"></i> Detalhes da Categoria</h3>
+        <button class="modal-close" onclick="fecharModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-controls">
+          <div class="modal-filter-pills">
+            <button class="pill-btn active" id="pill-todos" onclick="filtrarModalStatus('TODOS')">Todos</button>
+            <button class="pill-btn" id="pill-ok" onclick="filtrarModalStatus('OK')">Compradores (OK)</button>
+            <button class="pill-btn" id="pill-nok" onclick="filtrarModalStatus('NOK')">Não Compradores (NOK)</button>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <label style="font-size:12px; font-weight:600; cursor:pointer;">
+              <input type="checkbox" id="chk-select-all-modal" onchange="toggleSelectAllModal(this.checked)" checked> Selecionar Todos
+            </label>
+          </div>
+        </div>
+
+        <table class="modal-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">Sel.</th>
+              <th>Cód PDV</th>
+              <th>Nome Fantasia</th>
+              <th>Frequência</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="modal-tbody">
+            <!-- Linhas preenchidas via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action btn-wa-direct" style="padding: 8px 16px; font-size: 13px;" onclick="enviarModalWhatsApp()">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp Específico
+        </button>
+        <button class="btn-action btn-pdf" style="padding: 8px 16px; font-size: 13px;" onclick="gerarPDFModalEspecfico()">
+          <i class="fa-solid fa-file-pdf"></i> PDF Específico
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- PERSISTÊNCIA LOCAL (IndexedDB para Planilhas Grandes) ---
+    const DB_NAME = 'BI_Planner_DB';
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    function abrirDB() {
+      return new Promise((resolve, reject) => {
+        if (dbInstance) return resolve(dbInstance);
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('app_state')) {
+            db.createObjectStore('app_state');
+          }
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = (e) => reject(e);
+      });
+    }
+
+    async function salvarPlanilhaNoDB(dbPDVs, dbProdutos, setoresDisponiveis) {
+      try {
+        const db = await abrirDB();
+        const tx = db.transaction('app_state', 'readwrite');
+        const store = tx.objectStore('app_state');
+        store.put(dbPDVs, 'dbPDVs');
+        store.put(dbProdutos, 'dbProdutos');
+        store.put(setoresDisponiveis, 'setoresDisponiveis');
+      } catch (err) {
+        console.error('Erro ao salvar no IndexedDB:', err);
+      }
+    }
+
+    async function carregarPlanilhaDoDB() {
+      try {
+        const db = await abrirDB();
+        const tx = db.transaction('app_state', 'readonly');
+        const store = tx.objectStore('app_state');
+
+        const getReq = (key) => new Promise((res) => {
+          const r = store.get(key);
+          r.onsuccess = () => res(r.result);
+          r.onerror = () => res(null);
+        });
+
+        const pdvs = await getReq('dbPDVs');
+        const prods = await getReq('dbProdutos');
+        const setores = await getReq('setoresDisponiveis');
+
+        if (pdvs && Array.isArray(pdvs)) state.dbPDVs = pdvs;
+        if (prods && Array.isArray(prods)) state.dbProdutos = prods;
+        if (setores && Array.isArray(setores)) state.setoresDisponiveis = setores;
+
+        atualizarBadgesUpload();
+      } catch (err) {
+        console.error('Erro ao carregar do IndexedDB:', err);
+      }
+    }
+
+    async function limparBancoDeDados() {
+      if (confirm("Deseja apagar o banco de dados da planilha salvo no navegador?")) {
+        try {
+          const db = await abrirDB();
+          const tx = db.transaction('app_state', 'readwrite');
+          tx.objectStore('app_state').clear();
+          state.dbPDVs = [];
+          state.dbProdutos = [];
+          state.setoresDisponiveis = [];
+          atualizarBadgesUpload();
+          if (state.currentTab === 'positivacao') renderForm();
+          alert("Dados da planilha limpos com sucesso!");
+        } catch (err) {
+          alert("Erro ao limpar o banco de dados.");
+        }
+      }
+    }
+
+    // --- Estado Global da Aplicação ---
+    const state = {
+      currentTab: 'janela',
+      itens: [],
+      dbPDVs: [],
+      dbProdutos: [],
+      setoresDisponiveis: [],
+      tempWorkbookRaw: null,
+      modalData: {
+        categoryKey: '',
+        categoryName: '',
+        filterStatus: 'TODOS',
+        pdvs: []
+      }
+    };
+
+    function atualizarBadgesUpload() {
+      const pdvBadge = document.getElementById('count-pdv');
+      const prodBadge = document.getElementById('count-prod');
+      if (pdvBadge && prodBadge) {
+        pdvBadge.textContent = `${state.dbPDVs.length} reg`;
+        pdvBadge.classList.toggle('active', state.dbPDVs.length > 0);
+        prodBadge.textContent = `${state.dbProdutos.length} reg`;
+        prodBadge.classList.toggle('active', state.dbProdutos.length > 0);
+      }
+    }
+
+    // --- Carregamento e Pré-Filtro da Planilha ---
+    function mostrarSpinner(msg = 'Carregando...') {
+      const el = document.getElementById('loading-overlay');
+      document.getElementById('loading-text').textContent = msg;
+      el.style.display = 'flex';
+    }
+
+    function ocultarSpinner() {
+      document.getElementById('loading-overlay').style.display = 'none';
+    }
+
+    function iniciarProcessamentoPlanilha(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      mostrarSpinner("Lendo estrutura da planilha...");
+
+      setTimeout(() => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
+            state.tempWorkbookRaw = workbook;
+
+            const sheetPainelName = workbook.SheetNames.find(n => n.toUpperCase().includes('PAINEL')) || workbook.SheetNames[0];
+            const sheetPainel = workbook.Sheets[sheetPainelName];
+
+            const setoresSet = new Set();
+            if (sheetPainel) {
+              const json = XLSX.utils.sheet_to_json(sheetPainel, { header: 1 });
+              json.forEach((row, idx) => {
+                if (idx >= 2 && row && row[3]) {
+                  const s = String(row[3]).trim();
+                  if (s) setoresSet.add(s);
+                }
+              });
+            }
+
+            const selectImport = document.getElementById('select-setor-importacao');
+            selectImport.innerHTML = '<option value="TODOS">Carregar Todos os Setores</option>';
+            [...setoresSet].sort().forEach(s => {
+              selectImport.innerHTML += `<option value="${s}">Setor ${s}</option>`;
+            });
+
+            ocultarSpinner();
+            document.getElementById('modal-pre-filtro').classList.add('active');
+          } catch (err) {
+            ocultarSpinner();
+            alert('Erro ao ler arquivo Excel: ' + err.message);
+          }
+        };
+        reader.onerror = () => {
+          ocultarSpinner();
+          alert('Erro na leitura do arquivo.');
+        };
+        reader.readAsArrayBuffer(file);
+      }, 50);
+    }
+
+    function fecharModalPreFiltro() {
+      document.getElementById('modal-pre-filtro').classList.remove('active');
+      state.tempWorkbookRaw = null;
+      document.getElementById('excel-file-input').value = '';
+    }
+
+    function confirmarImportacaoComFiltro() {
+      const setorFiltro = document.getElementById('select-setor-importacao').value;
+      const workbook = state.tempWorkbookRaw;
+      fecharModalPreFiltro();
+
+      if (!workbook) return;
+
+      mostrarSpinner("Processando e otimizando dados...");
+
+      setTimeout(() => {
+        try {
+          state.dbPDVs = [];
+          const sheetPainelName = workbook.SheetNames.find(n => n.toUpperCase().includes('PAINEL')) || workbook.SheetNames[0];
+          const sheetPainel = workbook.Sheets[sheetPainelName];
+
+          if (sheetPainel) {
+            const jsonPainel = XLSX.utils.sheet_to_json(sheetPainel, { header: 1 });
+            jsonPainel.forEach((row, idx) => {
+              if (idx >= 2 && row && row[4] && row[5]) {
+                const setorRow = String(row[3] || '').trim();
+                
+                if (setorFiltro === 'TODOS' || setorRow === setorFiltro) {
+                  state.dbPDVs.push({
+                    frequencia: String(row[1] || ''),
+                    gv: String(row[2] || ''),
+                    setor: setorRow,
+                    codigo: String(row[4]).trim(),
+                    nome: String(row[5]).trim(),
+                    produtos_tt: String(row[6] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                    nab: String(row[7] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                    cerveja: String(row[8] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                    mkt: String(row[9] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                    stela_pg: String(row[10] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK',
+                    florestal: String(row[11] || '').toUpperCase().trim() === 'OK' ? 'OK' : 'NOK'
+                  });
+                }
+              }
+            });
+          }
+
+          state.setoresDisponiveis = [...new Set(state.dbPDVs.map(p => p.setor).filter(Boolean))].sort();
+
+          // --- LEITURA DE PRODUTOS AGRUPADOS (SEM DUPLICADOS) ---
+          state.dbProdutos = [];
+          const produtosUnicosMap = new Map(); // Garante registros únicos
+
+          const sheetProdName = workbook.SheetNames.find(n => n.toUpperCase().includes('VILHENA') && !n.toUpperCase().includes('PAINEL')) || workbook.SheetNames[1];
+          const sheetProd = workbook.Sheets[sheetProdName];
+
+          if (sheetProd) {
+            const jsonProd = XLSX.utils.sheet_to_json(sheetProd);
+            jsonProd.forEach(row => {
+              const cod = row['Cod.Produto'] || row['Codigo'] || row['PRODUTO TOTAL'];
+              const desc = row['Desc.Produto'] || row['Descrição'] || row['Descricao'];
+              
+              if (cod && desc) {
+                const codigoLimpo = String(cod).trim();
+                const nomeLimpo = String(desc).trim();
+
+                // Usa o código do produto como chave para desduplicar
+                if (!produtosUnicosMap.has(codigoLimpo)) {
+                  produtosUnicosMap.set(codigoLimpo, {
+                    codigo: codigoLimpo,
+                    nome: nomeLimpo
+                  });
+                }
+              }
+            });
+
+            // Converte o Map em array
+            state.dbProdutos = Array.from(produtosUnicosMap.values());
+          }
+
+          atualizarBadgesUpload();
+          salvarPlanilhaNoDB(state.dbPDVs, state.dbProdutos, state.setoresDisponiveis);
+
+          ocultarSpinner();
+          alert(`Planilha carregada com sucesso!\n${state.dbPDVs.length} PDVs e ${state.dbProdutos.length} Produtos (únicos) processados.`);
+          
+          if (state.currentTab === 'positivacao') renderForm();
+        } catch (err) {
+          ocultarSpinner();
+          alert("Ocorreu um erro ao processar os dados: " + err.message);
+        }
+      }, 50);
+    }
+
+    // --- Persistência de Lotes e Nomes de Abas ---
+    function salvarLoteStorage() {
+      localStorage.setItem('BI_PLANNER_LOTE', JSON.stringify(state.itens));
+    }
+
+    function carregarLoteStorage() {
+      const saved = localStorage.getItem('BI_PLANNER_LOTE');
+      if (saved) {
+        try {
+          state.itens = JSON.parse(saved);
+          atualizarSaida();
+        } catch(e){}
+      }
+    }
+
+    function salvarNomesAbas() {
+      const ativ = document.getElementById('nome-aba-ativacao').value;
+      const cust = document.getElementById('nome-aba-custom').value;
+      localStorage.setItem('BI_PLANNER_ABAS', JSON.stringify({ ativ, cust }));
+    }
+
+    function carregarNomesAbas() {
+      const saved = localStorage.getItem('BI_PLANNER_ABAS');
+      if (saved) {
+        try {
+          const { ativ, cust } = JSON.parse(saved);
+          if (ativ) document.getElementById('nome-aba-ativacao').value = ativ;
+          if (cust) document.getElementById('nome-aba-custom').value = cust;
+        } catch(e){}
+      }
+    }
+
+    // --- Autocomplete ---
+    function setupAutocomplete(inputEl, targetInputEl, type) {
+      if (!inputEl) return;
+      inputEl.addEventListener("input", function() {
+        const val = this.value;
+        closeAllLists();
+        if (!val) return false;
+
+        const listDiv = document.createElement("DIV");
+        listDiv.setAttribute("class", "autocomplete-items");
+        this.parentNode.appendChild(listDiv);
+
+        const dataset = type === 'pdv' ? state.dbPDVs : state.dbProdutos;
+        const searchVal = val.toUpperCase();
+        
+        let matches = dataset.filter(item => 
+          (item.codigo && item.codigo.toUpperCase().includes(searchVal)) || 
+          (item.nome && item.nome.toUpperCase().includes(searchVal))
+        ).slice(0, 15);
+
+        matches.forEach(item => {
+          const b = document.createElement("DIV");
+          b.innerHTML = `[${item.codigo}] ${item.nome}`.replace(new RegExp(val, "gi"), (match) => `<strong>${match}</strong>`);
+          
+          b.addEventListener("click", function() {
+            if (inputEl.id.includes('cod') || inputEl.id.includes('codigo')) {
+              inputEl.value = item.codigo;
+              if (targetInputEl) targetInputEl.value = item.nome;
+            } else {
+              inputEl.value = item.nome;
+              if (targetInputEl) targetInputEl.value = item.codigo;
+            }
+            closeAllLists();
+          });
+          listDiv.appendChild(b);
+        });
+      });
+
+      function closeAllLists(elmnt) {
+        const x = document.getElementsByClassName("autocomplete-items");
+        for (let i = 0; i < x.length; i++) {
+          if (elmnt != x[i] && elmnt != inputEl) x[i].parentNode.removeChild(x[i]);
+        }
+      }
+
+      document.addEventListener("click", (e) => closeAllLists(e.target));
+    }
+
+    // --- Troca de Abas ---
+    function switchTab(tabKey, element) {
+      state.currentTab = tabKey;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      if (element) element.classList.add('active');
+
+      const mainBtns = document.getElementById('main-buttons');
+      const outputSec = document.getElementById('output-section');
+      
+      if (tabKey === 'positivacao') {
+        mainBtns.style.display = 'none';
+        outputSec.style.display = 'none';
+      } else {
+        mainBtns.style.display = 'flex';
+        outputSec.style.display = 'block';
+      }
+
+      renderForm();
+    }
+
+    function formatarData(data) {
+      if (!data) return '';
+      const p = data.split('-');
+      return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : data;
+    }
+
+    function calcularTTV() {
+      const custo = parseFloat(document.getElementById('custo-desc').value) || 0;
+      const desconto = parseFloat(document.getElementById('desconto-desc').value) || 0;
+      const ttvFinal = custo - (custo * (desconto / 100));
+      document.getElementById('ttv-desc').value = ttvFinal.toFixed(2);
+    }
+
+    function getFotoFieldHTML(prefix) {
+      return `
+        <div class="check-group" style="grid-column: 1 / -1;">
+          <div class="check-header"><label><i class="fa-solid fa-paperclip"></i> Foto do Cadastro / Anexo:</label></div>
+          <input type="file" id="foto-${prefix}" accept="image/*" />
+        </div>
+      `;
+    }
+
+    function buildField(label, id, defaultValue = '') {
+      return `
+        <div class="check-group">
+          <div class="check-header">
+            <label>${label}</label>
+            <input type="checkbox" id="chk-${id}" checked />
+          </div>
+          <input type="text" id="${id}" value="${defaultValue}" autocomplete="off" />
+        </div>
+      `;
+    }
+
+    // Renderização dos Formulários
+    function renderForm() {
+      const div = document.getElementById('formulario');
+      div.innerHTML = '';
+      const tab = state.currentTab;
+
+      if (tab === 'janela') {
+        div.innerHTML = `
+          <div class="section">
+            ${buildField('Operação', 'op-janela', '1031538')}
+            ${buildField('Filial', 'filial-janela', 'Vilhena')}
+            ${buildField('Rn', 'rn-janela', '414')}
+            ${buildField('Cod PDV', 'codpdv-janela')}
+            ${buildField('Nome Fantasia', 'nome-janela')}
+            <div class="check-group">
+              <div class="check-header"><label>Data de Entrega</label><input type="checkbox" id="chk-data-janela" checked /></div>
+              <input type="date" id="data-janela" />
+            </div>
+            ${buildField('Motivo', 'motivo-janela')}
+            ${buildField('Cidade', 'cidade-janela', 'Cerejeiras')}
+            ${getFotoFieldHTML('janela')}
+          </div>`;
+        setupAutocomplete(document.getElementById('codpdv-janela'), document.getElementById('nome-janela'), 'pdv');
+        setupAutocomplete(document.getElementById('nome-janela'), document.getElementById('codpdv-janela'), 'pdv');
+      }
+
+      if (tab === 'bonificacao') {
+        div.innerHTML = `
+          <div class="section">
+            ${buildField('Operação', 'op-boni', '1031538')}
+            ${buildField('Filial', 'filial-boni', 'Vilhena')}
+            ${buildField('Rn', 'rn-boni', '414')}
+            ${buildField('Cod PDV', 'codpdv-boni')}
+            ${buildField('Nome Fantasia', 'nome-boni')}
+            
+            <div class="produto-vertical-container">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="font-weight: 700; font-size: 13px; color: var(--text-main);"><i class="fa-solid fa-boxes-stacked"></i> Lista de Produtos (Bonificação)</label>
+                <button class="btn-action btn-add" style="padding: 5px 10px; font-size:11.5px;" onclick="adicionarLinhaProdutoVertical()"><i class="fa-solid fa-plus"></i> Adicionar Produto</button>
+              </div>
+              <div id="produtos-vertical-list">
+                <div class="produto-card-vertical">
+                  <div class="produto-card-header">
+                    <span>Item #1</span>
+                  </div>
+                  <div class="produto-fields-grid">
+                    <div class="check-group">
+                      <label style="font-size:11px;">Descrição do Produto</label>
+                      <input type="text" id="produto-boni-0" placeholder="Nome do Produto" autocomplete="off"/>
+                    </div>
+                    <div class="check-group">
+                      <label style="font-size:11px;">Código</label>
+                      <input type="text" id="codigo-boni-0" placeholder="Código" autocomplete="off"/>
+                    </div>
+                    <div class="check-group">
+                      <label style="font-size:11px;">Quantidade</label>
+                      <input type="number" id="quantidade-boni-0" placeholder="Qtd" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="check-group">
+              <div class="check-header"><label>Data de entrega</label><input type="checkbox" id="chk-data-boni" checked /></div>
+              <input type="date" id="data-boni" />
+            </div>
+            ${buildField('Motivo', 'motivo-boni')}
+            ${buildField('Cidade', 'cidade-boni', 'Cerejeiras')}
+            ${getFotoFieldHTML('boni')}
+          </div>`;
+
+        setupAutocomplete(document.getElementById('codpdv-boni'), document.getElementById('nome-boni'), 'pdv');
+        setupAutocomplete(document.getElementById('nome-boni'), document.getElementById('codpdv-boni'), 'pdv');
+        setupAutocomplete(document.getElementById('produto-boni-0'), document.getElementById('codigo-boni-0'), 'prod');
+        setupAutocomplete(document.getElementById('codigo-boni-0'), document.getElementById('produto-boni-0'), 'prod');
+      }
+
+      if (tab === 'desconto') {
+        div.innerHTML = `
+          <div class="section">
+            ${buildField('Operação', 'op-desc', '1031538')}
+            ${buildField('Rn', 'rn-desc', '414')}
+            ${buildField('Produto', 'produto-desc')}
+            ${buildField('Código Produto', 'codigo-desc')}
+            ${buildField('Quantidade', 'quantidade-desc')}
+            <div class="check-group">
+              <div class="check-header"><label>Desconto (%)</label><input type="checkbox" id="chk-desconto-desc" checked /></div>
+              <input type="number" step="0.01" id="desconto-desc" onchange="calcularTTV()" />
+            </div>
+            <div class="check-group">
+              <div class="check-header"><label>Custo (R$)</label><input type="checkbox" id="chk-custo-desc" checked /></div>
+              <input type="number" step="0.01" id="custo-desc" onchange="calcularTTV()" />
+            </div>
+            <div class="check-group">
+              <div class="check-header"><label>TTV Final (R$)</label><input type="checkbox" id="chk-ttv-desc" checked /></div>
+              <input type="number" step="0.01" id="ttv-desc" readonly />
+            </div>
+            ${getFotoFieldHTML('desc')}
+          </div>`;
+        setupAutocomplete(document.getElementById('produto-desc'), document.getElementById('codigo-desc'), 'prod');
+        setupAutocomplete(document.getElementById('codigo-desc'), document.getElementById('produto-desc'), 'prod');
+      }
+
+      if (tab === 'limite') {
+        div.innerHTML = `
+          <div class="section">
+            ${buildField('Operação', 'op-limite', '1031538')}
+            ${buildField('Filial', 'filial-limite', 'Vilhena')}
+            ${buildField('Rn', 'rn-limite', '414')}
+            ${buildField('Cod PDV', 'codpdv-limite')}
+            ${buildField('Nome Fantasia', 'nome-limite')}
+            ${buildField('Limite', 'valor-limite')}
+            ${buildField('Motivo', 'motivo-limite')}
+            <div class="check-group">
+              <div class="check-header"><label>Forma de Pagamento</label><input type="checkbox" id="chk-pagamento-limite" checked /></div>
+              <select id="pagamento-limite">
+                <option value="">Selecione</option>
+                <option value="PIX">PIX</option>
+                <option value="Boleto 3 dias com ADF">Boleto 3 dias com ADF</option>
+              </select>
+            </div>
+            ${getFotoFieldHTML('limite')}
+          </div>`;
+        setupAutocomplete(document.getElementById('codpdv-limite'), document.getElementById('nome-limite'), 'pdv');
+        setupAutocomplete(document.getElementById('nome-limite'), document.getElementById('codpdv-limite'), 'pdv');
+      }
+
+      if (tab === 'ativacao') {
+        div.innerHTML = `
+          <div class="section">
+            ${buildField('Operação', 'op-ativacao', '1031538')}
+            ${buildField('Filial', 'filial-ativacao', 'Vilhena')}
+            ${buildField('Rn', 'rn-ativacao', '414')}
+            ${buildField('Cod PDV', 'codpdv-ativacao')}
+            ${buildField('Nome Fantasia', 'nome-ativacao')}
+            <div class="check-group">
+              <div class="check-header"><label>Dia de Visita</label><input type="checkbox" id="chk-dia-visita-ativacao" checked /></div>
+              <select id="dia-visita-ativacao">
+                <option value="">Selecione</option>
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+              </select>
+            </div>
+            <div class="check-group">
+              <div class="check-header"><label>Dia de Entrega</label><input type="checkbox" id="chk-dia-entrega-ativacao" checked /></div>
+              <select id="dia-entrega-ativacao">
+                <option value="">Selecione</option>
+                <option value="Segunda-feira">Segunda-feira</option>
+                <option value="Terça-feira">Terça-feira</option>
+                <option value="Quarta-feira">Quarta-feira</option>
+                <option value="Quinta-feira">Quinta-feira</option>
+                <option value="Sexta-feira">Sexta-feira</option>
+              </select>
+            </div>
+            ${buildField('Limite', 'limite-ativacao')}
+            <div class="check-group">
+              <div class="check-header"><label>Forma de Pagamento</label><input type="checkbox" id="chk-pagamento-ativacao" checked /></div>
+              <select id="pagamento-ativacao">
+                <option value="">Selecione</option>
+                <option value="PIX">PIX</option>
+                <option value="Boleto 3 dias com ADF">Boleto 3 dias com ADF</option>
+              </select>
+            </div>
+            ${buildField('Cidade', 'cidade-ativacao', 'Cerejeiras')}
+            ${getFotoFieldHTML('ativacao')}
+          </div>`;
+        setupAutocomplete(document.getElementById('codpdv-ativacao'), document.getElementById('nome-ativacao'), 'pdv');
+        setupAutocomplete(document.getElementById('nome-ativacao'), document.getElementById('codpdv-ativacao'), 'pdv');
+      }
+
+      if (tab === 'custom') {
+        div.innerHTML = `
+          <div class="section">
+            ${buildField('Operação', 'op-custom', '1031538')}
+            ${buildField('Filial', 'filial-custom', 'Vilhena')}
+            ${buildField('Rn', 'rn-custom', '414')}
+            ${buildField('Cod PDV', 'codpdv-custom')}
+            ${buildField('Nome Fantasia', 'nome-custom')}
+            <div class="check-group">
+              <div class="check-header"><label>Data</label><input type="checkbox" id="chk-data-custom" checked /></div>
+              <input type="date" id="data-custom" />
+            </div>
+            ${buildField('Motivo', 'motivo-custom')}
+            ${buildField('Valor / Limite', 'valor-custom')}
+            <div class="check-group" style="grid-column: 1 / -1;">
+              <div class="check-header"><label>Observações Adicionais</label><input type="checkbox" id="chk-obs-custom" checked /></div>
+              <textarea id="obs-custom" rows="2" placeholder="Digite suas observações personalizadas..."></textarea>
+            </div>
+            ${getFotoFieldHTML('custom')}
+          </div>`;
+        setupAutocomplete(document.getElementById('codpdv-custom'), document.getElementById('nome-custom'), 'pdv');
+        setupAutocomplete(document.getElementById('nome-custom'), document.getElementById('codpdv-custom'), 'pdv');
+      }
+
+      if (tab === 'positivacao') {
+        renderPositivacaoPanel(div);
+      }
+    }
+
+    // --- Adiciona Produto Vertical na Bonificação ---
+    let prodCountVert = 1;
+    function adicionarLinhaProdutoVertical() {
+      const container = document.getElementById('produtos-vertical-list');
+      const idx = prodCountVert++;
+      const card = document.createElement('div');
+      card.className = 'produto-card-vertical';
+      card.innerHTML = `
+        <div class="produto-card-header">
+          <span>Item #${idx + 1}</span>
+          <button class="btn-action btn-pdf" style="padding:4px 8px; font-size:11px;" onclick="this.closest('.produto-card-vertical').remove()"><i class="fa-solid fa-trash"></i> Remover</button>
+        </div>
+        <div class="produto-fields-grid">
+          <div class="check-group">
+            <label style="font-size:11px;">Descrição do Produto</label>
+            <input type="text" id="produto-boni-${idx}" placeholder="Nome do Produto" autocomplete="off"/>
+          </div>
+          <div class="check-group">
+            <label style="font-size:11px;">Código</label>
+            <input type="text" id="codigo-boni-${idx}" placeholder="Código" autocomplete="off"/>
+          </div>
+          <div class="check-group">
+            <label style="font-size:11px;">Quantidade</label>
+            <input type="number" id="quantidade-boni-${idx}" placeholder="Qtd" />
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+
+      setupAutocomplete(document.getElementById(`produto-boni-${idx}`), document.getElementById(`codigo-boni-${idx}`), 'prod');
+      setupAutocomplete(document.getElementById(`codigo-boni-${idx}`), document.getElementById(`produto-boni-${idx}`), 'prod');
+    }
+
+    // --- ABA DE POSITIVAÇÃO & DASHBOARD BI ---
+    function renderPositivacaoPanel(container) {
+      const setores = state.setoresDisponiveis.length ? state.setoresDisponiveis : ['414', '415', '416', '417'];
+      
+      container.innerHTML = `
+        <div class="positivacao-panel">
+          <div class="filter-bar">
+            <label style="font-weight:700;"><i class="fa-solid fa-filter"></i> Filtrar por Setor:</label>
+            <select id="select-setor-pos" onchange="atualizarDashboardPositivacao()" style="max-width:200px; padding:8px 12px; border-radius:6px; border:1px solid var(--border-color);">
+              <option value="TODOS">Todos os Setores</option>
+              ${setores.map(s => `<option value="${s}">Setor ${s}</option>`).join('')}
+            </select>
+            <button class="btn-action btn-pdf" style="margin-left:auto;" onclick="gerarRelatorioPDFGeral()">
+              <i class="fa-solid fa-file-pdf"></i> Imprimir Relatório Geral PDF
+            </button>
+          </div>
+
+          <div id="metrics-content">
+            <!-- Métricas -->
+          </div>
+        </div>
+      `;
+
+      atualizarDashboardPositivacao();
+    }
+
+    function atualizarDashboardPositivacao() {
+      const selectSetor = document.getElementById('select-setor-pos');
+      if (!selectSetor) return;
+      
+      const setorSel = selectSetor.value;
+      const pdvsFiltrados = setorSel === 'TODOS' 
+        ? state.dbPDVs 
+        : state.dbPDVs.filter(p => p.setor === setorSel);
+
+      const totalPDVs = pdvsFiltrados.length || 1;
+
+      const calcCategory = (key) => {
+        const okCount = pdvsFiltrados.filter(p => p[key] === 'OK').length;
+        const pct = Math.round((okCount / totalPDVs) * 100);
+        return { count: okCount, pct };
+      };
+
+      const cats = [
+        { key: 'produtos_tt', name: 'PRODUTOS TT (Compradores)', ...calcCategory('produtos_tt') },
+        { key: 'cerveja', name: 'Cerveja', ...calcCategory('cerveja') },
+        { key: 'nab', name: 'NAB (Não Alcoólicos)', ...calcCategory('nab') },
+        { key: 'mkt', name: 'Marketplace (MKT)', ...calcCategory('mkt') },
+        { key: 'stela_pg', name: 'Stella / PG', ...calcCategory('stela_pg') },
+        { key: 'florestal', name: 'Florestal', ...calcCategory('florestal') }
+      ];
+
+      const metricsDiv = document.getElementById('metrics-content');
+      metricsDiv.innerHTML = `
+        <div class="kpi-grid">
+          <div class="kpi-card" style="border-top: 4px solid var(--primary); cursor:default;">
+            <div class="lbl">Total Clientes na Carteira</div>
+            <div class="val">${pdvsFiltrados.length}</div>
+            <div style="font-size:11px; color:var(--text-muted);">Setor Selecionado: ${setorSel}</div>
+          </div>
+        </div>
+
+        <h3 style="margin-top:20px; font-size:15px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-hand-pointer" style="color:var(--primary);"></i> Clique em uma categoria para expandir, filtrar e exportar
+        </h3>
+
+        <div class="kpi-grid" style="margin-top:10px;">
+          ${cats.map(c => `
+            <div class="kpi-card" onclick="abrirModalCategoria('${c.key}', '${c.name}')">
+              <div class="lbl">${c.name}</div>
+              <div class="val">${c.pct}%</div>
+              <div style="font-size:12px; font-weight:600; color:var(--text-muted);">${c.count} de ${pdvsFiltrados.length} PDVs</div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: ${c.pct}%;"></div>
+              </div>
+              <div class="card-click-hint"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> Expandir Lista</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // --- LÓGICA DO MODAL DE CATEGORIA ---
+    function abrirModalCategoria(key, name) {
+      const selectSetor = document.getElementById('select-setor-pos');
+      const setorSel = selectSetor ? selectSetor.value : 'TODOS';
+      
+      const pdvsSetor = setorSel === 'TODOS' 
+        ? state.dbPDVs 
+        : state.dbPDVs.filter(p => p.setor === setorSel);
+
+      state.modalData.categoryKey = key;
+      state.modalData.categoryName = name;
+      state.modalData.filterStatus = 'TODOS';
+      state.modalData.pdvs = pdvsSetor.map(p => ({
+        pdv: p,
+        status: p[key] || 'NOK',
+        selected: true
+      }));
+
+      document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-list-check"></i> ${name} - Setor ${setorSel}`;
+      document.getElementById('chk-select-all-modal').checked = true;
+
+      filtrarModalStatus('TODOS');
+      document.getElementById('modal-categoria').classList.add('active');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-categoria').classList.remove('active');
+    }
+
+    function filtrarModalStatus(status) {
+      state.modalData.filterStatus = status;
+
+      document.getElementById('pill-todos').classList.toggle('active', status === 'TODOS');
+      document.getElementById('pill-ok').classList.toggle('active', status === 'OK');
+      document.getElementById('pill-nok').classList.toggle('active', status === 'NOK');
+
+      renderModalTable();
+    }
+
+    function renderModalTable() {
+      const tbody = document.getElementById('modal-tbody');
+      tbody.innerHTML = '';
+
+      const statusFiltro = state.modalData.filterStatus;
+      const pdvsExibicao = state.modalData.pdvs.filter(item => {
+        if (statusFiltro === 'TODOS') return true;
+        return item.status === statusFiltro;
+      });
+
+      if (pdvsExibicao.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Nenhum PDV encontrado para este filtro.</td></tr>`;
+        return;
+      }
+
+      pdvsExibicao.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="toggleItemModal('${item.pdv.codigo}', this.checked)" />
+          </td>
+          <td><strong>${item.pdv.codigo}</strong></td>
+          <td>${item.pdv.nome}</td>
+          <td>${item.pdv.frequencia || '-'}</td>
+          <td><span class="tag-status ${item.status === 'OK' ? 'ok' : 'nok'}">${item.status}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleItemModal(codigo, isChecked) {
+      const item = state.modalData.pdvs.find(i => i.pdv.codigo === codigo);
+      if (item) item.selected = isChecked;
+    }
+
+    function toggleSelectAllModal(isChecked) {
+      const statusFiltro = state.modalData.filterStatus;
+      state.modalData.pdvs.forEach(item => {
+        if (statusFiltro === 'TODOS' || item.status === statusFiltro) {
+          item.selected = isChecked;
+        }
+      });
+      renderModalTable();
+    }
+
+    function enviarModalWhatsApp() {
+      const statusFiltro = state.modalData.filterStatus;
+      const selecionados = state.modalData.pdvs.filter(item => 
+        item.selected && (statusFiltro === 'TODOS' || item.status === statusFiltro)
+      );
+
+      if (selecionados.length === 0) {
+        alert('Nenhum PDV selecionado.');
+        return;
+      }
+
+      let text = `*Relatório de Positivação:* ${state.modalData.categoryName}\n`;
+      text += `*Filtro:* ${statusFiltro} | *Total PDVs:* ${selecionados.length}\n`;
+      text += `------------------------------------\n`;
+
+      selecionados.forEach(item => {
+        text += `• [${item.pdv.codigo}] ${item.pdv.nome} - *${item.status}*\n`;
+      });
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function gerarPDFModalEspecfico() {
+      const statusFiltro = state.modalData.filterStatus;
+      const selecionados = state.modalData.pdvs.filter(item => 
+        item.selected && (statusFiltro === 'TODOS' || item.status === statusFiltro)
+      );
+
+      if (selecionados.length === 0) {
+        alert('Nenhum PDV selecionado para imprimir no PDF.');
+        return;
+      }
+
+      const selectSetor = document.getElementById('select-setor-pos');
+      const setorSel = selectSetor ? selectSetor.value : 'TODOS';
+      const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+      const totalFiltro = selecionados.length;
+      const okCount = selecionados.filter(i => i.status === 'OK').length;
+      const pctOK = Math.round((okCount / (totalFiltro || 1)) * 100);
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório - ${state.modalData.categoryName}</title>
+          <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #1e293b; background: #fff; }
+            .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
+            .pdf-header h1 { font-size: 20px; color: #4f46e5; margin: 0; }
+            .pdf-header p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
+            
+            .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; }
+            .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; flex: 1; text-align: center; }
+            .kpi-card .val { font-size: 20px; font-weight: bold; color: #4f46e5; }
+            .kpi-card .lbl { font-size: 11px; color: #64748b; text-transform: uppercase; }
+
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+            th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; }
+            th { background-color: #f1f5f9; color: #334155; font-weight: 700; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            
+            .badge-ok { background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 10px; }
+            .badge-nok { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="pdf-header">
+            <div>
+              <h1>Relatório Específico: ${state.modalData.categoryName}</h1>
+              <p>Setor: <strong>${setorSel}</strong> | Filtro Aplicado: <strong>${statusFiltro}</strong></p>
+            </div>
+            <div style="text-align: right;">
+              <p>Data: <strong>${dataHoje}</strong></p>
+            </div>
+          </div>
+
+          <div class="kpi-container">
+            <div class="kpi-card">
+              <div class="lbl">PDVs Selecionados</div>
+              <div class="val">${totalFiltro}</div>
+            </div>
+            <div class="kpi-card">
+              <div class="lbl">Positivados (OK)</div>
+              <div class="val" style="color:#10b981;">${okCount}</div>
+            </div>
+            <div class="kpi-card">
+              <div class="lbl">Taxa de Cobertura</div>
+              <div class="val">${pctOK}%</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 15%;">Código PDV</th>
+                <th style="width: 50%;">Nome Fantasia</th>
+                <th style="width: 20%;">Frequência Visita</th>
+                <th style="width: 15%;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${selecionados.map(item => `
+                <tr>
+                  <td><strong>${item.pdv.codigo}</strong></td>
+                  <td>${item.pdv.nome}</td>
+                  <td>${item.pdv.frequencia || '-'}</td>
+                  <td><span class="${item.status === 'OK' ? 'badge-ok' : 'badge-nok'}">${item.status}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <script>
+            window.onload = function() { window.print(); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    function gerarRelatorioPDFGeral() {
+      const selectSetor = document.getElementById('select-setor-pos');
+      const setorSel = selectSetor ? selectSetor.value : 'TODOS';
+      const pdvsFiltrados = setorSel === 'TODOS' ? state.dbPDVs : state.dbPDVs.filter(p => p.setor === setorSel);
+
+      if (pdvsFiltrados.length === 0) {
+        alert('Nenhum dado encontrado para gerar o relatório PDF.');
+        return;
+      }
+
+      const dataHoje = new Date().toLocaleDateString('pt-BR');
+      const totalPDVs = pdvsFiltrados.length || 1;
+
+      const calcCategory = (key) => {
+        const okCount = pdvsFiltrados.filter(p => p[key] === 'OK').length;
+        const pct = Math.round((okCount / totalPDVs) * 100);
+        return { count: okCount, pct };
+      };
+
+      const cats = {
+        produtos_tt: { name: 'PRODUTOS TT', ...calcCategory('produtos_tt') },
+        cerveja: { name: 'Cerveja', ...calcCategory('cerveja') },
+        nab: { name: 'NAB', ...calcCategory('nab') },
+        mkt: { name: 'Marketplace', ...calcCategory('mkt') },
+        stela_pg: { name: 'Stella / PG', ...calcCategory('stela_pg') },
+        florestal: { name: 'Florestal', ...calcCategory('florestal') }
+      };
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Relatório Executivo de Positivação</title>
+          <style>
+            body { font-family: 'Inter', system-ui, sans-serif; padding: 25px; color: #0f172a; background: #fff; }
+            
+            .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
+            .header-bar h1 { font-size: 22px; color: #4f46e5; margin: 0; }
+            .header-bar p { font-size: 12px; color: #64748b; margin: 4px 0 0; }
+            
+            .kpi-section-title { font-size: 14px; font-weight: bold; color: #334155; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+            .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 25px; }
+            .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+            .kpi-card .lbl { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+            .kpi-card .val { font-size: 20px; font-weight: bold; color: #4f46e5; margin: 4px 0; }
+            
+            .progress-bg { background: #e2e8f0; border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px; }
+            .progress-fill { background: #10b981; height: 100%; }
+
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+            th, td { border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; }
+            th { background-color: #f1f5f9; color: #1e293b; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+
+            .badge-ok { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+            .badge-nok { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header-bar">
+            <div>
+              <h1>Dashboard de Positivação & Cobertura</h1>
+              <p>Relatório Consolidado de Desempenho por Setor</p>
+            </div>
+            <div style="text-align: right;">
+              <p>Setor: <strong>${setorSel}</strong></p>
+              <p>Emissão: <strong>${dataHoje}</strong></p>
+            </div>
+          </div>
+
+          <div class="kpi-section-title">Resumo dos Indicadores principais</div>
+          <div class="kpi-grid">
+            <div class="kpi-card" style="border-left: 4px solid #4f46e5;">
+              <div class="lbl">Total Clientes Carteira</div>
+              <div class="val">${pdvsFiltrados.length}</div>
+              <div style="font-size:10px; color:#64748b;">Setor ${setorSel}</div>
+            </div>
+            ${Object.values(cats).map(c => `
+              <div class="kpi-card">
+                <div class="lbl">${c.name}</div>
+                <div class="val">${c.pct}%</div>
+                <div style="font-size:10px; color:#64748b;">${c.count} de ${pdvsFiltrados.length} PDVs</div>
+                <div class="progress-bg">
+                  <div class="progress-fill" style="width: ${c.pct}%;"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="kpi-section-title">Detalhamento dos Clientes (PDVs)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Cód PDV</th>
+                <th>Nome Fantasia</th>
+                <th>Setor</th>
+                <th>PRODUTOS TT</th>
+                <th>CERVEJA</th>
+                <th>NAB</th>
+                <th>MKT</th>
+                <th>STELLA PG</th>
+                <th>FLORESTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pdvsFiltrados.slice(0, 150).map(p => `
+                <tr>
+                  <td><strong>${p.codigo}</strong></td>
+                  <td>${p.nome}</td>
+                  <td>${p.setor}</td>
+                  <td><span class="${p.produtos_tt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.produtos_tt}</span></td>
+                  <td><span class="${p.cerveja === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.cerveja}</span></td>
+                  <td><span class="${p.nab === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.nab}</span></td>
+                  <td><span class="${p.mkt === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.mkt}</span></td>
+                  <td><span class="${p.stela_pg === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.stela_pg}</span></td>
+                  <td><span class="${p.florestal === 'OK' ? 'badge-ok' : 'badge-nok'}">${p.florestal}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ${pdvsFiltrados.length > 150 ? `<p style="font-size:10px; color:#94a3b8; margin-top:8px;">* Exibindo os primeiros 150 PDVs no relatório impresso.</p>` : ''}
+
+          <script>
+            window.onload = function() { window.print(); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    // --- WhatsApp Direct / Lote ---
+    function getChecked(id) {
+      const chk = document.getElementById('chk-' + id);
+      return chk ? chk.checked : true;
+    }
+
+    function gerarTextoAtual() {
+      const tab = state.currentTab;
+      let texto = '';
+
+      if (tab === 'bonificacao') {
+        texto += 'Bonificação:\n';
+        if (getChecked('op-boni')) texto += `*Operação:* ${document.getElementById('op-boni').value}\n`;
+        if (getChecked('filial-boni')) texto += `*Filial:* ${document.getElementById('filial-boni').value}\n`;
+        if (getChecked('rn-boni')) texto += `*Rn:* ${document.getElementById('rn-boni').value}\n`;
+        if (getChecked('codpdv-boni')) texto += `*Cod PDV:* ${document.getElementById('codpdv-boni').value}\n`;
+        if (getChecked('nome-boni')) texto += `*Nome Fantasia:* ${document.getElementById('nome-boni').value}\n`;
+        
+        const prods = document.querySelectorAll('#produtos-vertical-list .produto-card-vertical');
+        if (prods.length > 0) {
+          texto += `*Produtos:*\n`;
+          prods.forEach((p, index) => {
+            const prodVal = p.querySelector(`[id^="produto-boni-"]`)?.value;
+            const codVal = p.querySelector(`[id^="codigo-boni-"]`)?.value;
+            const qtdVal = p.querySelector(`[id^="quantidade-boni-"]`)?.value;
+            if (prodVal || codVal || qtdVal) {
+              texto += `  Item ${index + 1}:\n`;
+              if (prodVal) texto += `    - Produto: ${prodVal}\n`;
+              if (codVal) texto += `    - Código: ${codVal}\n`;
+              if (qtdVal) texto += `    - Quantidade: ${qtdVal}\n`;
+            }
+          });
+        }
+        if (getChecked('data-boni')) texto += `*Data de Entrega:* ${formatarData(document.getElementById('data-boni').value)}\n`;
+        if (getChecked('motivo-boni')) texto += `*Motivo:* ${document.getElementById('motivo-boni').value}\n`;
+        if (getChecked('cidade-boni')) texto += `*Cidade:* ${document.getElementById('cidade-boni').value}\n`;
+      }
+
+      if (tab === 'janela') {
+        texto += 'Janela de entrega:\n';
+        if (getChecked('op-janela')) texto += `*Operação:* ${document.getElementById('op-janela').value}\n`;
+        if (getChecked('filial-janela')) texto += `*Filial:* ${document.getElementById('filial-janela').value}\n`;
+        if (getChecked('rn-janela')) texto += `*Rn:* ${document.getElementById('rn-janela').value}\n`;
+        if (getChecked('nome-janela')) texto += `*Nome Fantasia:* ${document.getElementById('nome-janela').value}\n`;
+        if (getChecked('codpdv-janela')) texto += `*Cod PDV:* ${document.getElementById('codpdv-janela').value}\n`;
+        if (getChecked('data-janela')) texto += `*Data de Entrega:* ${formatarData(document.getElementById('data-janela').value)}\n`;
+        if (getChecked('motivo-janela')) texto += `*Motivo:* ${document.getElementById('motivo-janela').value}\n`;
+        if (getChecked('cidade-janela')) texto += `*Cidade:* ${document.getElementById('cidade-janela').value}\n`;
+      }
+
+      if (tab === 'desconto') {
+        texto += 'Desconto:\n';
+        if (getChecked('op-desc')) texto += `*Operação:* ${document.getElementById('op-desc').value}\n`;
+        if (getChecked('rn-desc')) texto += `*Rn:* ${document.getElementById('rn-desc').value}\n`;
+        if (getChecked('produto-desc')) texto += `*Produto:* ${document.getElementById('produto-desc').value}\n`;
+        if (getChecked('codigo-desc')) texto += `*Código:* ${document.getElementById('codigo-desc').value}\n`;
+        if (getChecked('quantidade-desc')) texto += `*Quantidade:* ${document.getElementById('quantidade-desc').value}\n`;
+        if (getChecked('desconto-desc')) texto += `*Desconto (%):* ${document.getElementById('desconto-desc').value}\n`;
+        if (getChecked('custo-desc')) texto += `*Custo (R$):* ${document.getElementById('custo-desc').value}\n`;
+        if (getChecked('ttv-desc')) texto += `*TTV Final (R$):* ${document.getElementById('ttv-desc').value}\n`;
+      }
+
+      if (tab === 'limite') {
+        texto += 'Limite:\n';
+        if (getChecked('op-limite')) texto += `*Operação:* ${document.getElementById('op-limite').value}\n`;
+        if (getChecked('filial-limite')) texto += `*Filial:* ${document.getElementById('filial-limite').value}\n`;
+        if (getChecked('rn-limite')) texto += `*Rn:* ${document.getElementById('rn-limite').value}\n`;
+        if (getChecked('codpdv-limite')) texto += `*Cod PDV:* ${document.getElementById('codpdv-limite').value}\n`;
+        if (getChecked('nome-limite')) texto += `*Nome Fantasia:* ${document.getElementById('nome-limite').value}\n`;
+        if (getChecked('valor-limite')) texto += `*Limite:* ${document.getElementById('valor-limite').value}\n`;
+        if (getChecked('motivo-limite')) texto += `*Motivo:* ${document.getElementById('motivo-limite').value}\n`;
+        if (getChecked('pagamento-limite')) {
+          const pag = document.getElementById('pagamento-limite');
+          texto += `*Forma de Pagamento:* ${pag.options[pag.selectedIndex].text}\n`;
+        }
+      }
+
+      if (tab === 'ativacao') {
+        const titleAtiv = document.getElementById('nome-aba-ativacao').value || 'Ativação';
+        texto += `${titleAtiv}:\n`;
+        if (getChecked('op-ativacao')) texto += `*Operação:* ${document.getElementById('op-ativacao').value}\n`;
+        if (getChecked('filial-ativacao')) texto += `*Filial:* ${document.getElementById('filial-ativacao').value}\n`;
+        if (getChecked('rn-ativacao')) texto += `*Rn:* ${document.getElementById('rn-ativacao').value}\n`;
+        if (getChecked('codpdv-ativacao')) texto += `*Cod PDV:* ${document.getElementById('codpdv-ativacao').value}\n`;
+        if (getChecked('nome-ativacao')) texto += `*Nome Fantasia:* ${document.getElementById('nome-ativacao').value}\n`;
+        if (getChecked('dia-visita-ativacao')) {
+          const dv = document.getElementById('dia-visita-ativacao');
+          texto += `*Dia de Visita:* ${dv.options[dv.selectedIndex].text}\n`;
+        }
+        if (getChecked('dia-entrega-ativacao')) {
+          const de = document.getElementById('dia-entrega-ativacao');
+          texto += `*Dia de Entrega:* ${de.options[de.selectedIndex].text}\n`;
+        }
+        if (getChecked('limite-ativacao')) texto += `*Limite:* ${document.getElementById('limite-ativacao').value}\n`;
+        if (getChecked('pagamento-ativacao')) {
+          const pag = document.getElementById('pagamento-ativacao');
+          texto += `*Forma de Pagamento:* ${pag.options[pag.selectedIndex].text}\n`;
+        }
+        if (getChecked('cidade-ativacao')) texto += `*Cidade:* ${document.getElementById('cidade-ativacao').value}\n`;
+      }
+
+      if (tab === 'custom') {
+        const titleCust = document.getElementById('nome-aba-custom').value || 'Custom';
+        texto += `${titleCust}:\n`;
+        if (getChecked('op-custom')) texto += `*Operação:* ${document.getElementById('op-custom').value}\n`;
+        if (getChecked('filial-custom')) texto += `*Filial:* ${document.getElementById('filial-custom').value}\n`;
+        if (getChecked('rn-custom')) texto += `*Rn:* ${document.getElementById('rn-custom').value}\n`;
+        if (getChecked('codpdv-custom')) texto += `*Cod PDV:* ${document.getElementById('codpdv-custom').value}\n`;
+        if (getChecked('nome-custom')) texto += `*Nome Fantasia:* ${document.getElementById('nome-custom').value}\n`;
+        if (getChecked('data-custom')) texto += `*Data:* ${formatarData(document.getElementById('data-custom').value)}\n`;
+        if (getChecked('motivo-custom')) texto += `*Motivo:* ${document.getElementById('motivo-custom').value}\n`;
+        if (getChecked('valor-custom')) texto += `*Valor/Limite:* ${document.getElementById('valor-custom').value}\n`;
+        if (getChecked('obs-custom')) texto += `*Observações:* ${document.getElementById('obs-custom').value}\n`;
+      }
+
+      return texto;
+    }
+
+    async function enviarDiretoWhatsApp() {
+      const texto = gerarTextoAtual();
+      if (!texto.trim()) { alert('Preencha os campos antes de enviar.'); return; }
+
+      const prefix = state.currentTab === 'bonificacao' ? 'boni' : (state.currentTab === 'desconto' ? 'desc' : state.currentTab);
+      const inputFoto = document.getElementById(`foto-${prefix}`);
+      const arquivoFoto = (inputFoto && inputFoto.files) ? inputFoto.files[0] : null;
+
+      if (arquivoFoto && navigator.canShare && navigator.canShare({ files: [arquivoFoto] })) {
+        try {
+          await navigator.share({ text: texto, files: [arquivoFoto] });
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    function adicionarItem() {
+      const texto = gerarTextoAtual();
+      if (!texto.trim()) { alert('Preencha pelo menos um campo marcado.'); return; }
+      state.itens.push({ texto });
+      salvarLoteStorage();
+      atualizarSaida();
+    }
+
+    function atualizarSaida() {
+      const saida = document.getElementById('saida');
+      saida.innerHTML = '';
+      state.itens.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'item-container';
+        div.textContent = item.texto;
+        const btn = document.createElement('button');
+        btn.className = 'btn-del';
+        btn.innerHTML = '&times;';
+        btn.onclick = () => {
+          state.itens.splice(i, 1);
+          salvarLoteStorage();
+          atualizarSaida();
+        };
+        div.appendChild(btn);
+        saida.appendChild(div);
+      });
+    }
+
+    function gerarWhatsapp() {
+      if (state.itens.length === 0) { alert('Adicione itens ao lote antes de compartilhar.'); return; }
+      const texto = state.itens.map(i => i.texto).join('\n---\n');
+      window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    window.onload = async () => {
+      carregarNomesAbas();
+      await carregarPlanilhaDoDB();
+      carregarLoteStorage();
+      renderForm();
+    };
+  </script>
+</body>
+</html>
