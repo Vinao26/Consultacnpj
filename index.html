@@ -3,12 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestão, Laudos & PDV</title>
+  <title>Sistema de Gestão, Laudos & PDV (Firebase Cloud)</title>
 
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- FIREBASE SDK & FIRESTORE INTEGRATION -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      getDocs, 
+      doc, 
+      updateDoc, 
+      deleteDoc, 
+      setDoc, 
+      getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyABfdbkjbLYNRe2M6DspkeVHw4-R609D98",
+      authDomain: "laudos-ce08f.firebaseapp.com",
+      projectId: "laudos-ce08f",
+      storageBucket: "laudos-ce08f.firebasestorage.app",
+      messagingSenderId: "134067924465",
+      appId: "1:134067924465:web:440371fba0d12f24226850",
+      measurementId: "G-WDG2S0SLSB"
+    };
+
+    // Initialize Firebase & Firestore
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    // Disponibiliza as funções do Firestore no escopo global
+    window.db = db;
+    window.fsCollection = collection;
+    window.fsAddDoc = addDoc;
+    window.fsGetDocs = getDocs;
+    window.fsDoc = doc;
+    window.fsUpdateDoc = updateDoc;
+    window.fsDeleteDoc = deleteDoc;
+    window.fsSetDoc = setDoc;
+    window.fsGetDoc = getDoc;
+  </script>
 
   <style>
     body {
@@ -37,7 +81,6 @@
     .laudo-scope .btn-success { background: var(--success); }
     .laudo-scope .btn-warning { background: var(--warning); color: #000; }
     .laudo-scope .btn-secondary { background: #6c757d; }
-    .laudo-scope .alert { padding: 10px; background: var(--danger); color: white; border-radius: 5px; margin-bottom: 15px; font-weight: bold; }
     .laudo-scope table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     .laudo-scope th, .laudo-scope td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
     .laudo-scope th { background-color: #f2f2f2; }
@@ -78,7 +121,6 @@
       align-items: center;
     }
     .laudo-scope .autocomplete-item:hover { background-color: #f0f7ff; }
-    .laudo-scope .autocomplete-item:last-child { border-bottom: none; }
 
     /* MODAL POP-UP DE ASSINATURA */
     .modal-overlay {
@@ -106,18 +148,13 @@
   <nav class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
       <div class="font-bold text-lg tracking-wide flex items-center gap-2">
-        <span>🛠️ Gestão, Laudos & Sistema PDV</span>
+        <span>🛠️ Gestão, Laudos & PDV (Nuvem Firebase)</span>
       </div>
     </div>
   </nav>
 
   <div class="laudo-scope p-4 md:p-8">
     <div class="container">
-
-      <!-- ALERTA DE MEMÓRIA -->
-      <div id="memoryAlert" class="alert hidden">
-        ⚠️ Atenção: Armazenamento local quase cheio! Realize um backup e exclua registros antigos.
-      </div>
 
       <!-- TELA DE LOGIN & CADASTRO -->
       <div id="loginCard" class="card login-box">
@@ -142,12 +179,12 @@
         </div>
 
         <hr style="margin: 20px 0;">
-        <h4>👥 Últimos Usuários Cadastrados:</h4>
+        <h4>👥 Usuários Cadastrados na Nuvem:</h4>
         <table style="font-size: 0.85em;">
           <thead>
             <tr>
               <th>Login</th>
-              <th>Data de Criacao</th>
+              <th>Data de Criação</th>
             </tr>
           </thead>
           <tbody id="tabelaUsuariosLogin"></tbody>
@@ -172,7 +209,6 @@
           <button onclick="mudarAba('clientes')">👤 Clientes</button>
           <button onclick="mudarAba('pecas')">🧩 Peças / Estoque</button>
           <button onclick="mudarAba('empresa')" class="btn-warning">🏢 Minha Empresa</button>
-          <button onclick="mudarAba('backup')" class="btn-secondary">💾 Backup</button>
         </div>
 
         <hr>
@@ -196,7 +232,6 @@
           <textarea id="eqDefeito" rows="3" placeholder="Defeito Relatado / Diagnosticado"></textarea>
           
           <label><b>3. Peças Utilizadas (Do seu estoque):</b></label>
-          
           <div class="autocomplete-wrapper">
             <input type="text" id="laudoFiltroPeca" placeholder="🔍 Digite para pesquisar (Ex: Memória, Cabo, EAN)..." onkeyup="buscarPecasAutocomplete()" autocomplete="off">
             <div id="autocompleteResultados" class="autocomplete-results hidden"></div>
@@ -231,7 +266,7 @@
           <input type="file" id="fotoInput" accept="image/*" multiple onchange="carregarFotos(event)">
           <div id="previewFotos" class="preview-container"></div>
 
-          <button onclick="salvarEGerarLaudo()" class="btn-success" style="margin-top: 20px; font-size: 1.1em;">📄 Gerar PDF e Salvar no Balanço</button>
+          <button onclick="salvarEGerarLaudo()" class="btn-success" style="margin-top: 20px; font-size: 1.1em;">📄 Gerar PDF e Salvar na Nuvem</button>
         </div>
 
         <!-- ABA PDV: SISTEMA DE VENDAS DE ESTOQUE -->
@@ -266,7 +301,6 @@
             </tbody>
           </table>
 
-          <!-- PAGAMENTO NO PDV -->
           <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-top: 15px; border: 1px solid #cbd5e1;">
             <h4 style="margin-top: 0;">💳 Pagamento</h4>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -303,7 +337,7 @@
 
         <!-- ABA 2: BALANÇO FINANCEIRO -->
         <div id="abaBalanco" class="hidden">
-          <h3>📊 Balanço de Serviços, Vendas & Lucro</h3>
+          <h3>📊 Balanço de Serviços, Vendas & Lucro (Nuvem)</h3>
 
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 150px;">
@@ -428,17 +462,7 @@
           <input type="file" id="empLogoInput" accept="image/*" onchange="carregarLogoEmpresa(event)">
           <div id="previewEmpresaLogo" style="margin-top: 10px;"></div>
 
-          <button onclick="salvarDadosEmpresa()" class="btn-success" style="margin-top: 15px;">💾 Salvar Dados da Empresa</button>
-        </div>
-
-        <!-- ABA 5: BACKUP -->
-        <div id="abaBackup" class="hidden">
-          <h3>Segurança dos Seus Dados</h3>
-          <p>Exporte um arquivo de segurança para manter seus dados protegidos ou transferir para outro dispositivo (Pode guardar no seu Google Drive).</p>
-          <button onclick="exportarBackup()" class="btn-primary">⬇️ Baixar Backup de Segurança (.json)</button>
-          <br><br>
-          <label><b>Restaurar Backup:</b></label>
-          <input type="file" id="importFileInput" accept=".json" onchange="importarBackup(event)">
+          <button onclick="salvarDadosEmpresa()" class="btn-success" style="margin-top: 15px;">💾 Salvar Dados da Empresa na Nuvem</button>
         </div>
 
       </div>
@@ -450,7 +474,7 @@
   <div id="modalAssinatura" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 style="margin-top:0;">✍️ Assinatura do Técnico</h3>
-      <p style="font-size:0.85em; color:#666;">Desenhe sua assinatura abaixo. Ela será recolhida ao salvar para não atrapalhar sua navegação.</p>
+      <p style="font-size:0.85em; color:#666;">Desenhe sua assinatura abaixo. Ela será utilizada no laudo atual.</p>
       
       <div class="signature-container">
         <canvas id="sigCanvas" width="380" height="150"></canvas>
@@ -464,15 +488,8 @@
     </div>
   </div>
 
-  <!-- SCRIPT VANILLA JS - SISTEMA DE LAUDOS & PDV -->
+  <!-- SCRIPT VANILLA JS COM FIRESTORE BANCO ONLINE -->
   <script>
-    const STORAGE_USERS = "LAUDOS_APP_USERS";
-    const STORAGE_CLIENTES = "LAUDOS_APP_CLIENTES";
-    const STORAGE_LAUDOS = "LAUDOS_APP_SERVICOS";
-    const STORAGE_PECAS = "LAUDOS_APP_PECAS";
-    const STORAGE_SIG = "LAUDOS_APP_SIGNATURE";
-    const STORAGE_EMPRESA = "LAUDOS_APP_EMPRESA";
-    
     let usuarioAtual = null;
     let fotosBase64 = [];
     let pecaFotoTempBase64 = "";
@@ -483,10 +500,18 @@
     let isDrawing = false;
     let sigCanvas, sigCtx;
 
-    function initLaudoSystem() {
-      renderizarListaUsuariosLogin();
-      carregarDadosEmpresa();
-      
+    let cacheUsuarios = [];
+    let cacheClientes = [];
+    let cachePecas = [];
+    let cacheLaudos = [];
+    let cacheEmpresa = {};
+
+    async function initLaudoSystem() {
+      setTimeout(async () => {
+        await carregarUsuariosNuvem();
+        await carregarEmpresaNuvem();
+      }, 1000);
+
       document.addEventListener('click', function(e) {
         const autocompleteEl = document.getElementById('autocompleteResultados');
         const inputEl = document.getElementById('laudoFiltroPeca');
@@ -502,7 +527,62 @@
       });
     }
 
-    function obterUsuarios() { return JSON.parse(localStorage.getItem(STORAGE_USERS) || "[]"); }
+    async function carregarUsuariosNuvem() {
+      try {
+        const snap = await window.fsGetDocs(window.fsCollection(window.db, "usuarios"));
+        cacheUsuarios = [];
+        snap.forEach(doc => cacheUsuarios.push({ id: doc.id, ...doc.data() }));
+        renderizarListaUsuariosLogin();
+      } catch (e) {
+        console.error("Erro ao carregar usuários:", e);
+      }
+    }
+
+    async function carregarClientesNuvem() {
+      try {
+        const snap = await window.fsGetDocs(window.fsCollection(window.db, "clientes"));
+        cacheClientes = [];
+        snap.forEach(doc => cacheClientes.push({ id: doc.id, ...doc.data() }));
+        renderizarClientes();
+        atualizarSelectsClientes();
+      } catch (e) { console.error(e); }
+    }
+
+    async function carregarPecasNuvem() {
+      try {
+        const snap = await window.fsGetDocs(window.fsCollection(window.db, "pecas"));
+        cachePecas = [];
+        snap.forEach(doc => cachePecas.push({ id: doc.id, ...doc.data() }));
+        renderizarPecas();
+      } catch (e) { console.error(e); }
+    }
+
+    async function carregarLaudosNuvem() {
+      try {
+        const snap = await window.fsGetDocs(window.fsCollection(window.db, "laudos"));
+        cacheLaudos = [];
+        snap.forEach(doc => cacheLaudos.push({ id: doc.id, ...doc.data() }));
+        renderizarBalanco();
+      } catch (e) { console.error(e); }
+    }
+
+    async function carregarEmpresaNuvem() {
+      try {
+        const docRef = window.fsDoc(window.db, "configuracoes", "empresa");
+        const docSnap = await window.fsGetDoc(docRef);
+        if (docSnap.exists()) {
+          cacheEmpresa = docSnap.data();
+          if(cacheEmpresa.nome) document.getElementById('empNome').value = cacheEmpresa.nome;
+          if(cacheEmpresa.cnpj) document.getElementById('empCNPJ').value = cacheEmpresa.cnpj;
+          if(cacheEmpresa.endereco) document.getElementById('empEndereco').value = cacheEmpresa.endereco;
+          if(cacheEmpresa.contato) document.getElementById('empContato').value = cacheEmpresa.contato;
+          if(cacheEmpresa.logo) {
+            empresaLogoBase64 = cacheEmpresa.logo;
+            document.getElementById('previewEmpresaLogo').innerHTML = `<img src="${cacheEmpresa.logo}" style="max-height: 80px; border-radius: 4px; border: 1px solid #ccc;">`;
+          }
+        }
+      } catch (e) { console.error(e); }
+    }
 
     function alternarTelaLogin(mostrarCadastro) {
       if(mostrarCadastro) {
@@ -514,56 +594,52 @@
       }
     }
 
-    function cadastrarUsuario() {
-      const user = document.getElementById('newUser').value.trim();
-      const pass = document.getElementById('newPass').value;
+    async function cadastrarUsuario() {
+      const userVal = document.getElementById('newUser').value.trim();
+      const passVal = document.getElementById('newPass').value;
 
-      if(!user || !pass) return alert("Preencha usuário e senha.");
+      if(!userVal || !passVal) return alert("Preencha usuário e senha.");
 
-      const usuarios = obterUsuarios();
-      if(usuarios.some(u => u.user.toLowerCase() === user.toLowerCase())) {
+      if(cacheUsuarios.some(u => u.user && u.user.toLowerCase() === userVal.toLowerCase())) {
         return alert("Este usuário já existe.");
       }
 
-      usuarios.push({
-        id: Date.now(),
-        user: user,
-        pass: pass,
+      const novoUser = {
+        user: userVal,
+        pass: passVal,
         dataCriacao: new Date().toLocaleDateString('pt-BR')
-      });
+      };
 
-      localStorage.setItem(STORAGE_USERS, JSON.stringify(usuarios));
-      alert("Usuário criado com sucesso!");
+      await window.fsAddDoc(window.fsCollection(window.db, "usuarios"), novoUser);
+      alert("Usuário criado com sucesso na Nuvem!");
       document.getElementById('newUser').value = '';
       document.getElementById('newPass').value = '';
       alternarTelaLogin(false);
-      renderizarListaUsuariosLogin();
+      await carregarUsuariosNuvem();
     }
 
     function renderizarListaUsuariosLogin() {
       const tbody = document.getElementById('tabelaUsuariosLogin');
       if (!tbody) return;
       tbody.innerHTML = '';
-      const usuarios = obterUsuarios();
 
-      if(usuarios.length === 0) {
+      if(cacheUsuarios.length === 0) {
         tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#888;">Nenhum usuário cadastrado.</td></tr>';
         return;
       }
 
-      usuarios.slice(-5).reverse().forEach(u => {
+      cacheUsuarios.slice(-5).reverse().forEach(u => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td><b>${u.user}</b></td><td>${u.dataCriacao}</td>`;
+        tr.innerHTML = `<td><b>${u.user || 'Desconhecido'}</b></td><td>${u.dataCriacao || 'N/A'}</td>`;
         tbody.appendChild(tr);
       });
     }
 
     function autenticar() {
-      const user = document.getElementById('loginUser').value.trim();
-      const pass = document.getElementById('loginPass').value;
+      const userVal = document.getElementById('loginUser').value.trim();
+      const passVal = document.getElementById('loginPass').value;
 
-      const usuarios = obterUsuarios();
-      const conta = usuarios.find(u => u.user.toLowerCase() === user.toLowerCase() && u.pass === pass);
+      const conta = cacheUsuarios.find(u => u.user && u.user.toLowerCase() === userVal.toLowerCase() && u.pass === passVal);
 
       if(conta) {
         iniciarSessao(conta.user);
@@ -576,17 +652,15 @@
       iniciarSessao("Visitante");
     }
 
-    function iniciarSessao(nomeUsuario) {
+    async function iniciarSessao(nomeUsuario) {
       usuarioAtual = nomeUsuario;
       document.getElementById('userBadge').innerText = `Usuário: ${usuarioAtual}`;
       document.getElementById('loginCard').classList.add('hidden');
       document.getElementById('appContent').classList.remove('hidden');
       
-      verificarEspacoMemoria();
-      renderizarClientes();
-      atualizarSelectsClientes();
-      renderizarBalanco();
-      renderizarPecas();
+      await carregarClientesNuvem();
+      await carregarPecasNuvem();
+      await carregarLaudosNuvem();
       inicializarCanvasAssinatura();
     }
 
@@ -605,7 +679,6 @@
       document.getElementById('abaClientes').classList.add('hidden');
       document.getElementById('abaPecas').classList.add('hidden');
       document.getElementById('abaEmpresa').classList.add('hidden');
-      document.getElementById('abaBackup').classList.add('hidden');
 
       if(aba === 'laudo') document.getElementById('abaLaudo').classList.remove('hidden');
       if(aba === 'pdv') document.getElementById('abaPdv').classList.remove('hidden');
@@ -613,7 +686,6 @@
       if(aba === 'clientes') document.getElementById('abaClientes').classList.remove('hidden');
       if(aba === 'pecas') document.getElementById('abaPecas').classList.remove('hidden');
       if(aba === 'empresa') document.getElementById('abaEmpresa').classList.remove('hidden');
-      if(aba === 'backup') document.getElementById('abaBackup').classList.remove('hidden');
     }
 
     function formatarMoeda(val) {
@@ -621,30 +693,18 @@
       return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function verificarEspacoMemoria() {
-      let totalData = JSON.stringify(localStorage).length;
-      if (totalData > 4500000) {
-        document.getElementById('memoryAlert').classList.remove('hidden');
-      } else {
-        document.getElementById('memoryAlert').classList.add('hidden');
-      }
-    }
-
-    /* CONFIGURAÇÕES DA EMPRESA */
-    function obterEmpresa() {
-      return JSON.parse(localStorage.getItem(STORAGE_EMPRESA) || "{}");
-    }
-
-    function carregarDadosEmpresa() {
-      const emp = obterEmpresa();
-      if(emp.nome) document.getElementById('empNome').value = emp.nome;
-      if(emp.cnpj) document.getElementById('empCNPJ').value = emp.cnpj;
-      if(emp.endereco) document.getElementById('empEndereco').value = emp.endereco;
-      if(emp.contato) document.getElementById('empContato').value = emp.contato;
-      if(emp.logo) {
-        empresaLogoBase64 = emp.logo;
-        document.getElementById('previewEmpresaLogo').innerHTML = `<img src="${emp.logo}" style="max-height: 80px; border-radius: 4px; border: 1px solid #ccc;">`;
-      }
+    async function salvarDadosEmpresa() {
+      const emp = {
+        nome: document.getElementById('empNome').value.trim(),
+        cnpj: document.getElementById('empCNPJ').value.trim(),
+        endereco: document.getElementById('empEndereco').value.trim(),
+        contato: document.getElementById('empContato').value.trim(),
+        logo: empresaLogoBase64
+      };
+      
+      await window.fsSetDoc(window.fsDoc(window.db, "configuracoes", "empresa"), emp);
+      cacheEmpresa = emp;
+      alert("Dados da empresa salvos na Nuvem com sucesso!");
     }
 
     function carregarLogoEmpresa(event) {
@@ -674,90 +734,7 @@
       reader.readAsDataURL(file);
     }
 
-    function salvarDadosEmpresa() {
-      const emp = {
-        nome: document.getElementById('empNome').value.trim(),
-        cnpj: document.getElementById('empCNPJ').value.trim(),
-        endereco: document.getElementById('empEndereco').value.trim(),
-        contato: document.getElementById('empContato').value.trim(),
-        logo: empresaLogoBase64
-      };
-      localStorage.setItem(STORAGE_EMPRESA, JSON.stringify(emp));
-      alert("Dados da empresa salvos com sucesso!");
-    }
-
-    /* MODAL DE ASSINATURA RECOLHÍVEL */
-    function inicializarCanvasAssinatura() {
-      sigCanvas = document.getElementById('sigCanvas');
-      sigCtx = sigCanvas.getContext('2d');
-      sigCtx.lineWidth = 2;
-      sigCtx.strokeStyle = "#000000";
-
-      sigCanvas.addEventListener('mousedown', startDrawing);
-      sigCanvas.addEventListener('mousemove', draw);
-      sigCanvas.addEventListener('mouseup', stopDrawing);
-      sigCanvas.addEventListener('mouseleave', stopDrawing);
-
-      sigCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(getTouchPos(e)); });
-      sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getTouchPos(e)); });
-      sigCanvas.addEventListener('touchend', stopDrawing);
-
-      const sigSalva = localStorage.getItem(`${STORAGE_SIG}_${usuarioAtual}`);
-      if(sigSalva) {
-        assinaturaTemporaria = sigSalva;
-        document.getElementById('statusAssinatura').innerHTML = `✅ Assinatura gravada com sucesso!`;
-      }
-    }
-
-    function abrirModalAssinatura() {
-      document.getElementById('modalAssinatura').classList.remove('hidden');
-      limparAssinatura();
-      if(assinaturaTemporaria) {
-        const img = new Image();
-        img.onload = () => sigCtx.drawImage(img, 0, 0);
-        img.src = assinaturaTemporaria;
-      }
-    }
-
-    function fecharModalAssinatura() {
-      document.getElementById('modalAssinatura').classList.add('hidden');
-    }
-
-    function salvarAssinaturaModal() {
-      assinaturaTemporaria = sigCanvas.toDataURL();
-      localStorage.setItem(`${STORAGE_SIG}_${usuarioAtual}`, assinaturaTemporaria);
-      document.getElementById('statusAssinatura').innerHTML = `✅ Assinatura gravada com sucesso!`;
-      fecharModalAssinatura();
-    }
-
-    function getTouchPos(e) {
-      const rect = sigCanvas.getBoundingClientRect();
-      const touch = e.touches[0];
-      return { clientX: touch.clientX - rect.left, clientY: touch.clientY - rect.top, isTouch: true };
-    }
-
-    function startDrawing(e) {
-      isDrawing = true;
-      sigCtx.beginPath();
-      const x = e.isTouch ? e.clientX : e.offsetX;
-      const y = e.isTouch ? e.clientY : e.offsetY;
-      sigCtx.moveTo(x, y);
-    }
-
-    function draw(e) {
-      if(!isDrawing) return;
-      const x = e.isTouch ? e.clientX : e.offsetX;
-      const y = e.isTouch ? e.clientY : e.offsetY;
-      sigCtx.lineTo(x, y);
-      sigCtx.stroke();
-    }
-
-    function stopDrawing() { isDrawing = false; }
-    function limparAssinatura() { sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
-
-    function obterClientes() { return JSON.parse(localStorage.getItem(STORAGE_CLIENTES) || "[]"); }
-
-    function salvarCliente() {
+    async function salvarCliente() {
       const idEdit = document.getElementById('cliIdEdit').value;
       const nome = document.getElementById('cliNome').value.trim();
       const cpf = document.getElementById('cliCPF').value.trim();
@@ -766,24 +743,22 @@
 
       if(!nome) return alert("Preencha ao menos o nome do cliente.");
 
-      let clientes = obterClientes();
+      const dados = { usuario: usuarioAtual, nome, cpf, endereco, telefone, dataCriacao: new Date().toISOString().split('T')[0] };
 
       if(idEdit) {
-        clientes = clientes.map(c => c.id == idEdit ? { ...c, nome, cpf, endereco, telefone } : c);
-        alert("Cliente atualizado!");
+        await window.fsUpdateDoc(window.fsDoc(window.db, "clientes", idEdit), dados);
+        alert("Cliente atualizado na nuvem!");
       } else {
-        clientes.push({ id: Date.now(), usuario: usuarioAtual, nome, cpf, endereco, telefone, dataCriacao: new Date().toISOString().split('T')[0] });
-        alert("Cliente salvo!");
+        await window.fsAddDoc(window.fsCollection(window.db, "clientes"), dados);
+        alert("Cliente salvo na nuvem!");
       }
 
-      localStorage.setItem(STORAGE_CLIENTES, JSON.stringify(clientes));
       cancelarEdicaoCliente();
-      renderizarClientes();
-      atualizarSelectsClientes();
+      await carregarClientesNuvem();
     }
 
     function editarCliente(id) {
-      const cliente = obterClientes().find(c => c.id == id);
+      const cliente = cacheClientes.find(c => c.id == id);
       if(!cliente) return;
 
       document.getElementById('cliIdEdit').value = cliente.id;
@@ -812,7 +787,7 @@
     function renderizarClientes() {
       const tbody = document.getElementById('tabelaClientes');
       tbody.innerHTML = '';
-      let clientes = obterClientes();
+      let clientes = cacheClientes;
       const busca = document.getElementById('buscaCliente').value.toLowerCase();
 
       if(busca) clientes = clientes.filter(c => c.nome.toLowerCase().includes(busca));
@@ -820,24 +795,22 @@
       clientes.forEach(c => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${c.dataCriacao}</td>
+          <td>${c.dataCriacao || 'N/A'}</td>
           <td>${c.nome}</td>
           <td>${c.telefone}</td>
           <td>
-            <button onclick="editarCliente(${c.id})" class="btn-warning" style="padding:4px 8px; width:auto;">Editar</button>
-            <button onclick="deletarCliente(${c.id})" class="btn-danger" style="padding:4px 8px; width:auto;">Excluir</button>
+            <button onclick="editarCliente('${c.id}')" class="btn-warning" style="padding:4px 8px; width:auto;">Editar</button>
+            <button onclick="deletarCliente('${c.id}')" class="btn-danger" style="padding:4px 8px; width:auto;">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function deletarCliente(id) {
-      if(confirm("Deseja remover este cliente?")) {
-        let clientes = obterClientes().filter(c => c.id !== id);
-        localStorage.setItem(STORAGE_CLIENTES, JSON.stringify(clientes));
-        renderizarClientes();
-        atualizarSelectsClientes();
+    async function deletarCliente(id) {
+      if(confirm("Deseja remover este cliente da nuvem?")) {
+        await window.fsDeleteDoc(window.fsDoc(window.db, "clientes", id));
+        await carregarClientesNuvem();
       }
     }
 
@@ -850,8 +823,7 @@
       selBalanco.innerHTML = '<option value="">-- Todos os Clientes --</option>';
       selPDV.innerHTML = '<option value="">-- Consumidor Final (Sem Cadastro) --</option>';
 
-      const clientes = obterClientes();
-      clientes.forEach(c => {
+      cacheClientes.forEach(c => {
         selLaudo.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
         selBalanco.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
         selPDV.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
@@ -865,7 +837,7 @@
         container.innerHTML = '<i>Nenhum cliente selecionado.</i>';
         return;
       }
-      const cliente = obterClientes().find(c => c.id == id);
+      const cliente = cacheClientes.find(c => c.id == id);
       if(cliente) {
         container.innerHTML = `
           <b>CPF/CNPJ:</b> ${cliente.cpf || 'N/A'} | 
@@ -875,11 +847,8 @@
       }
     }
 
-    function obterPecas() { return JSON.parse(localStorage.getItem(STORAGE_PECAS) || "[]"); }
-
     function gerarCodigoBarrasAleatorio() {
-      const randomCode = Math.floor(100000000000 + Math.random() * 900000000000).toString();
-      document.getElementById('pecaCodigoBarras').value = randomCode;
+      document.getElementById('pecaCodigoBarras').value = Math.floor(100000000000 + Math.random() * 900000000000).toString();
     }
 
     function carregarFotoPeca(event) {
@@ -903,15 +872,13 @@
           ctx.drawImage(img, 0, 0, w, h);
 
           pecaFotoTempBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          
-          const container = document.getElementById('previewPecaFotoContainer');
-          container.innerHTML = `<img src="${pecaFotoTempBase64}" class="preview-thumb" alt="Preview Peça">`;
+          document.getElementById('previewPecaFotoContainer').innerHTML = `<img src="${pecaFotoTempBase64}" class="preview-thumb">`;
         };
       };
       reader.readAsDataURL(file);
     }
 
-    function salvarPeca() {
+    async function salvarPeca() {
       const idEdit = document.getElementById('pecaIdEdit').value;
       const nome = document.getElementById('pecaNome').value.trim();
       const codigoBarras = document.getElementById('pecaCodigoBarras').value.trim();
@@ -919,35 +886,27 @@
 
       if(!nome || !valor) return alert("Preencha a descrição e o valor da peça.");
 
-      let pecas = obterPecas();
+      const dados = {
+        nome,
+        codigoBarras: codigoBarras || Math.floor(100000000000 + Math.random() * 900000000000).toString(),
+        valor: parseFloat(valor),
+        foto: pecaFotoTempBase64 || ''
+      };
 
       if(idEdit) {
-        pecas = pecas.map(p => p.id == idEdit ? { 
-          ...p, 
-          nome, 
-          codigoBarras: codigoBarras || p.codigoBarras || '', 
-          valor: parseFloat(valor),
-          foto: pecaFotoTempBase64 || p.foto || ''
-        } : p);
-        alert("Peça atualizada!");
+        await window.fsUpdateDoc(window.fsDoc(window.db, "pecas", idEdit), dados);
+        alert("Peça atualizada na nuvem!");
       } else {
-        pecas.push({ 
-          id: Date.now(), 
-          nome, 
-          codigoBarras: codigoBarras || Math.floor(100000000000 + Math.random() * 900000000000).toString(),
-          valor: parseFloat(valor),
-          foto: pecaFotoTempBase64 || ''
-        });
-        alert("Peça cadastrada!");
+        await window.fsAddDoc(window.fsCollection(window.db, "pecas"), dados);
+        alert("Peça cadastrada na nuvem!");
       }
 
-      localStorage.setItem(STORAGE_PECAS, JSON.stringify(pecas));
       cancelarEdicaoPeca();
-      renderizarPecas();
+      await carregarPecasNuvem();
     }
 
     function editarPeca(id) {
-      const peca = obterPecas().find(p => p.id == id);
+      const peca = cachePecas.find(p => p.id == id);
       if(!peca) return;
 
       document.getElementById('pecaIdEdit').value = peca.id;
@@ -956,11 +915,10 @@
       document.getElementById('pecaValor').value = peca.valor;
       
       pecaFotoTempBase64 = peca.foto || '';
-      const container = document.getElementById('previewPecaFotoContainer');
       if(pecaFotoTempBase64) {
-        container.innerHTML = `<img src="${pecaFotoTempBase64}" class="preview-thumb" alt="Preview Peça">`;
+        document.getElementById('previewPecaFotoContainer').innerHTML = `<img src="${pecaFotoTempBase64}" class="preview-thumb">`;
       } else {
-        container.innerHTML = '';
+        document.getElementById('previewPecaFotoContainer').innerHTML = '';
       }
 
       document.getElementById('pecaFormTitulo').innerText = "✏️ Editar Peça";
@@ -985,7 +943,7 @@
     function renderizarPecas() {
       const tbody = document.getElementById('tabelaPecas');
       tbody.innerHTML = '';
-      let pecas = obterPecas();
+      let pecas = cachePecas;
       const busca = document.getElementById('buscaPeca').value.toLowerCase();
 
       if(busca) {
@@ -1005,19 +963,18 @@
           <td>${p.nome}</td>
           <td>${formatarMoeda(p.valor)}</td>
           <td>
-            <button onclick="editarPeca(${p.id})" class="btn-warning" style="padding:4px 8px; width:auto;">Editar</button>
-            <button onclick="deletarPeca(${p.id})" class="btn-danger" style="padding:4px 8px; width:auto;">Excluir</button>
+            <button onclick="editarPeca('${p.id}')" class="btn-warning" style="padding:4px 8px; width:auto;">Editar</button>
+            <button onclick="deletarPeca('${p.id}')" class="btn-danger" style="padding:4px 8px; width:auto;">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function deletarPeca(id) {
-      if(confirm("Remover esta peça?")) {
-        let pecas = obterPecas().filter(p => p.id !== id);
-        localStorage.setItem(STORAGE_PECAS, JSON.stringify(pecas));
-        renderizarPecas();
+    async function deletarPeca(id) {
+      if(confirm("Remover esta peça da nuvem?")) {
+        await window.fsDeleteDoc(window.fsDoc(window.db, "pecas", id));
+        await carregarPecasNuvem();
       }
     }
 
@@ -1031,8 +988,7 @@
         return;
       }
 
-      const pecas = obterPecas();
-      const filtradas = pecas.filter(p => 
+      const filtradas = cachePecas.filter(p => 
         p.nome.toLowerCase().includes(termo) || 
         (p.codigoBarras && p.codigoBarras.toLowerCase().includes(termo))
       );
@@ -1048,48 +1004,22 @@
         const div = document.createElement('div');
         div.className = 'autocomplete-item';
         const cod = p.codigoBarras ? `<small style="color:#666;">[${p.codigoBarras}]</small> ` : '';
-        div.innerHTML = `
-          <div>
-            ${cod}<strong>${p.nome}</strong>
-          </div>
-          <span style="color: #28a745; font-weight: bold;">${formatarMoeda(p.valor)}</span>
-        `;
-        div.onclick = function() {
-          selecionarPecaAutocomplete(p);
-        };
+        div.innerHTML = `<div>${cod}<strong>${p.nome}</strong></div><span style="color: #28a745; font-weight: bold;">${formatarMoeda(p.valor)}</span>`;
+        div.onclick = function() { selecionarPecaAutocomplete(p); };
         container.appendChild(div);
       });
-
       container.classList.remove('hidden');
     }
 
     function selecionarPecaAutocomplete(peca) {
       const existente = pecasSelecionadasLaudo.find(item => item.id === peca.id);
-      if (existente) {
-        existente.qtd += 1;
-      } else {
-        pecasSelecionadasLaudo.push({ ...peca, qtd: 1 });
-      }
+      if (existente) { existente.qtd += 1; } 
+      else { pecasSelecionadasLaudo.push({ ...peca, qtd: 1 }); }
 
       renderizarPecasDoLaudo();
       calcularTotalServico();
-      
       document.getElementById('laudoFiltroPeca').value = '';
-      document.getElementById('autocompleteResultados').innerHTML = '';
       document.getElementById('autocompleteResultados').classList.add('hidden');
-    }
-
-    function alterarQtdPecaLaudo(index, novaQtd) {
-      const qtd = parseInt(novaQtd) || 1;
-      pecasSelecionadasLaudo[index].qtd = Math.max(1, qtd);
-      renderizarPecasDoLaudo();
-      calcularTotalServico();
-    }
-
-    function removerPecaDoLaudo(index) {
-      pecasSelecionadasLaudo.splice(index, 1);
-      renderizarPecasDoLaudo();
-      calcularTotalServico();
     }
 
     function renderizarPecasDoLaudo() {
@@ -1104,12 +1034,9 @@
       pecasSelecionadasLaudo.forEach((p, index) => {
         const div = document.createElement('div');
         div.className = 'peca-tag';
-        const cod = p.codigoBarras ? ` (${p.codigoBarras})` : '';
         const totalPeca = p.valor * p.qtd;
         div.innerHTML = `
-          <div>
-            <b>Peça:</b> ${p.nome}${cod} — <b>Unit: ${formatarMoeda(p.valor)}</b>
-          </div>
+          <div><b>Peça:</b> ${p.nome} — <b>Unit: ${formatarMoeda(p.valor)}</b></div>
           <div style="display:flex; align-items:center; gap:8px;">
             <label style="font-size:0.85em; margin:0;">Qtd:</label>
             <input type="number" value="${p.qtd}" min="1" onchange="alterarQtdPecaLaudo(${index}, this.value)" style="width: 60px; padding: 2px 4px; margin:0; text-align:center;">
@@ -1121,18 +1048,34 @@
       });
     }
 
-    /* LÓGICA DO SISTEMA PDV / VENDAS E FORMAS DE PAGAMENTO */
+    function alterarQtdPecaLaudo(index, novaQtd) {
+      pecasSelecionadasLaudo[index].qtd = Math.max(1, parseInt(novaQtd) || 1);
+      renderizarPecasDoLaudo();
+      calcularTotalServico();
+    }
+
+    function removerPecaDoLaudo(index) {
+      pecasSelecionadasLaudo.splice(index, 1);
+      renderizarPecasDoLaudo();
+      calcularTotalServico();
+    }
+
+    function calcularTotalServico() {
+      const maoDeObra = parseFloat(document.getElementById('eqMaoDeObra').value) || 0;
+      const totalPecas = pecasSelecionadasLaudo.reduce((sum, p) => sum + (p.valor * p.qtd), 0);
+      const total = maoDeObra + totalPecas;
+      document.getElementById('eqValorTotalDisplay').value = formatarMoeda(total);
+      return { maoDeObra, totalPecas, total };
+    }
+
     function atualizarPagamentoPDV() {
       const forma = document.getElementById('pdvFormaPagamento').value;
-      const boxValor = document.getElementById('boxValorRecebido');
-      const boxTroco = document.getElementById('boxTroco');
-
       if (forma === "Dinheiro") {
-        boxValor.classList.remove('hidden');
-        boxTroco.classList.remove('hidden');
+        document.getElementById('boxValorRecebido').classList.remove('hidden');
+        document.getElementById('boxTroco').classList.remove('hidden');
       } else {
-        boxValor.classList.add('hidden');
-        boxTroco.classList.add('hidden');
+        document.getElementById('boxValorRecebido').classList.add('hidden');
+        document.getElementById('boxTroco').classList.add('hidden');
       }
       calcularTrocoPDV();
     }
@@ -1162,14 +1105,13 @@
         return;
       }
 
-      const pecas = obterPecas();
-      const filtradas = pecas.filter(p => 
+      const filtradas = cachePecas.filter(p => 
         p.nome.toLowerCase().includes(termo) || 
         (p.codigoBarras && p.codigoBarras.toLowerCase().includes(termo))
       );
 
       if (filtradas.length === 0) {
-        container.innerHTML = '<div style="padding: 10px; color: #888; text-align: center;">Nenhum produto/peça encontrado.</div>';
+        container.innerHTML = '<div style="padding: 10px; color: #888; text-align: center;">Nenhum produto encontrado.</div>';
         container.classList.remove('hidden');
         return;
       }
@@ -1179,15 +1121,8 @@
         const div = document.createElement('div');
         div.className = 'autocomplete-item';
         const cod = p.codigoBarras ? `<small style="color:#666;">[${p.codigoBarras}]</small> ` : '';
-        div.innerHTML = `
-          <div>
-            ${cod}<strong>${p.nome}</strong>
-          </div>
-          <span style="color: #28a745; font-weight: bold;">${formatarMoeda(p.valor)}</span>
-        `;
-        div.onclick = function() {
-          adicionarAoCarrinhoPDV(p);
-        };
+        div.innerHTML = `<div>${cod}<strong>${p.nome}</strong></div><span style="color: #28a745; font-weight: bold;">${formatarMoeda(p.valor)}</span>`;
+        div.onclick = function() { adicionarAoCarrinhoPDV(p); };
         container.appendChild(div);
       });
 
@@ -1196,37 +1131,11 @@
 
     function adicionarAoCarrinhoPDV(peca) {
       const itemExistente = carrinhoPDV.find(item => item.id === peca.id);
-      if(itemExistente) {
-        itemExistente.qtd += 1;
-      } else {
-        carrinhoPDV.push({
-          id: peca.id,
-          nome: peca.nome,
-          codigoBarras: peca.codigoBarras || '',
-          valor: peca.valor,
-          qtd: 1
-        });
-      }
+      if(itemExistente) { itemExistente.qtd += 1; } 
+      else { carrinhoPDV.push({ id: peca.id, nome: peca.nome, codigoBarras: peca.codigoBarras || '', valor: peca.valor, qtd: 1 }); }
 
       document.getElementById('pdvFiltroPeca').value = '';
       document.getElementById('autocompletePDVResultados').classList.add('hidden');
-      renderizarCarrinhoPDV();
-    }
-
-    function alterarQtdCarrinhoPDV(index, novaQtd) {
-      const qtd = parseInt(novaQtd) || 1;
-      carrinhoPDV[index].qtd = Math.max(1, qtd);
-      renderizarCarrinhoPDV();
-    }
-
-    function removerDoCarrinhoPDV(index) {
-      carrinhoPDV.splice(index, 1);
-      renderizarCarrinhoPDV();
-    }
-
-    function limparCarrinhoPDV() {
-      carrinhoPDV = [];
-      document.getElementById('pdvValorRecebido').value = '';
       renderizarCarrinhoPDV();
     }
 
@@ -1242,7 +1151,6 @@
       }
 
       let totalGeral = 0;
-
       carrinhoPDV.forEach((item, index) => {
         const subtotal = item.valor * item.qtd;
         totalGeral += subtotal;
@@ -1250,7 +1158,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${index + 1}</td>
-          <td><strong>${item.nome}</strong> ${item.codigoBarras ? `<br><small style="color:#666;">SKU: ${item.codigoBarras}</small>` : ''}</td>
+          <td><strong>${item.nome}</strong></td>
           <td><input type="number" value="${item.qtd}" min="1" onchange="alterarQtdCarrinhoPDV(${index}, this.value)" style="margin:0; padding:4px; text-align:center;"></td>
           <td>${formatarMoeda(item.valor)}</td>
           <td><b>${formatarMoeda(subtotal)}</b></td>
@@ -1263,26 +1171,38 @@
       calcularTrocoPDV();
     }
 
-    function finalizarVendaPDV(tipoFormato = 'cupom') {
-      if(carrinhoPDV.length === 0) return alert("Adicione produtos ao carrinho antes de finalizar.");
+    function alterarQtdCarrinhoPDV(index, novaQtd) {
+      carrinhoPDV[index].qtd = Math.max(1, parseInt(novaQtd) || 1);
+      renderizarCarrinhoPDV();
+    }
+
+    function removerDoCarrinhoPDV(index) {
+      carrinhoPDV.splice(index, 1);
+      renderizarCarrinhoPDV();
+    }
+
+    function limparCarrinhoPDV() {
+      carrinhoPDV = [];
+      document.getElementById('pdvValorRecebido').value = '';
+      renderizarCarrinhoPDV();
+    }
+
+    async function finalizarVendaPDV(tipoFormato = 'cupom') {
+      if(carrinhoPDV.length === 0) return alert("Adicione produtos ao carrinho.");
 
       const totalVenda = carrinhoPDV.reduce((acc, i) => acc + (i.valor * i.qtd), 0);
       const formaPagamento = document.getElementById('pdvFormaPagamento').value;
       let valorRecebido = parseFloat(document.getElementById('pdvValorRecebido').value) || totalVenda;
 
       if (formaPagamento === "Dinheiro" && valorRecebido < totalVenda) {
-        return alert("O valor recebido em dinheiro é menor que o total da venda!");
+        return alert("O valor recebido em dinheiro é menor que o total!");
       }
 
       const troco = Math.max(0, valorRecebido - totalVenda);
-
       const clienteId = document.getElementById('pdvClienteSelect').value;
-      const cliente = clienteId ? obterClientes().find(c => c.id == clienteId) : null;
+      const cliente = clienteId ? cacheClientes.find(c => c.id == clienteId) : null;
 
-      // Registrar no Balanço
-      const laudos = obterLaudos();
       const novaVenda = {
-        id: Date.now(),
         tipo: 'venda',
         usuario: usuarioAtual,
         clienteId: cliente ? cliente.id : null,
@@ -1292,8 +1212,8 @@
         valor: totalVenda,
         data: new Date().toISOString().split('T')[0]
       };
-      laudos.push(novaVenda);
-      localStorage.setItem(STORAGE_LAUDOS, JSON.stringify(laudos));
+
+      await window.fsAddDoc(window.fsCollection(window.db, "laudos"), novaVenda);
 
       if (tipoFormato === 'notona') {
         gerarNotonaA4PDF(cliente, carrinhoPDV, totalVenda, formaPagamento, valorRecebido, troco);
@@ -1302,235 +1222,104 @@
       }
 
       limparCarrinhoPDV();
-      renderizarBalanco();
-      verificarEspacoMemoria();
-      alert("Venda finalizada com sucesso! Documento gerado.");
+      await carregarLaudosNuvem();
+      alert("Venda registrada na Nuvem com sucesso!");
     }
 
-    /* NOTONA GRANDE (A4) COM LOGO PADRÃO */
-    function gerarNotonaA4PDF(cliente, itens, total, formaPagamento, valorRecebido, troco) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const emp = obterEmpresa();
+    async function salvarEGerarLaudo() {
+      const clienteId = document.getElementById('laudoClienteSelect').value;
+      if(!clienteId) return alert("Selecione um cliente para o laudo.");
 
-      // Cabeçalho da Empresa
-      doc.setFillColor(0, 102, 204);
-      doc.rect(0, 0, 210, 25, 'F');
-
-      if(emp.logo) {
-        doc.addImage(emp.logo, 'PNG', 10, 2, 20, 20);
-      }
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text(emp.nome || "COMPROVANTE DE VENDA", emp.logo ? 35 : 105, 12, { align: emp.logo ? "left" : "center" });
+      const cliente = cacheClientes.find(c => c.id == clienteId);
+      const modelo = document.getElementById('eqModelo').value || "Não informado";
+      const serie = document.getElementById('eqSerie').value || "Não informado";
+      const defeito = document.getElementById('eqDefeito').value || "Não informado";
+      const solucao = document.getElementById('eqSolucao').value || "Não informado";
       
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      const empSub = `${emp.cnpj ? 'CNPJ: ' + emp.cnpj + ' | ' : ''}${emp.endereco || ''} ${emp.contato ? '| TEL: ' + emp.contato : ''}`;
-      if(empSub) doc.text(empSub, emp.logo ? 35 : 105, 18, { align: emp.logo ? "left" : "center" });
+      const { maoDeObra, totalPecas, total } = calcularTotalServico();
 
-      // Dados do Cliente e Operação
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text("DADOS DO CLIENTE & EMISSÃO", 14, 33);
-      doc.line(14, 35, 196, 35);
+      const novoServico = {
+        tipo: 'laudo',
+        usuario: usuarioAtual,
+        clienteId: cliente.id,
+        clienteNome: cliente.nome,
+        modelo,
+        serie,
+        valor: total,
+        data: new Date().toISOString().split('T')[0]
+      };
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9.5);
-      doc.text(`Cliente: ${cliente ? cliente.nome : 'Consumidor Final'}`, 14, 42);
-      doc.text(`CPF/CNPJ: ${cliente && cliente.cpf ? cliente.cpf : 'N/A'}`, 14, 47);
-      doc.text(`Endereço: ${cliente && cliente.endereco ? cliente.endereco : 'N/A'}`, 14, 52);
-      doc.text(`Telefone: ${cliente && cliente.telefone ? cliente.telefone : 'N/A'}`, 14, 57);
+      await window.fsAddDoc(window.fsCollection(window.db, "laudos"), novoServico);
 
-      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, 140, 42);
-      doc.text(`Operador: ${usuarioAtual}`, 140, 47);
-      doc.text(`Forma Pagto: ${formaPagamento}`, 140, 52);
+      gerarPDF(cliente, modelo, serie, defeito, solucao, maoDeObra, totalPecas, total, pecasSelecionadasLaudo, assinaturaTemporaria);
 
-      // Tabela de Produtos
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("ITENS DA COMPRA", 14, 67);
-      doc.line(14, 69, 196, 69);
-
-      doc.setFillColor(242, 242, 242);
-      doc.rect(14, 71, 182, 7, 'F');
-      doc.setFontSize(9);
-      doc.text("ITEM", 16, 76);
-      doc.text("DESCRIÇÃO", 32, 76);
-      doc.text("QTD", 125, 76);
-      doc.text("PREÇO UNIT.", 145, 76);
-      doc.text("SUBTOTAL", 175, 76);
-
-      let y = 84;
-      doc.setFont("helvetica", "normal");
-
-      itens.forEach((item, index) => {
-        const sub = item.valor * item.qtd;
-        doc.text((index + 1).toString(), 16, y);
-        
-        const nomeTruncado = item.nome.length > 45 ? item.nome.substring(0, 45) + '...' : item.nome;
-        doc.text(nomeTruncado, 32, y);
-        doc.text(item.qtd.toString(), 127, y);
-        doc.text(formatarMoeda(item.valor), 145, y);
-        doc.text(formatarMoeda(sub), 175, y);
-
-        y += 7;
-        doc.setDrawColor(230, 230, 230);
-        doc.line(14, y - 4, 196, y - 4);
-
-        if (y > 260) {
-          doc.addPage();
-          y = 20;
-        }
-      });
-
-      // Totais e Detalhes de Pagamento
-      y += 5;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("RESUMO FINANCEIRO", 130, y);
-      doc.line(130, y + 2, 196, y + 2);
-
-      y += 8;
-      doc.setFontSize(10);
-      doc.text(`TOTAL R$:`, 130, y);
-      doc.setTextColor(0, 102, 204);
-      doc.text(formatarMoeda(total), 175, y);
-      doc.setTextColor(0, 0, 0);
-
-      if (formaPagamento === "Dinheiro") {
-        y += 6;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.text(`Valor Recebido:`, 130, y);
-        doc.text(formatarMoeda(valorRecebido), 175, y);
-
-        y += 5;
-        doc.text(`Troco:`, 130, y);
-        doc.text(formatarMoeda(troco), 175, y);
-      }
-
-      // Rodapé / Assinaturas
-      y += 25;
-      doc.line(60, y, 150, y);
-      doc.setFontSize(8.5);
-      doc.setFont("helvetica", "normal");
-      doc.text("Assinatura / Recebido por", 105, y + 4, { align: "center" });
-
-      doc.save(`Notona_Venda_${Date.now()}.pdf`);
+      pecasSelecionadasLaudo = [];
+      document.getElementById('eqMaoDeObra').value = '';
+      calcularTotalServico();
+      renderizarPecasDoLaudo();
+      await carregarLaudosNuvem();
+      alert("Laudo gerado e gravado na nuvem!");
     }
 
-    function gerarCupomFiscalPDF(cliente, itens, total, formaPagamento, valorRecebido, troco) {
-      const { jsPDF } = window.jspdf;
-      const emp = obterEmpresa();
-      
-      const doc = new jsPDF({
-        unit: 'mm',
-        format: [80, 220 + (itens.length * 10)]
-      });
+    function inicializarCanvasAssinatura() {
+      sigCanvas = document.getElementById('sigCanvas');
+      if(!sigCanvas) return;
+      sigCtx = sigCanvas.getContext('2d');
+      sigCtx.lineWidth = 2;
+      sigCtx.strokeStyle = "#000000";
 
-      let y = 8;
+      sigCanvas.addEventListener('mousedown', startDrawing);
+      sigCanvas.addEventListener('mousemove', draw);
+      sigCanvas.addEventListener('mouseup', stopDrawing);
+      sigCanvas.addEventListener('mouseleave', stopDrawing);
 
-      if(emp.logo) {
-        doc.addImage(emp.logo, 'PNG', 25, y, 30, 15);
-        y += 18;
-      }
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(10);
-      doc.text(emp.nome || "MINHA EMPRESA / LOJA", 40, y, { align: "center" });
-      y += 4;
-
-      doc.setFont("courier", "normal");
-      doc.setFontSize(7.5);
-      if(emp.cnpj) { doc.text(`CNPJ: ${emp.cnpj}`, 40, y, { align: "center" }); y += 3.5; }
-      if(emp.endereco) { doc.text(emp.endereco, 40, y, { align: "center" }); y += 3.5; }
-      if(emp.contato) { doc.text(`TEL: ${emp.contato}`, 40, y, { align: "center" }); y += 3.5; }
-
-      doc.text("----------------------------------------", 40, y, { align: "center" });
-      y += 4;
-
-      doc.setFont("courier", "bold");
-      doc.text("CUPOM NÃO FISCAL - RECIBO DE VENDA", 40, y, { align: "center" });
-      y += 4;
-
-      doc.setFont("courier", "normal");
-      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, 5, y);
-      y += 3.5;
-      doc.text(`Operador: ${usuarioAtual}`, 5, y);
-      y += 3.5;
-
-      if(cliente) {
-        doc.text(`Cliente: ${cliente.nome}`, 5, y);
-        y += 3.5;
-        if(cliente.cpf) { doc.text(`CPF/CNPJ: ${cliente.cpf}`, 5, y); y += 3.5; }
-      } else {
-        doc.text("Cliente: CONSUMIDOR FINAL", 5, y);
-        y += 3.5;
-      }
-
-      doc.text("----------------------------------------", 40, y, { align: "center" });
-      y += 4;
-
-      doc.setFont("courier", "bold");
-      doc.text("QTD  DESCRIÇÃO           SUBTOTAL", 5, y);
-      y += 4;
-
-      doc.setFont("courier", "normal");
-      itens.forEach(item => {
-        const sub = item.valor * item.qtd;
-        const nomeTruncado = item.nome.length > 18 ? item.nome.substring(0, 18) : item.nome.padEnd(18, ' ');
-        doc.text(`${item.qtd.toString().padStart(2, ' ')}x ${nomeTruncado} ${formatarMoeda(sub).padStart(10, ' ')}`, 5, y);
-        y += 4;
-      });
-
-      doc.text("----------------------------------------", 40, y, { align: "center" });
-      y += 4;
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(9);
-      doc.text(`TOTAL R$: ${formatarMoeda(total)}`, 75, y, { align: "right" });
-      y += 4;
-
-      doc.setFont("courier", "normal");
-      doc.setFontSize(8);
-      doc.text(`Forma Pagto: ${formaPagamento}`, 5, y);
-      y += 4;
-
-      if (formaPagamento === "Dinheiro") {
-        doc.text(`Valor Recebido: ${formatarMoeda(valorRecebido)}`, 5, y);
-        y += 4;
-        doc.text(`Troco: ${formatarMoeda(troco)}`, 5, y);
-        y += 4;
-      }
-
-      doc.text("----------------------------------------", 40, y, { align: "center" });
-      y += 5;
-
-      doc.setFontSize(7.5);
-      doc.text("Obrigado pela preferência!", 40, y, { align: "center" });
-
-      doc.save(`Recibo_PDV_${Date.now()}.pdf`);
+      sigCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(getTouchPos(e)); });
+      sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getTouchPos(e)); });
+      sigCanvas.addEventListener('touchend', stopDrawing);
     }
 
-    function calcularTotalServico() {
-      const maoDeObra = parseFloat(document.getElementById('eqMaoDeObra').value) || 0;
-      const totalPecas = pecasSelecionadasLaudo.reduce((sum, p) => sum + (p.valor * p.qtd), 0);
-      const total = maoDeObra + totalPecas;
-      document.getElementById('eqValorTotalDisplay').value = formatarMoeda(total);
-      return { maoDeObra, totalPecas, total };
+    function abrirModalAssinatura() {
+      document.getElementById('modalAssinatura').classList.remove('hidden');
+      limparAssinatura();
     }
+
+    function fecharModalAssinatura() { document.getElementById('modalAssinatura').classList.add('hidden'); }
+    function salvarAssinaturaModal() {
+      if(sigCanvas) {
+        assinaturaTemporaria = sigCanvas.toDataURL();
+        document.getElementById('statusAssinatura').innerHTML = `✅ Assinatura capturada!`;
+      }
+      fecharModalAssinatura();
+    }
+
+    function getTouchPos(e) {
+      const rect = sigCanvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      return { clientX: touch.clientX - rect.left, clientY: touch.clientY - rect.top, isTouch: true };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      sigCtx.beginPath();
+      const x = e.isTouch ? e.clientX : e.offsetX;
+      const y = e.isTouch ? e.clientY : e.offsetY;
+      sigCtx.moveTo(x, y);
+    }
+
+    function draw(e) {
+      if(!isDrawing) return;
+      const x = e.isTouch ? e.clientX : e.offsetX;
+      const y = e.isTouch ? e.clientY : e.offsetY;
+      sigCtx.lineTo(x, y);
+      sigCtx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+    function limparAssinatura() { if(sigCtx && sigCanvas) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
 
     function carregarFotos(event) {
       const files = Array.from(event.target.files);
-      if(files.length > 5) {
-        alert("Selecione no máximo 5 fotos.");
-        document.getElementById('fotoInput').value = "";
-        return;
-      }
+      if(files.length > 5) return alert("Selecione no máximo 5 fotos.");
 
       fotosBase64 = [];
       const previewContainer = document.getElementById('previewFotos');
@@ -1566,57 +1355,15 @@
       });
     }
 
-    function obterLaudos() { return JSON.parse(localStorage.getItem(STORAGE_LAUDOS) || "[]"); }
-
-    function salvarEGerarLaudo() {
-      const clienteId = document.getElementById('laudoClienteSelect').value;
-      if(!clienteId) return alert("Selecione um cliente para o laudo.");
-
-      const cliente = obterClientes().find(c => c.id == clienteId);
-      const modelo = document.getElementById('eqModelo').value || "Não informado";
-      const serie = document.getElementById('eqSerie').value || "Não informado";
-      const defeito = document.getElementById('eqDefeito').value || "Não informado";
-      const solucao = document.getElementById('eqSolucao').value || "Não informado";
-      
-      const { maoDeObra, totalPecas, total } = calcularTotalServico();
-
-      const laudos = obterLaudos();
-      const novoServico = {
-        id: Date.now(),
-        tipo: 'laudo',
-        usuario: usuarioAtual,
-        clienteId: cliente.id,
-        clienteNome: cliente.nome,
-        modelo,
-        serie,
-        valor: total,
-        data: new Date().toISOString().split('T')[0]
-      };
-      laudos.push(novoServico);
-      localStorage.setItem(STORAGE_LAUDOS, JSON.stringify(laudos));
-
-      gerarPDF(cliente, modelo, serie, defeito, solucao, maoDeObra, totalPecas, total, pecasSelecionadasLaudo, assinaturaTemporaria);
-
-      pecasSelecionadasLaudo = [];
-      document.getElementById('eqMaoDeObra').value = '';
-      calcularTotalServico();
-      renderizarPecasDoLaudo();
-      renderizarBalanco();
-      verificarEspacoMemoria();
-      alert("Laudo gerado com sucesso!");
-    }
-
     function gerarPDF(cliente, modelo, serie, defeito, solucao, maoDeObra, totalPecas, total, pecas, assinaturaImg) {
-      const { jsPDF } = window.jspdf;
+      const jsPDF = window.jspdf.jsPDF;
       const doc = new jsPDF();
-      const emp = obterEmpresa();
+      const emp = cacheEmpresa;
 
       doc.setFillColor(0, 102, 204);
       doc.rect(0, 0, 210, 25, 'F');
 
-      if(emp.logo) {
-        doc.addImage(emp.logo, 'PNG', 10, 2, 20, 20);
-      }
+      if(emp.logo) { doc.addImage(emp.logo, 'PNG', 10, 2, 20, 20); }
 
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(14);
@@ -1671,11 +1418,7 @@
         doc.text("Peças Substituídas:", 14, nextY);
         doc.setFont("helvetica", "normal");
         
-        let pecasTexto = pecas.map(p => {
-          const cod = p.codigoBarras ? ` [${p.codigoBarras}]` : '';
-          return `- ${p.qtd}x ${p.nome}${cod} (${formatarMoeda(p.valor * p.qtd)})`;
-        }).join('\n');
-        
+        let pecasTexto = pecas.map(p => `- ${p.qtd}x ${p.nome} (${formatarMoeda(p.valor * p.qtd)})`).join('\n');
         const pecasLines = doc.splitTextToSize(pecasTexto, 135);
         doc.text(pecasLines, 60, nextY);
         nextY += (pecasLines.length * 5) + 2;
@@ -1720,12 +1463,8 @@
       doc.text(`Técnico: ${usuarioAtual}`, 105, nextY + 20, { align: "center" });
 
       if(fotosBase64.length > 0) {
-        if (nextY + 30 > 180) {
-          doc.addPage();
-          nextY = 20;
-        } else {
-          nextY += 28;
-        }
+        if (nextY + 30 > 180) { doc.addPage(); nextY = 20; } 
+        else { nextY += 28; }
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
@@ -1735,33 +1474,105 @@
 
         let x = 14;
         let y = nextY;
-        const imgWidth = 85;
-        const imgHeight = 60;
-
         fotosBase64.forEach((foto, index) => {
-          if (y + imgHeight > 275) {
-            doc.addPage();
-            y = 20;
-          }
-
-          doc.addImage(foto, 'JPEG', x, y, imgWidth, imgHeight);
-          
-          if (index % 2 === 0) {
-            x = 110; 
-          } else {
-            x = 14;
-            y += imgHeight + 8;
-          }
+          if (y + 60 > 275) { doc.addPage(); y = 20; }
+          doc.addImage(foto, 'JPEG', x, y, 85, 60);
+          if (index % 2 === 0) { x = 110; } 
+          else { x = 14; y += 68; }
         });
       }
 
       doc.save(`Laudo_${cliente.nome.replace(/\s+/g, '_')}.pdf`);
     }
 
+    function gerarNotonaA4PDF(cliente, itens, total, formaPagamento, valorRecebido, troco) {
+      const jsPDF = window.jspdf.jsPDF;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const emp = cacheEmpresa;
+
+      doc.setFillColor(0, 102, 204);
+      doc.rect(0, 0, 210, 25, 'F');
+      if(emp.logo) doc.addImage(emp.logo, 'PNG', 10, 2, 20, 20);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(emp.nome || "COMPROVANTE DE VENDA", emp.logo ? 35 : 105, 12, { align: emp.logo ? "left" : "center" });
+      
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "normal");
+      const empSub = `${emp.cnpj ? 'CNPJ: ' + emp.cnpj + ' | ' : ''}${emp.endereco || ''}`;
+      if(empSub) doc.text(empSub, emp.logo ? 35 : 105, 18, { align: emp.logo ? "left" : "center" });
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("DADOS DO CLIENTE & EMISSÃO", 14, 33);
+      doc.line(14, 35, 196, 35);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.text(`Cliente: ${cliente ? cliente.nome : 'Consumidor Final'}`, 14, 42);
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 140, 42);
+      doc.text(`Forma Pagto: ${formaPagamento}`, 140, 47);
+
+      doc.setFont("helvetica", "bold");
+      doc.text("ITENS DA COMPRA", 14, 60);
+      doc.line(14, 62, 196, 62);
+
+      let y = 70;
+      doc.setFont("helvetica", "normal");
+      itens.forEach((item, index) => {
+        doc.text(`${index + 1}. ${item.nome} (${item.qtd}x) - ${formatarMoeda(item.valor * item.qtd)}`, 14, y);
+        y += 6;
+      });
+
+      y += 10;
+      doc.setFont("helvetica", "bold");
+      doc.text(`TOTAL: ${formatarMoeda(total)}`, 14, y);
+
+      doc.save(`Venda_A4_${Date.now()}.pdf`);
+    }
+
+    function gerarCupomFiscalPDF(cliente, itens, total, formaPagamento, valorRecebido, troco) {
+      const jsPDF = window.jspdf.jsPDF;
+      const emp = cacheEmpresa;
+      
+      const doc = new jsPDF({ unit: 'mm', format: [80, 200 + (itens.length * 10)] });
+      let y = 8;
+
+      if(emp.logo) { doc.addImage(emp.logo, 'PNG', 25, y, 30, 15); y += 18; }
+
+      doc.setFont("courier", "bold");
+      doc.setFontSize(10);
+      doc.text(emp.nome || "LOJA / ASSISTENCIA", 40, y, { align: "center" });
+      y += 6;
+
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 5, y);
+      y += 4;
+      doc.text(`Cliente: ${cliente ? cliente.nome : 'Consumidor Final'}`, 5, y);
+      y += 6;
+
+      itens.forEach(item => {
+        doc.text(`${item.qtd}x ${item.nome.substring(0, 15)} ${formatarMoeda(item.valor * item.qtd)}`, 5, y);
+        y += 4;
+      });
+
+      y += 4;
+      doc.setFont("courier", "bold");
+      doc.text(`TOTAL R$: ${formatarMoeda(total)}`, 5, y);
+      y += 4;
+      doc.text(`Pagto: ${formaPagamento}`, 5, y);
+
+      doc.save(`Recibo_PDV_${Date.now()}.pdf`);
+    }
+
     function renderizarBalanco() {
       const tbody = document.getElementById('tabelaBalanco');
       tbody.innerHTML = '';
-      let laudos = obterLaudos();
+      let laudos = cacheLaudos;
 
       const inicio = document.getElementById('balFiltroInicio').value;
       const fim = document.getElementById('balFiltroFim').value;
@@ -1770,8 +1581,6 @@
       if(inicio) laudos = laudos.filter(l => l.data >= inicio);
       if(fim) laudos = laudos.filter(l => l.data <= fim);
       if(clienteId) laudos = laudos.filter(l => l.clienteId == clienteId);
-
-      laudos.sort((a, b) => b.id - a.id);
 
       let total = 0;
 
@@ -1788,7 +1597,7 @@
           <td>${l.clienteNome}</td>
           <td>${l.modelo}</td>
           <td><b>${formatarMoeda(l.valor)}</b></td>
-          <td><button onclick="deletarLaudo(${l.id})" class="btn-danger" style="padding:4px 8px; width:auto;">Excluir</button></td>
+          <td><button onclick="deletarLaudo('${l.id}')" class="btn-danger" style="padding:4px 8px; width:auto;">Excluir</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -1796,59 +1605,11 @@
       document.getElementById('totalBalanco').innerHTML = `<b>Total Acumulado no Período: ${formatarMoeda(total)}</b>`;
     }
 
-    function deletarLaudo(id) {
-      if(confirm("Remover este registro do balanço?")) {
-        let laudos = obterLaudos().filter(l => l.id !== id);
-        localStorage.setItem(STORAGE_LAUDOS, JSON.stringify(laudos));
-        renderizarBalanco();
+    async function deletarLaudo(id) {
+      if(confirm("Remover este registro da nuvem?")) {
+        await window.fsDeleteDoc(window.fsDoc(window.db, "laudos", id));
+        await carregarLaudosNuvem();
       }
-    }
-
-    function exportarBackup() {
-      const backupData = {
-        usuarios: obterUsuarios(),
-        clientes: obterClientes(),
-        laudos: obterLaudos(),
-        pecas: obterPecas(),
-        empresa: obterEmpresa()
-      };
-      const blob = new Blob([JSON.stringify(backupData)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `backup_completo_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-    }
-
-    function importarBackup(event) {
-      const file = event.target.files[0];
-      if(!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const json = JSON.parse(e.target.result);
-          if(json.clientes && json.laudos) {
-            if(json.usuarios) localStorage.setItem(STORAGE_USERS, JSON.stringify(json.usuarios));
-            localStorage.setItem(STORAGE_CLIENTES, JSON.stringify(json.clientes));
-            localStorage.setItem(STORAGE_LAUDOS, JSON.stringify(json.laudos));
-            if(json.pecas) localStorage.setItem(STORAGE_PECAS, JSON.stringify(json.pecas));
-            if(json.empresa) localStorage.setItem(STORAGE_EMPRESA, JSON.stringify(json.empresa));
-            alert("Backup completo restaurado com sucesso!");
-            renderizarListaUsuariosLogin();
-            renderizarClientes();
-            atualizarSelectsClientes();
-            renderizarBalanco();
-            renderizarPecas();
-            carregarDadosEmpresa();
-          } else {
-            alert("Arquivo de backup em formato incompatível.");
-          }
-        } catch (err) {
-          alert("Erro ao processar o arquivo de backup.");
-        }
-      };
-      reader.readAsText(file);
     }
   </script>
 </body>
