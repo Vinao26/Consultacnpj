@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Pro | Controle de PDV</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Libs Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --surface-card: #ffffff;
+            --surface-hover: #f1f5f9;
+            --surface-subtle: #f8fafc;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: rgba(79, 70, 229, 0.1);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.12);
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --surface-card: #1e293b;
+                --surface-hover: #334155;
+                --surface-subtle: rgba(15, 23, 42, 0.5);
+                --primary: #6366f1;
+                --primary-hover: #4f46e5;
+                --primary-light: rgba(99, 102, 241, 0.15);
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--surface-card);
+            padding: 20px 28px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+        
+        .app-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+            color: var(--text-main);
+        }
+        
+        .app-header h2 i {
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            font-size: 20px;
+        }
+
+        .global-actions-bar {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        button {
+            padding: 12px 18px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        
+        button:active { transform: translateY(0); }
+        button:disabled { background-color: #94a3b8 !important; cursor: not-allowed; opacity: 0.6; }
+
+        .btn-pdf { background-color: #ef4444; }
+        .btn-pdf:hover { background-color: #dc2626; }
+        .btn-whatsapp { background-color: #10b981; }
+        .btn-whatsapp:hover { background-color: #059669; }
+        .btn-reset { background-color: #64748b; }
+        .btn-reset:hover { background-color: #475569; }
+        .btn-backup { background-color: #8b5cf6; }
+        .btn-backup:hover { background-color: #7c3aed; }
+        .btn-restore { background-color: #0284c7; }
+        .btn-restore:hover { background-color: #0369a1; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover { transform: translateY(-2px); }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .metric-info span { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric-info strong { font-size: 22px; color: var(--text-main); font-weight: 800; display: block; margin-top: 2px; }
+
+        .summary-accordion {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-header {
+            padding: 18px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            user-select: none;
+            transition: background-color 0.2s;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .summary-header:hover { background-color: var(--surface-hover); }
+        .summary-header-title { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--text-main); }
+
+        .summary-badges-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .summary-badge {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-badge-success {
+            background-color: var(--success-light);
+            color: var(--success);
+        }
+
+        .summary-content {
+            display: none;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--surface-subtle);
+        }
+
+        .client-summary-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .upload-section {
+            background-color: var(--surface-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .file-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .file-list-table th, .file-list-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .file-list-table th { background: var(--surface-subtle); color: var(--text-muted); font-weight: 700; }
+
+        .filter-section {
+            display: none;
+            background-color: var(--surface-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        .autocomplete-container { position: relative; }
+        
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            z-index: 99;
+            top: calc(100% - 8px);
+            left: 0; right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: var(--surface-card);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .autocomplete-items div {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        
+        .autocomplete-items div:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .days-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            background: var(--surface-subtle);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .day-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .day-checkbox-item input:checked + span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 100%;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-section {
+            display: none;
+            background-color: var(--surface-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        
+        .preview-section h3 {
+            padding: 20px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .preview-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .preview-table th, .preview-table td { padding: 14px 20px; border-bottom: 1px solid var(--border-color); font-size: 13.5px; text-align: left; }
+        .preview-table th { background-color: var(--surface-subtle); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .task-selected { background-color: var(--success-light) !important; }
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+        @media (max-width: 640px) {
+            body { padding: 12px 8px; }
+            .container { gap: 14px; }
+            .app-header h2 { font-size: 18px; }
+            .action-buttons button { width: 100%; }
+            .client-summary-card { flex-direction: column; align-items: flex-start; }
+            .client-summary-card button { width: 100%; }
+            .summary-header { flex-direction: column; align-items: flex-start; }
+            .summary-badges-group { width: 100%; justify-content: space-between; margin-top: 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="app-header">
+            <h2><i class="fas fa-layer-group"></i>Controle de tarefas DIA MUNDIAL</h2>
+        </div>
+
+        <div class="global-actions-bar">
+            <div class="action-buttons">
+                <button id="pdfBtn" class="btn-pdf"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                <button id="whatsappBtn" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button id="resetSelectionBtn" class="btn-reset"><i class="fas fa-rotate-left"></i> Zerar Seleção</button>
+            </div>
+        </div>
+
+        <div class="metrics-grid" id="metricsPanel" style="display: none;">
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-calendar-day"></i></div>
+                <div class="metric-info">
+                    <span>Dias de Visita</span>
+                    <strong id="metricDays">0</strong>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-store"></i></div>
+                <div class="metric-info">
+                    <span>PDVs Únicos</span>
+                    <strong id="metricPdvs">0</strong>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-list-check"></i></div>
+                <div class="metric-info">
+                    <span>Tarefas Carregadas</span>
+                    <strong id="metricTasks">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-accordion" id="summaryAccordion">
+            <div class="summary-header" id="summaryHeader">
+                <div class="summary-header-title">
+                    <i class="fas fa-clipboard-check" style="color: var(--primary);"></i>
+                    <span>Resumo de Execução</span>
+                </div>
+                <div class="summary-badges-group">
+                    <span class="summary-badge">Clientes: <strong id="clientCountBadge">0</strong></span>
+                    <span class="summary-badge summary-badge-success">Tarefas Concluídas: <strong id="taskCounter">0</strong></span>
+                    <i class="fas fa-chevron-down" id="accordionIcon" style="color: var(--text-muted);"></i>
+                </div>
+            </div>
+            <div class="summary-content" id="summaryContent">
+                <div id="clientListContainer">
+                    <p style="color: var(--text-muted); text-align: center; padding: 10px;">Nenhuma tarefa realizada ainda.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="upload-section">
+            <div class="action-buttons">
+                <button id="uploadBtn"><i class="fas fa-plus"></i> Importar Planilha</button>
+                <button id="exportBackupBtn" class="btn-backup"><i class="fas fa-download"></i> Exportar Backup</button>
+                <button id="importBackupBtn" class="btn-restore"><i class="fas fa-upload"></i> Restaurar Backup</button>
+            </div>
+
+            <div id="loadedFilesContainer" style="margin-top: 20px; display: none;">
+                <label>Planilhas Alimenta-Banco (Ativas):</label>
+                <div class="table-responsive">
+                    <table class="file-list-table">
+                        <thead>
+                            <tr>
+                                <th>Nome do Arquivo</th>
+                                <th>Tarefas Lidas</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileListTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-section" id="filterSection">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <h3><i class="fas fa-filter" style="color: var(--primary);"></i> Filtros de Escopo</h3>
+                    
+                    <label for="rnFilter">Setor / RN</label>
+                    <select id="rnFilter"><option value="">Todos os Setores / RNs</option></select>
+                    
+                    <label>Dias de Visita Ativos</label>
+                    <div class="days-checkbox-grid" id="visitDaysCheckboxContainer"></div>
+                </div>
+                
+                <div class="filter-group">
+                    <h3><i class="fas fa-search" style="color: var(--primary);"></i> Localizar PDV</h3>
+                    
+                    <div class="autocomplete-container">
+                        <label for="pdvFilter">Código do PDV</label>
+                        <input type="text" id="pdvFilter" placeholder="Digite o código para visualizar as tarefas...">
+                        <div id="pdvAutocomplete" class="autocomplete-items"></div>
+                    </div>
+                    
+                    <div class="autocomplete-container">
+                        <label for="fantasyNameFilter">Nome Fantasia</label>
+                        <input type="text" id="fantasyNameFilter" placeholder="Digite o nome do estabelecimento...">
+                        <div id="fantasyNameAutocomplete" class="autocomplete-items"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <h3><i class="fas fa-tasks" style="color: var(--primary);"></i> Tarefas Encontradas</h3>
+            <div class="table-responsive">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th width="60px">Status</th>
+                            <th>PDV</th>
+                            <th>Nome Fantasia</th>
+                            <th>Descrição da Tarefa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Filtro Importação -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-card">
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);"><i class="fas fa-sliders" style="color: var(--primary);"></i> Configurar Importação</h3>
+            <div>
+                <label for="modalRnSelect">Filtrar por Setor/RN:</label>
+                <select id="modalRnSelect"><option value="">Carregar todos os Setores</option></select>
+            </div>
+            <div>
+                <label>Dias de Visita Ativos:</label>
+                <div class="days-checkbox-grid" id="modalDaysContainer"></div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button id="modalConfirmBtn"><i class="fas fa-check"></i> Importar Dados</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STATE_STORAGE_KEY = "pdvAppState_v5_pro";
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loadedFilesContainer = document.getElementById('loadedFilesContainer');
+        const fileListTableBody = document.getElementById('fileListTableBody');
+        const metricsPanel = document.getElementById('metricsPanel');
+        const metricDays = document.getElementById('metricDays');
+        const metricPdvs = document.getElementById('metricPdvs');
+        const metricTasks = document.getElementById('metricTasks');
+        
+        const filterSection = document.getElementById('filterSection');
+        const rnFilter = document.getElementById('rnFilter');
+        const visitDaysCheckboxContainer = document.getElementById('visitDaysCheckboxContainer');
+        const pdvFilter = document.getElementById('pdvFilter');
+        const fantasyNameFilter = document.getElementById('fantasyNameFilter');
+        const pdvAutocomplete = document.getElementById('pdvAutocomplete');
+        const fantasyNameAutocomplete = document.getElementById('fantasyNameAutocomplete');
+        const previewSection = document.getElementById('previewSection');
+        const previewTableBody = document.getElementById('previewTableBody');
+        const taskCounter = document.getElementById('taskCounter');
+        
+        const importModal = document.getElementById('importModal');
+        const modalRnSelect = document.getElementById('modalRnSelect');
+        const modalDaysContainer = document.getElementById('modalDaysContainer');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+        let databaseFiles = [];
+        let currentData = [];
+        let selectedTasks = {};
+        let columnMapping = { rn: null, visitDay: null, pdv: null, fantasyName: null, tasks: null };
+        
+        let tempRawImportedData = [];
+        let tempCurrentFileName = "";
+        let replacingIndex = -1;
+
+        function formatDate(value) {
+            if (!value) return '';
+            if (value instanceof Date) return value.toLocaleDateString('pt-BR');
+            if (typeof value === 'number') {
+                const date = new Date((value - 25569) * 86400 * 1000);
+                return date.toLocaleDateString('pt-BR');
+            }
+            return String(value);
+        }
+
+        function generateTaskId(item) {
+            const pdv = columnMapping.pdv ? item[columnMapping.pdv] : '';
+            const task = columnMapping.tasks ? item[columnMapping.tasks] : '';
+            return `${pdv}_${task}`.trim();
+        }
+
+        function identifyColumns(sampleDataset = currentData) {
+            if (!sampleDataset || sampleDataset.length === 0) return;
+            const columnNames = Object.keys(sampleDataset[0]);
+
+            columnMapping.rn = columnNames.find(c => {
+                let valid = 0;
+                sampleDataset.forEach(i => {
+                    const num = Number(i[c]);
+                    if (!isNaN(num) && num >= 100 && num <= 999) valid++;
+                });
+                return valid > sampleDataset.length * 0.3;
+            });
+
+            columnMapping.tasks = columnNames.find(c => sampleDataset.some(i => i[c] && String(i[c]).toLowerCase().includes('auxilie')));
+            if (!columnMapping.tasks) {
+                columnMapping.tasks = columnNames.find(k => /tarefa|descri|ação|acao/i.test(k));
+            }
+
+            columnMapping.visitDay = columnNames.find(k => /data|dia|visita|date/i.test(k));
+            columnMapping.pdv = columnNames.find(k => /pdv|ponto|venda|codigo|código|loja/i.test(k));
+            columnMapping.fantasyName = columnNames.find(k => /fantasia|nome|estabelecimento/i.test(k));
+        }
+
+        uploadBtn.addEventListener('click', () => triggerFileInput(-1));
+
+        function triggerFileInput(replaceIdx = -1) {
+            replacingIndex = replaceIdx;
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.multiple = replaceIdx === -1;
+            fileInput.accept = '.xlsx, .xls, .csv';
+            
+            fileInput.onchange = (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) processFiles(files);
+            };
+            fileInput.click();
+        }
+
+        function processFiles(files) {
+            tempRawImportedData = [];
+            tempCurrentFileName = files.map(f => f.name).join(', ');
+
+            let loaded = 0;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    wb.SheetNames.forEach(sheet => {
+                        const sheetData = XLSX.utils.sheet_to_json(wb.Sheets[sheet]);
+                        tempRawImportedData = tempRawImportedData.concat(sheetData);
+                    });
+                    loaded++;
+                    if (loaded === files.length) openImportModal();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function openImportModal() {
+            identifyColumns(tempRawImportedData);
+
+            modalRnSelect.innerHTML = '<option value="">Carregar todos os Setores / RNs</option>';
+            if (columnMapping.rn) {
+                const uniqueRNs = [...new Set(tempRawImportedData.map(i => i[columnMapping.rn]))].filter(Boolean).sort();
+                uniqueRNs.forEach(rn => modalRnSelect.innerHTML += `<option value="${rn}">Setor ${rn}</option>`);
+            }
+
+            modalDaysContainer.innerHTML = '';
+            if (columnMapping.visitDay) {
+                const uniqueDays = [...new Set(tempRawImportedData.map(i => formatDate(i[columnMapping.visitDay])))].filter(Boolean);
+                if (uniqueDays.length > 0) {
+                    uniqueDays.forEach(day => {
+                        modalDaysContainer.innerHTML += `
+                            <label class="day-checkbox-item">
+                                <input type="checkbox" value="${day}" checked>
+                                <span>${day}</span>
+                            </label>`;
+                    });
+                } else {
+                    modalDaysContainer.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Planilha sem coluna de data detectada.</p>';
+                }
+            } else {
+                modalDaysContainer.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Planilha sem coluna de data detectada.</p>';
+            }
+            importModal.style.display = 'flex';
+        }
+
+        modalConfirmBtn.addEventListener('click', () => {
+            const selectedRn = modalRnSelect.value;
+            const checkedDays = Array.from(modalDaysContainer.querySelectorAll('input:checked')).map(cb => cb.value);
+
+            const filteredImport = tempRawImportedData.filter(item => {
+                const rnMatch = !selectedRn || (columnMapping.rn && String(item[columnMapping.rn]) === String(selectedRn));
+                
+                let dayMatch = true;
+                if (columnMapping.visitDay && checkedDays.length > 0) {
+                    const dayValue = formatDate(item[columnMapping.visitDay]);
+                    dayMatch = !dayValue || checkedDays.includes(dayValue);
+                }
+                return rnMatch && dayMatch;
+            });
+
+            if (replacingIndex >= 0) {
+                databaseFiles[replacingIndex] = { fileName: tempCurrentFileName, data: filteredImport };
+            } else {
+                databaseFiles.push({ fileName: tempCurrentFileName, data: filteredImport });
+            }
+
+            importModal.style.display = 'none';
+            rebuildDatabase();
+        });
+
+        function rebuildDatabase() {
+            const taskMap = new Map();
+            currentData = [];
+
+            databaseFiles.forEach(fileObj => {
+                fileObj.data.forEach(item => {
+                    identifyColumns([item]);
+                    const taskId = generateTaskId(item);
+                    if (taskId && !taskMap.has(taskId)) {
+                        taskMap.set(taskId, item);
+                    }
+                });
+            });
+
+            currentData = Array.from(taskMap.values());
+            identifyColumns();
+            renderFileList();
+            updateDashboardMetrics();
+            updateFilters();
+            applyFilters();
+            updateClientSummary();
+            saveState();
+        }
+
+        function renderFileList() {
+            if (databaseFiles.length === 0) {
+                loadedFilesContainer.style.display = 'none';
+                filterSection.style.display = 'none';
+                metricsPanel.style.display = 'none';
+                previewSection.style.display = 'none';
+                return;
+            }
+
+            loadedFilesContainer.style.display = 'block';
+            filterSection.style.display = 'block';
+            metricsPanel.style.display = 'grid';
+            fileListTableBody.innerHTML = '';
+
+            databaseFiles.forEach((file, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><b>${file.fileName}</b></td>
+                    <td>${file.data.length} tarefas</td>
+                    <td>
+                        <button onclick="triggerFileInput(${index})" style="padding: 6px 12px; font-size: 12px;"><i class="fas fa-sync"></i> Substituir</button>
+                        <button onclick="removeFile(${index})" class="btn-danger" style="padding: 6px 12px; font-size: 12px;"><i class="fas fa-trash"></i> Excluir</button>
+                    </td>
+                `;
+                fileListTableBody.appendChild(row);
+            });
+        }
+
+        window.removeFile = function(index) {
+            if (confirm("Deseja remover esta planilha do seu banco de dados?")) {
+                databaseFiles.splice(index, 1);
+                rebuildDatabase();
+            }
+        };
+
+        function updateDashboardMetrics() {
+            if (currentData.length === 0) {
+                metricsPanel.style.display = 'none';
+                return;
+            }
+            
+            const daysSet = new Set();
+            const pdvSet = new Set();
+
+            currentData.forEach(item => {
+                if (columnMapping.visitDay && item[columnMapping.visitDay]) {
+                    const formatted = formatDate(item[columnMapping.visitDay]);
+                    if (formatted) daysSet.add(formatted);
+                }
+                if (columnMapping.pdv && item[columnMapping.pdv]) {
+                    pdvSet.add(item[columnMapping.pdv]);
+                }
+            });
+
+            metricDays.textContent = daysSet.size;
+            metricPdvs.textContent = pdvSet.size;
+            metricTasks.textContent = currentData.length;
+        }
+
+        function updateFilters() {
+            rnFilter.innerHTML = '<option value="">Todos os Setores / RNs</option>';
+            visitDaysCheckboxContainer.innerHTML = '';
+        
+            if (columnMapping.rn) {
+                const uniqueRNs = [...new Set(currentData.map(i => i[columnMapping.rn]))].filter(Boolean).sort();
+                uniqueRNs.forEach(rn => rnFilter.innerHTML += `<option value="${rn}">${rn}</option>`);
+            }
+        
+            if (columnMapping.visitDay) {
+                const uniqueVisitDays = [...new Set(currentData.map(i => formatDate(i[columnMapping.visitDay])))].filter(Boolean);
+                uniqueVisitDays.forEach(day => {
+                    const label = document.createElement('label');
+                    label.className = 'day-checkbox-item';
+                    label.innerHTML = `<input type="checkbox" class="filter-day-cb" value="${day}" checked> <span>${day}</span>`;
+                    label.querySelector('input').addEventListener('change', () => { applyFilters(); saveState(); });
+                    visitDaysCheckboxContainer.appendChild(label);
+                });
+            }
+
+            setupAutocomplete(pdvFilter, pdvAutocomplete, columnMapping.pdv);
+            setupAutocomplete(fantasyNameFilter, fantasyNameAutocomplete, columnMapping.fantasyName);
+        }
+
+        function setupAutocomplete(inputElement, containerElement, columnName) {
+            if (!columnName) return;
+            
+            inputElement.addEventListener('input', function() {
+                const input = this.value.toLowerCase();
+                containerElement.innerHTML = '';
+                if (input.length < 1) return;
+                
+                const uniqueValues = [...new Set(currentData.map(item => item[columnName]))]
+                    .filter(value => value && String(value).toLowerCase().includes(input))
+                    .slice(0, 10);
+                
+                uniqueValues.forEach(value => {
+                    const item = document.createElement('div');
+                    item.textContent = value;
+                    item.addEventListener('click', function() {
+                        inputElement.value = value;
+                        containerElement.innerHTML = '';
+                        applyFilters();
+                        saveState();
+                    });
+                    containerElement.appendChild(item);
+                });
+            });
+            
+            document.addEventListener('click', (e) => { if (e.target !== inputElement) containerElement.innerHTML = ''; });
+        }
+
+        function applyFilters() {
+            const selectedRN = rnFilter.value;
+            const selectedVisitDays = Array.from(document.querySelectorAll('.filter-day-cb:checked')).map(cb => cb.value);
+            const pdvText = pdvFilter.value.trim().toLowerCase();
+            const fantasyNameText = fantasyNameFilter.value.trim().toLowerCase();
+
+            if (!pdvText && !fantasyNameText) {
+                previewSection.style.display = 'none';
+                return;
+            }
+
+            const filteredData = currentData.filter(item => {
+                const rnMatch = !selectedRN || (columnMapping.rn && String(item[columnMapping.rn]) === String(selectedRN));
+                const dayFormatted = columnMapping.visitDay ? formatDate(item[columnMapping.visitDay]) : null;
+                const visitDayMatch = !dayFormatted || selectedVisitDays.length === 0 || selectedVisitDays.includes(dayFormatted);
+                const pdvMatch = !pdvText || (columnMapping.pdv && String(item[columnMapping.pdv]).toLowerCase().includes(pdvText));
+                const nameMatch = !fantasyNameText || (columnMapping.fantasyName && String(item[columnMapping.fantasyName]).toLowerCase().includes(fantasyNameText));
+                
+                return rnMatch && visitDayMatch && pdvMatch && nameMatch;
+            });
+
+            renderPreviewTable(filteredData);
+            previewSection.style.display = 'block';
+        }
+
+        function renderPreviewTable(data) {
+            previewTableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                previewTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 24px; color: var(--text-muted);">Nenhum cliente/tarefa encontrado.</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                const taskId = generateTaskId(item);
+                const isSelected = !!selectedTasks[taskId];
+
+                if (isSelected) row.classList.add('task-selected');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = isSelected;
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedTasks[taskId] = {
+                            pdv: columnMapping.pdv ? item[columnMapping.pdv] : 'Sem PDV',
+                            name: columnMapping.fantasyName ? item[columnMapping.fantasyName] : 'Sem Nome',
+                            task: columnMapping.tasks ? item[columnMapping.tasks] : 'Tarefa Concluída'
+                        };
+                    } else {
+                        delete selectedTasks[taskId];
+                    }
+                    
+                    row.classList.toggle('task-selected', this.checked);
+                    updateTaskCounter();
+                    updateClientSummary();
+                    saveState();
+                });
+
+                const checkboxCell = document.createElement('td'); checkboxCell.appendChild(checkbox); row.appendChild(checkboxCell);
+                row.appendChild(createElement('td', columnMapping.pdv ? item[columnMapping.pdv] : '-'));
+                row.appendChild(createElement('td', columnMapping.fantasyName ? item[columnMapping.fantasyName] : '-'));
+                row.appendChild(createElement('td', columnMapping.tasks ? item[columnMapping.tasks] : 'Tarefa realizada'));
+
+                previewTableBody.appendChild(row);
+            });
+        }
+
+        function createElement(tag, text) {
+            const el = document.createElement(tag);
+            el.textContent = text;
+            return el;
+        }
+
+        function updateTaskCounter() {
+            taskCounter.textContent = Object.keys(selectedTasks).length;
+        }
+
+        function updateClientSummary() {
+            const tasksByPDV = {};
+
+            Object.keys(selectedTasks).forEach(taskId => {
+                const item = selectedTasks[taskId];
+                const pdv = item.pdv || 'Sem PDV';
+                if (!tasksByPDV[pdv]) {
+                    tasksByPDV[pdv] = { name: item.name, count: 0 };
+                }
+                tasksByPDV[pdv].count++;
+            });
+
+            const pdvKeys = Object.keys(tasksByPDV);
+            document.getElementById('clientCountBadge').textContent = pdvKeys.length;
+            const clientListContainer = document.getElementById('clientListContainer');
+            clientListContainer.innerHTML = '';
+
+            if (pdvKeys.length === 0) {
+                clientListContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 10px;">Nenhuma tarefa realizada ainda.</p>';
+                return;
+            }
+
+            pdvKeys.forEach(pdv => {
+                const client = tasksByPDV[pdv];
+                const card = document.createElement('div');
+                card.className = 'client-summary-card';
+                card.innerHTML = `
+                    <div>
+                        <strong style="font-size: 15px; color: var(--text-main);">${client.name}</strong><br>
+                        <span style="font-size: 13px; color: var(--text-muted);">PDV: <b>${pdv}</b> | <b style="color: var(--success);">${client.count} tarefa(s) concluída(s)</b></span>
+                    </div>
+                    <button onclick="editClientTasks('${pdv}')" style="padding: 6px 12px; font-size: 12px;"><i class="fas fa-edit"></i> Editar</button>
+                `;
+                clientListContainer.appendChild(card);
+            });
+        }
+
+        window.editClientTasks = function(pdv) {
+            fantasyNameFilter.value = '';
+            pdvFilter.value = pdv;
+            applyFilters();
+            previewSection.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        rnFilter.addEventListener('change', () => { applyFilters(); saveState(); });
+        pdvFilter.addEventListener('input', () => { applyFilters(); saveState(); });
+        fantasyNameFilter.addEventListener('input', () => { applyFilters(); saveState(); });
+
+        document.getElementById('summaryHeader').addEventListener('click', () => {
+            const summaryContent = document.getElementById('summaryContent');
+            const accordionIcon = document.getElementById('accordionIcon');
+            const isVisible = summaryContent.style.display === 'block';
+            summaryContent.style.display = isVisible ? 'none' : 'block';
+            accordionIcon.className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        });
+
+        document.getElementById('resetSelectionBtn').addEventListener('click', () => {
+            if (Object.keys(selectedTasks).length === 0) return alert('Nenhuma tarefa selecionada.');
+            if (confirm('Deseja zerar todas as tarefas marcadas como concluídas?')) {
+                selectedTasks = {};
+                updateTaskCounter();
+                updateClientSummary();
+                applyFilters();
+                saveState();
+            }
+        });
+
+        document.getElementById('whatsappBtn').addEventListener('click', () => {
+            if (Object.keys(selectedTasks).length === 0) return alert('Nenhuma tarefa selecionada.');
+
+            const tasksByPDV = {};
+            Object.keys(selectedTasks).forEach(taskId => {
+                const item = selectedTasks[taskId];
+                const pdv = item.pdv;
+                if (!tasksByPDV[pdv]) tasksByPDV[pdv] = { name: item.name, tasks: [], count: 0 };
+                tasksByPDV[pdv].tasks.push(item.task);
+                tasksByPDV[pdv].count++;
+            });
+
+            let message = `*RESUMO DE TAREFAS REALIZADAS:*\n\n`;
+            let total = 0;
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                message += `*PDV:* ${pdv} - ${data.name}\n*Tarefas:*\n`;
+                data.tasks.forEach(task => message += `- ${task}\n`);
+                message += `*Total no PDV:* ${data.count}\n\n`;
+                total += data.count;
+            }
+            message += `*Total Geral Concluído:* ${total}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        });
+
+        document.getElementById('pdfBtn').addEventListener('click', () => {
+            if (Object.keys(selectedTasks).length === 0) return alert('Nenhuma tarefa selecionada.');
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const tasksByPDV = {};
+            const totalTasksInDatasetByPDV = {};
+
+            currentData.forEach(item => {
+                const pdv = columnMapping.pdv ? item[columnMapping.pdv] : 'Sem PDV';
+                totalTasksInDatasetByPDV[pdv] = (totalTasksInDatasetByPDV[pdv] || 0) + 1;
+            });
+
+            Object.keys(selectedTasks).forEach(taskId => {
+                const item = selectedTasks[taskId];
+                const pdv = item.pdv;
+                if (!tasksByPDV[pdv]) tasksByPDV[pdv] = { name: item.name, tasks: [], count: 0 };
+                tasksByPDV[pdv].tasks.push(item.task);
+                tasksByPDV[pdv].count++;
+            });
+
+            doc.setFillColor(79, 70, 229); doc.rect(0, 0, 210, 32, 'F');
+            doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+            doc.text('RELATÓRIO DE EXECUÇÃO DE TAREFAS PDV', 14, 18);
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(224, 231, 255);
+            doc.text(`EMISSÃO: ${dateStr} ÀS ${timeStr}`, 14, 25);
+
+            const summaryRows = [];
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                const totalPDVTasks = totalTasksInDatasetByPDV[pdv] || data.count;
+                const perc = Math.round((data.count / totalPDVTasks) * 100);
+                summaryRows.push([String(pdv), data.name, `${data.count} de ${totalPDVTasks}`, `${perc}%`]);
+            }
+
+            doc.autoTable({
+                startY: 40,
+                head: [['PDV', 'Nome Fantasia', 'Conclusão', 'Progresso']],
+                body: summaryRows,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] }
+            });
+
+            const detailRows = [];
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                data.tasks.forEach((task, index) => {
+                    detailRows.push([index === 0 ? String(pdv) : '', index === 0 ? data.name : '', task]);
+                });
+            }
+
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 10,
+                head: [['PDV', 'Nome Fantasia', 'Descrição da Tarefa Concluída']],
+                body: detailRows,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 23, 42] }
+            });
+
+            doc.save(`Relatorio_Tarefas_${dateStr.replace(/\//g, '-')}.pdf`);
+        });
+
+        document.getElementById('exportBackupBtn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(getCurrentState())], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `backup_pdv_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+        });
+
+        document.getElementById('importBackupBtn').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    restoreState(JSON.parse(event.target.result));
+                    saveState();
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        });
+
+        function getCurrentState() {
+            return {
+                selectedTasks: selectedTasks,
+                databaseFiles: databaseFiles,
+                columnMapping: columnMapping
+            };
+        }
+
+        function saveState() {
+            localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(getCurrentState()));
+        }
+
+        function restoreState(state) {
+            if (!state) return;
+            if (state.selectedTasks) selectedTasks = state.selectedTasks;
+            if (state.databaseFiles) databaseFiles = state.databaseFiles;
+            if (state.columnMapping) columnMapping = state.columnMapping;
+            
+            rebuildDatabase();
+            updateTaskCounter();
+            updateClientSummary();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedState = localStorage.getItem(STATE_STORAGE_KEY);
+            if (savedState) restoreState(JSON.parse(savedState));
+        });
+    </script>
+</body>
+</html>
