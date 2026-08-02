@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestão, Laudos & PDV (Firebase Cloud)</title>
+  <title>Sistema de Gestão, Laudos & PDV</title>
 
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -71,23 +71,24 @@
       --card: #ffffff;
       --text: #333;
     }
-    .laudo-scope .container { max-width: 950px; margin: 0 auto; }
+    .laudo-scope .container { max-width: 1050px; margin: 0 auto; }
     .laudo-scope .card { background: var(--card); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
     .laudo-scope .hidden { display: none !important; }
     .laudo-scope input, .laudo-scope select, .laudo-scope textarea, .laudo-scope button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
     .laudo-scope button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
     .laudo-scope button:hover { opacity: 0.9; }
-    .laudo-scope .btn-danger { background: var(--danger); }
-    .laudo-scope .btn-success { background: var(--success); }
+    .laudo-scope .btn-danger { background: var(--danger); color: white; }
+    .laudo-scope .btn-success { background: var(--success); color: white; }
     .laudo-scope .btn-warning { background: var(--warning); color: #000; }
-    .laudo-scope .btn-secondary { background: #6c757d; }
+    .laudo-scope .btn-secondary { background: #6c757d; color: white; }
+    .laudo-scope .btn-purple { background: #6f42c1; color: white; }
     .laudo-scope table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     .laudo-scope th, .laudo-scope td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: middle; }
     .laudo-scope th { background-color: #f2f2f2; }
     .laudo-scope .preview-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
     .laudo-scope .preview-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
     .laudo-scope .tabs { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-    .laudo-scope .tabs button { margin: 0; flex: 1; min-width: 120px; }
+    .laudo-scope .tabs button { margin: 0; flex: 1; min-width: 110px; }
     .laudo-scope .total-box { background: #e8f5e9; border: 1px solid #28a745; color: #2e7d32; padding: 15px; border-radius: 5px; margin-top: 15px; font-size: 1.2em; text-align: right; }
     .laudo-scope .peca-tag { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 8px 12px; border-radius: 4px; margin-top: 5px; font-size: 0.95em; gap: 10px; }
     .laudo-scope .signature-container { border: 2px dashed #0066cc; background: #fff; border-radius: 6px; padding: 10px; text-align: center; margin-top: 10px; }
@@ -122,6 +123,14 @@
     }
     .laudo-scope .autocomplete-item:hover { background-color: #f0f7ff; }
 
+    /* ADMIN EXPANSION USER CARD */
+    .user-accordion { border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 10px; overflow: hidden; background: #fff; }
+    .user-accordion-header { padding: 12px 16px; background: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+    .user-accordion-body { padding: 15px; border-top: 1px solid #cbd5e1; background: #fafafa; }
+    .checkbox-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+    .checkbox-group label { display: flex; align-items: center; gap: 8px; font-size: 0.9em; cursor: pointer; }
+    .checkbox-group input[type="checkbox"] { width: auto; margin: 0; }
+
     /* MODAL POP-UP DE ASSINATURA */
     .modal-overlay {
       position: fixed;
@@ -148,7 +157,7 @@
   <nav class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
       <div class="font-bold text-lg tracking-wide flex items-center gap-2">
-        <span>🛠️ Gestão, Laudos & PDV (Nuvem Firebase)</span>
+        <span>🛠️ Painel de Gestão, Laudos & PDV</span>
       </div>
     </div>
   </nav>
@@ -172,6 +181,7 @@
 
         <div id="formCadastro" class="hidden">
           <h3>Novo Usuário</h3>
+          <p style="font-size:0.8em; color:#666;">Novas contas iniciam apenas com permissão para criar laudo e fazer venda.</p>
           <input type="text" id="newUser" placeholder="Nome de Usuário">
           <input type="password" id="newPass" placeholder="Digite uma Senha">
           <button onclick="cadastrarUsuario()" class="btn-success">Cadastrar Conta</button>
@@ -184,7 +194,7 @@
           <thead>
             <tr>
               <th>Login</th>
-              <th>Data de Criação</th>
+              <th>Perfil</th>
             </tr>
           </thead>
           <tbody id="tabelaUsuariosLogin"></tbody>
@@ -203,12 +213,14 @@
 
         <!-- NAVEGAÇÃO DE SUB-ABAS -->
         <div class="tabs" style="margin-top: 15px;">
-          <button onclick="mudarAba('laudo')">📝 Novo Laudo</button>
-          <button onclick="mudarAba('pdv')" class="btn-success">🛒 Vendas (PDV)</button>
-          <button onclick="mudarAba('balanco')">📊 Balanço / Lucros</button>
-          <button onclick="mudarAba('clientes')">👤 Clientes</button>
-          <button onclick="mudarAba('pecas')">🧩 Peças / Estoque</button>
-          <button onclick="mudarAba('empresa')" class="btn-warning">🏢 Minha Empresa</button>
+          <button id="tabBtnLaudo" onclick="mudarAba('laudo')">📝 Novo Laudo</button>
+          <button id="tabBtnPdv" onclick="mudarAba('pdv')" class="btn-success">🛒 Vendas (PDV)</button>
+          <button id="tabBtnBalanco" onclick="mudarAba('balanco')">📊 Balanço</button>
+          <button id="tabBtnClientes" onclick="mudarAba('clientes')">👤 Clientes</button>
+          <button id="tabBtnPecas" onclick="mudarAba('pecas')">🧩 Peças/Estoque</button>
+          <button id="tabBtnEmpresa" onclick="mudarAba('empresa')" class="btn-warning">🏢 Empresa</button>
+          <button id="tabBtnPerfil" onclick="mudarAba('perfil')" class="btn-secondary">👤 Minha Conta</button>
+          <button id="tabBtnAdmin" onclick="mudarAba('admin')" class="btn-purple hidden">👑 ADMIN</button>
         </div>
 
         <hr>
@@ -329,8 +341,8 @@
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-            <button onclick="finalizarVendaPDV('cupom')" class="btn-success" style="font-size: 1em; flex: 2; min-width: 200px;">🧾 Finalizar (Cupom Fiscal PDF)</button>
-            <button onclick="finalizarVendaPDV('notona')" class="btn-warning" style="font-size: 1em; flex: 2; min-width: 200px;">📄 Finalizar (Notona A4 Folha Grande)</button>
+            <button onclick="finalizarVendaPDV('cupom')" class="btn-success" style="font-size: 1em; flex: 2; min-width: 200px;">🧾 Finalizar (Recibo Cupom Fiscal PDF)</button>
+            <button onclick="finalizarVendaPDV('notona')" class="btn-warning" style="font-size: 1em; flex: 2; min-width: 200px;">📄 Finalizar (Recibo A4 Folha Grande)</button>
             <button onclick="limparCarrinhoPDV()" class="btn-danger" style="flex: 1; min-width: 130px;">🧹 Limpar</button>
           </div>
         </div>
@@ -377,19 +389,20 @@
 
         <!-- ABA 3: CADASTRO E EDIÇÃO DE CLIENTES -->
         <div id="abaClientes" class="hidden">
-          <h3 id="cliFormTitulo">Cadastrar Novo Cliente</h3>
-          <input type="hidden" id="cliIdEdit">
-          <input type="text" id="cliNome" placeholder="Nome do Cliente / Empresa">
-          <input type="text" id="cliCPF" placeholder="CPF ou CNPJ">
-          <input type="text" id="cliEndereco" placeholder="Endereço Completo">
-          <input type="tel" id="cliTelefone" placeholder="Telefone / WhatsApp">
-          
-          <div style="display: flex; gap: 10px;">
-            <button onclick="salvarCliente()" id="btnSalvarCliente" class="btn-success">Salvar Cliente</button>
-            <button onclick="cancelarEdicaoCliente()" id="btnCancelarCliente" class="btn-secondary hidden" style="width: 150px;">Cancelar</button>
+          <div id="areaCadastroCliente">
+            <h3 id="cliFormTitulo">Cadastrar Novo Cliente</h3>
+            <input type="hidden" id="cliIdEdit">
+            <input type="text" id="cliNome" placeholder="Nome do Cliente / Empresa">
+            <input type="text" id="cliCPF" placeholder="CPF ou CNPJ">
+            <input type="text" id="cliEndereco" placeholder="Endereço Completo">
+            <input type="tel" id="cliTelefone" placeholder="Telefone / WhatsApp">
+            
+            <div style="display: flex; gap: 10px;">
+              <button onclick="salvarCliente()" id="btnSalvarCliente" class="btn-success">Salvar Cliente</button>
+              <button onclick="cancelarEdicaoCliente()" id="btnCancelarCliente" class="btn-secondary hidden" style="width: 150px;">Cancelar</button>
+            </div>
+            <hr>
           </div>
-
-          <hr>
 
           <h3>Clientes Cadastrados</h3>
           <input type="text" id="buscaCliente" placeholder="Buscar por nome..." onkeyup="renderizarClientes()">
@@ -409,27 +422,28 @@
 
         <!-- ABA 4: PEÇAS / ESTOQUE -->
         <div id="abaPecas" class="hidden">
-          <h3 id="pecaFormTitulo">🧩 Cadastrar Peça / Componente</h3>
-          <input type="hidden" id="pecaIdEdit">
-          <input type="text" id="pecaNome" placeholder="Descrição da Peça (Ex: Memória RAM 8GB DDR4)">
-          
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="pecaCodigoBarras" placeholder="Código de Barras / SKU">
-            <button type="button" onclick="gerarCodigoBarrasAleatorio()" class="btn-warning" style="width: 180px; margin: 0;">🎲 Gerar Código</button>
-          </div>
+          <div id="areaCadastroPeca">
+            <h3 id="pecaFormTitulo">🧩 Cadastrar Peça / Componente</h3>
+            <input type="hidden" id="pecaIdEdit">
+            <input type="text" id="pecaNome" placeholder="Descrição da Peça (Ex: Memória RAM 8GB DDR4)">
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="pecaCodigoBarras" placeholder="Código de Barras / SKU">
+              <button type="button" onclick="gerarCodigoBarrasAleatorio()" class="btn-warning" style="width: 180px; margin: 0;">🎲 Gerar Código</button>
+            </div>
 
-          <input type="number" step="0.01" id="pecaValor" placeholder="Valor / Preço de Referência (R$)">
-          
-          <label style="font-size: 0.9em; margin-top: 5px; display: block;">Foto da Peça (Opcional):</label>
-          <input type="file" id="pecaFotoInput" accept="image/*" onchange="carregarFotoPeca(event)">
-          <div id="previewPecaFotoContainer" style="margin: 5px 0;"></div>
-          
-          <div style="display: flex; gap: 10px;">
-            <button onclick="salvarPeca()" id="btnSalvarPeca" class="btn-success">Salvar Peça</button>
-            <button onclick="cancelarEdicaoPeca()" id="btnCancelarPeca" class="btn-secondary hidden" style="width: 150px;">Cancelar</button>
+            <input type="number" step="0.01" id="pecaValor" placeholder="Valor / Preço de Referência (R$)">
+            
+            <label style="font-size: 0.9em; margin-top: 5px; display: block;">Foto da Peça (Opcional):</label>
+            <input type="file" id="pecaFotoInput" accept="image/*" onchange="carregarFotoPeca(event)">
+            <div id="previewPecaFotoContainer" style="margin: 5px 0;"></div>
+            
+            <div style="display: flex; gap: 10px;">
+              <button onclick="salvarPeca()" id="btnSalvarPeca" class="btn-success">Salvar Peça</button>
+              <button onclick="cancelarEdicaoPeca()" id="btnCancelarPeca" class="btn-secondary hidden" style="width: 150px;">Cancelar</button>
+            </div>
+            <hr>
           </div>
-
-          <hr>
 
           <h3>Lista de Peças Cadastradas</h3>
           <input type="text" id="buscaPeca" placeholder="Buscar peça por nome ou código..." onkeyup="renderizarPecas()">
@@ -462,7 +476,77 @@
           <input type="file" id="empLogoInput" accept="image/*" onchange="carregarLogoEmpresa(event)">
           <div id="previewEmpresaLogo" style="margin-top: 10px;"></div>
 
-          <button onclick="salvarDadosEmpresa()" class="btn-success" style="margin-top: 15px;">💾 Salvar Dados da Empresa na Nuvem</button>
+          <button onclick="salvarDadosEmpresa()" id="btnSalvarEmpresa" class="btn-success" style="margin-top: 15px;">💾 Salvar Dados da Empresa na Nuvem</button>
+        </div>
+
+        <!-- ABA PERFIL / MINHA CONTA -->
+        <div id="abaPerfil" class="hidden">
+          <h3>👤 Minha Conta & Segurança</h3>
+          <p style="font-size: 0.9em; color: #666;">Altere suas credenciais de login ou senha conforme suas permissões.</p>
+
+          <label><b>Nome de Usuário:</b></label>
+          <input type="text" id="perfilUserDisplay" disabled style="background:#f1f5f9;">
+
+          <label><b>Nova Senha:</b></label>
+          <input type="password" id="perfilPassNew" placeholder="Digite uma nova senha">
+
+          <button onclick="salvarPerfilUsuario()" id="btnSalvarPerfil" class="btn-success" style="margin-top:10px;">💾 Atualizar Minha Senha</button>
+        </div>
+
+        <!-- ABA 5: PAINEL ADMINISTRADOR (NOVA) -->
+        <div id="abaAdmin" class="hidden">
+          <h3 class="text-xl font-bold text-purple-800 mb-2">👑 Painel do Administrador Geral</h3>
+          <p class="text-sm text-gray-600 mb-4">Controle total de permissões, usuários, alteração de senhas e edição/importação em lotes via planilha.</p>
+
+          <div class="tabs mb-4">
+            <button onclick="mudarSubAbaAdmin('usuarios')" class="btn-purple">👥 Gerenciar Usuários & Privilégios</button>
+            <button onclick="mudarSubAbaAdmin('loteEstoque')" class="btn-secondary">📦 Lote de Estoque (CSV)</button>
+            <button onclick="mudarSubAbaAdmin('loteClientes')" class="btn-secondary">👤 Lote de Clientes (CSV)</button>
+          </div>
+
+          <!-- SUB-ABA ADMIN: USUÁRIOS -->
+          <div id="subAdminUsuarios">
+            <h4 class="font-bold text-md mb-2">Usuários e Permissões do Sistema:</h4>
+            <div id="listaUsuariosAdminContainer"></div>
+          </div>
+
+          <!-- SUB-ABA ADMIN: LOTE ESTOQUE -->
+          <div id="subAdminLoteEstoque" class="hidden">
+            <h4 class="font-bold text-md mb-2">📦 Inclusão/Edição em Lote do Estoque</h4>
+            <p class="text-xs text-gray-600 mb-2">Cole dados em linhas separados por vírgula no padrão: <code>Descrição, CodigoBarras, Valor</code> ou envie um arquivo .CSV.</p>
+            
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+              <button onclick="exportarEstoqueCSV()" class="btn-warning" style="width:auto;">📥 Baixar Estoque em CSV</button>
+              <button onclick="baixarModeloEstoqueCSV()" class="btn-secondary" style="width:auto;">📄 Baixar Planilha Modelo</button>
+            </div>
+
+            <label><b>Carregar Arquivo CSV:</b></label>
+            <input type="file" id="inputCSVEstoque" accept=".csv, .txt" onchange="lerArquivoCSV(event, 'estoque')">
+
+            <label style="margin-top:10px; display:block;"><b>Ou Cole os Dados em Formato Texto/Planilha abaixo:</b></label>
+            <textarea id="textoLoteEstoque" rows="6" placeholder="Memoria RAM 8GB, 789123456, 150.00&#10;SSD 240GB Kingston, 789987654, 180.00"></textarea>
+
+            <button onclick="processarLoteEstoque()" class="btn-success" style="margin-top:10px;">🚀 Importar / Processar Estoque em Lote</button>
+          </div>
+
+          <!-- SUB-ABA ADMIN: LOTE CLIENTES -->
+          <div id="subAdminLoteClientes" class="hidden">
+            <h4 class="font-bold text-md mb-2">👤 Inclusão/Edição em Lote de Clientes</h4>
+            <p class="text-xs text-gray-600 mb-2">Cole dados em linhas separados por vírgula no padrão: <code>Nome, CPF_CNPJ, Endereco, Telefone</code> ou envie um arquivo .CSV.</p>
+
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+              <button onclick="exportarClientesCSV()" class="btn-warning" style="width:auto;">📥 Baixar Clientes em CSV</button>
+              <button onclick="baixarModeloClientesCSV()" class="btn-secondary" style="width:auto;">📄 Baixar Planilha Modelo</button>
+            </div>
+
+            <label><b>Carregar Arquivo CSV:</b></label>
+            <input type="file" id="inputCSVClientes" accept=".csv, .txt" onchange="lerArquivoCSV(event, 'clientes')">
+
+            <label style="margin-top:10px; display:block;"><b>Ou Cole os Dados em Formato Texto/Planilha abaixo:</b></label>
+            <textarea id="textoLoteClientes" rows="6" placeholder="João da Silva, 111.222.333-44, Rua A 123, (11) 99999-8888&#10;Oficina Mecanica Express, 12.345.678/0001-90, Av Central 500, (11) 3333-4444"></textarea>
+
+            <button onclick="processarLoteClientes()" class="btn-success" style="margin-top:10px;">🚀 Importar / Processar Clientes em Lote</button>
+          </div>
         </div>
 
       </div>
@@ -490,7 +574,7 @@
 
   <!-- SCRIPT VANILLA JS COM FIRESTORE BANCO ONLINE -->
   <script>
-    let usuarioAtual = null;
+    let usuarioAtualObj = null;
     let fotosBase64 = [];
     let pecaFotoTempBase64 = "";
     let pecasSelecionadasLaudo = [];
@@ -509,6 +593,7 @@
     async function initLaudoSystem() {
       setTimeout(async () => {
         await carregarUsuariosNuvem();
+        await garantirAdminVinicius();
         await carregarEmpresaNuvem();
       }, 1000);
 
@@ -527,12 +612,36 @@
       });
     }
 
+    async function garantirAdminVinicius() {
+      const vinicius = cacheUsuarios.find(u => u.user && u.user.toLowerCase() === 'vinicius');
+      if(!vinicius) {
+        const adminData = {
+          user: "Vinicius",
+          pass: "123456",
+          isAdmin: true,
+          permTrocarSenha: true,
+          permEstoque: true,
+          permClientes: true,
+          permEmpresa: true,
+          dataCriacao: new Date().toLocaleDateString('pt-BR')
+        };
+        await window.fsAddDoc(window.fsCollection(window.db, "usuarios"), adminData);
+        await carregarUsuariosNuvem();
+      } else if (!vinicius.isAdmin) {
+        await window.fsUpdateDoc(window.fsDoc(window.db, "usuarios", vinicius.id), { isAdmin: true, permEstoque: true, permClientes: true, permEmpresa: true, permTrocarSenha: true });
+        await carregarUsuariosNuvem();
+      }
+    }
+
     async function carregarUsuariosNuvem() {
       try {
         const snap = await window.fsGetDocs(window.fsCollection(window.db, "usuarios"));
         cacheUsuarios = [];
         snap.forEach(doc => cacheUsuarios.push({ id: doc.id, ...doc.data() }));
         renderizarListaUsuariosLogin();
+        if(usuarioAtualObj && usuarioAtualObj.isAdmin) {
+          renderizarUsuariosAdmin();
+        }
       } catch (e) {
         console.error("Erro ao carregar usuários:", e);
       }
@@ -607,6 +716,11 @@
       const novoUser = {
         user: userVal,
         pass: passVal,
+        isAdmin: false,
+        permTrocarSenha: true,
+        permEstoque: false,
+        permClientes: false,
+        permEmpresa: false,
         dataCriacao: new Date().toLocaleDateString('pt-BR')
       };
 
@@ -630,7 +744,8 @@
 
       cacheUsuarios.slice(-5).reverse().forEach(u => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td><b>${u.user || 'Desconhecido'}</b></td><td>${u.dataCriacao || 'N/A'}</td>`;
+        const role = u.isAdmin ? '👑 Admin' : '👤 Técnico/Operador';
+        tr.innerHTML = `<td><b>${u.user || 'Desconhecido'}</b></td><td>${role}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -642,21 +757,30 @@
       const conta = cacheUsuarios.find(u => u.user && u.user.toLowerCase() === userVal.toLowerCase() && u.pass === passVal);
 
       if(conta) {
-        iniciarSessao(conta.user);
+        iniciarSessao(conta);
       } else {
         alert("Usuário ou senha incorretos!");
       }
     }
 
     function entrarComoVisitante() {
-      iniciarSessao("Visitante");
+      iniciarSessao({
+        user: "Visitante",
+        isAdmin: false,
+        permTrocarSenha: false,
+        permEstoque: false,
+        permClientes: false,
+        permEmpresa: false
+      });
     }
 
-    async function iniciarSessao(nomeUsuario) {
-      usuarioAtual = nomeUsuario;
-      document.getElementById('userBadge').innerText = `Usuário: ${usuarioAtual}`;
+    async function iniciarSessao(usuario) {
+      usuarioAtualObj = usuario;
+      document.getElementById('userBadge').innerText = `Usuário: ${usuario.user} ${usuario.isAdmin ? '(ADMIN)' : ''}`;
       document.getElementById('loginCard').classList.add('hidden');
       document.getElementById('appContent').classList.remove('hidden');
+
+      aplicarRestricoesPrivilegio();
       
       await carregarClientesNuvem();
       await carregarPecasNuvem();
@@ -664,8 +788,41 @@
       inicializarCanvasAssinatura();
     }
 
+    function aplicarRestricoesPrivilegio() {
+      const u = usuarioAtualObj;
+      if(!u) return;
+
+      // Oculta/Exibe a aba Admin
+      if(u.isAdmin) {
+        document.getElementById('tabBtnAdmin').classList.remove('hidden');
+      } else {
+        document.getElementById('tabBtnAdmin').classList.add('hidden');
+      }
+
+      // Restrições de formulários se não tiver privilégio
+      if(!u.isAdmin && !u.permClientes) {
+        document.getElementById('areaCadastroCliente').classList.add('hidden');
+      } else {
+        document.getElementById('areaCadastroCliente').classList.remove('hidden');
+      }
+
+      if(!u.isAdmin && !u.permEstoque) {
+        document.getElementById('areaCadastroPeca').classList.add('hidden');
+      } else {
+        document.getElementById('areaCadastroPeca').classList.remove('hidden');
+      }
+
+      if(!u.isAdmin && !u.permEmpresa) {
+        document.getElementById('btnSalvarEmpresa').classList.add('hidden');
+      } else {
+        document.getElementById('btnSalvarEmpresa').classList.remove('hidden');
+      }
+
+      document.getElementById('perfilUserDisplay').value = u.user;
+    }
+
     function deslogar() {
-      usuarioAtual = null;
+      usuarioAtualObj = null;
       document.getElementById('loginUser').value = '';
       document.getElementById('loginPass').value = '';
       document.getElementById('loginCard').classList.remove('hidden');
@@ -679,6 +836,8 @@
       document.getElementById('abaClientes').classList.add('hidden');
       document.getElementById('abaPecas').classList.add('hidden');
       document.getElementById('abaEmpresa').classList.add('hidden');
+      document.getElementById('abaPerfil').classList.add('hidden');
+      document.getElementById('abaAdmin').classList.add('hidden');
 
       if(aba === 'laudo') document.getElementById('abaLaudo').classList.remove('hidden');
       if(aba === 'pdv') document.getElementById('abaPdv').classList.remove('hidden');
@@ -686,6 +845,223 @@
       if(aba === 'clientes') document.getElementById('abaClientes').classList.remove('hidden');
       if(aba === 'pecas') document.getElementById('abaPecas').classList.remove('hidden');
       if(aba === 'empresa') document.getElementById('abaEmpresa').classList.remove('hidden');
+      if(aba === 'perfil') document.getElementById('abaPerfil').classList.remove('hidden');
+      if(aba === 'admin') {
+        document.getElementById('abaAdmin').classList.remove('hidden');
+        renderizarUsuariosAdmin();
+      }
+    }
+
+    function mudarSubAbaAdmin(subAba) {
+      document.getElementById('subAdminUsuarios').classList.add('hidden');
+      document.getElementById('subAdminLoteEstoque').classList.add('hidden');
+      document.getElementById('subAdminLoteClientes').classList.add('hidden');
+
+      if(subAba === 'usuarios') document.getElementById('subAdminUsuarios').classList.remove('hidden');
+      if(subAba === 'loteEstoque') document.getElementById('subAdminLoteEstoque').classList.remove('hidden');
+      if(subAba === 'loteClientes') document.getElementById('subAdminLoteClientes').classList.remove('hidden');
+    }
+
+    function renderizarUsuariosAdmin() {
+      const container = document.getElementById('listaUsuariosAdminContainer');
+      container.innerHTML = '';
+
+      cacheUsuarios.forEach(u => {
+        const acc = document.createElement('div');
+        acc.className = 'user-accordion';
+
+        acc.innerHTML = `
+          <div class="user-accordion-header" onclick="toggleAccordion('${u.id}')">
+            <span>👤 ${u.user} ${u.isAdmin ? '<strong class="text-purple-700">(ADMIN)</strong>' : ''}</span>
+            <small style="color:#666;">Clique para expandir/editar ⚙️</small>
+          </div>
+          <div id="accBody_${u.id}" class="user-accordion-body hidden">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:200px;">
+                <label><b>Login / Usuário:</b></label>
+                <input type="text" id="admUser_${u.id}" value="${u.user}">
+              </div>
+              <div style="flex:1; min-width:200px;">
+                <label><b>Senha:</b></label>
+                <input type="password" id="admPass_${u.id}" value="${u.pass || ''}">
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="admChkAdmin_${u.id}" ${u.isAdmin ? 'checked' : ''}> 👑 Administrador Geral</label>
+              <label><input type="checkbox" id="admChkSenha_${u.id}" ${u.permTrocarSenha ? 'checked' : ''}> 🔑 Pode trocar própria senha</label>
+              <label><input type="checkbox" id="admChkClientes_${u.id}" ${u.permClientes ? 'checked' : ''}> 👤 Pode cadastrar/editar clientes</label>
+              <label><input type="checkbox" id="admChkEstoque_${u.id}" ${u.permEstoque ? 'checked' : ''}> 🧩 Pode cadastrar/editar estoque</label>
+              <label><input type="checkbox" id="admChkEmpresa_${u.id}" ${u.permEmpresa ? 'checked' : ''}> 🏢 Pode editar dados da empresa</label>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+              <button onclick="salvarPrivilegiosUsuario('${u.id}')" class="btn-success" style="width:auto;">💾 Salvar Alterações</button>
+              <button onclick="deletarUsuarioAdmin('${u.id}')" class="btn-danger" style="width:auto;">Excluir Usuário</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(acc);
+      });
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(`accBody_${id}`);
+      if(el) el.classList.toggle('hidden');
+    }
+
+    async function salvarPrivilegiosUsuario(id) {
+      const user = document.getElementById(`admUser_${id}`).value.trim();
+      const pass = document.getElementById(`admPass_${id}`).value;
+      const isAdmin = document.getElementById(`admChkAdmin_${id}`).checked;
+      const permTrocarSenha = document.getElementById(`admChkSenha_${id}`).checked;
+      const permClientes = document.getElementById(`admChkClientes_${id}`).checked;
+      const permEstoque = document.getElementById(`admChkEstoque_${id}`).checked;
+      const permEmpresa = document.getElementById(`admChkEmpresa_${id}`).checked;
+
+      if(!user || !pass) return alert("Usuário e senha não podem ficar em branco.");
+
+      const dados = { user, pass, isAdmin, permTrocarSenha, permClientes, permEstoque, permEmpresa };
+
+      await window.fsUpdateDoc(window.fsDoc(window.db, "usuarios", id), dados);
+      alert("Usuário e privilégios atualizados com sucesso!");
+      await carregarUsuariosNuvem();
+    }
+
+    async function deletarUsuarioAdmin(id) {
+      if(confirm("Deseja realmente excluir este usuário?")) {
+        await window.fsDeleteDoc(window.fsDoc(window.db, "usuarios", id));
+        alert("Usuário excluído!");
+        await carregarUsuariosNuvem();
+      }
+    }
+
+    async function salvarPerfilUsuario() {
+      if(!usuarioAtualObj || !usuarioAtualObj.id) return alert("Modo visitante não permite salvar senha.");
+      if(!usuarioAtualObj.isAdmin && !usuarioAtualObj.permTrocarSenha) return alert("Você não possui privilégio para alterar sua senha.");
+
+      const novaPass = document.getElementById('perfilPassNew').value;
+      if(!novaPass) return alert("Digite a nova senha.");
+
+      await window.fsUpdateDoc(window.fsDoc(window.db, "usuarios", usuarioAtualObj.id), { pass: novaPass });
+      alert("Sua senha foi alterada com sucesso!");
+      document.getElementById('perfilPassNew').value = '';
+      usuarioAtualObj.pass = novaPass;
+    }
+
+    /* INCLUSÃO E IMPORTAÇÃO EM LOTE - ESTOQUE E CLIENTES */
+    function lerArquivoCSV(event, tipo) {
+      const file = event.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if(tipo === 'estoque') {
+          document.getElementById('textoLoteEstoque').value = e.target.result;
+        } else if(tipo === 'clientes') {
+          document.getElementById('textoLoteClientes').value = e.target.result;
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function processarLoteEstoque() {
+      const texto = document.getElementById('textoLoteEstoque').value.trim();
+      if(!texto) return alert("Insira os dados para importar.");
+
+      const linhas = texto.split('\n');
+      let importados = 0;
+
+      for(let linha of linhas) {
+        if(!linha.trim()) continue;
+        const colunas = linha.split(/[,;\t]/);
+        const nome = colunas[0] ? colunas[0].trim() : '';
+        const codigoBarras = colunas[1] ? colunas[1].trim() : Math.floor(100000000000 + Math.random() * 900000000000).toString();
+        const valor = colunas[2] ? parseFloat(colunas[2].replace('R$', '').replace(',', '.').trim()) : 0;
+
+        if(nome) {
+          const dados = {
+            nome,
+            codigoBarras,
+            valor: valor || 0,
+            foto: ''
+          };
+          await window.fsAddDoc(window.fsCollection(window.db, "pecas"), dados);
+          importados++;
+        }
+      }
+
+      alert(`${importados} Peças/Produtos cadastrados/importados no estoque!`);
+      document.getElementById('textoLoteEstoque').value = '';
+      await carregarPecasNuvem();
+    }
+
+    async function processarLoteClientes() {
+      const texto = document.getElementById('textoLoteClientes').value.trim();
+      if(!texto) return alert("Insira os dados para importar.");
+
+      const linhas = texto.split('\n');
+      let importados = 0;
+
+      for(let linha of linhas) {
+        if(!linha.trim()) continue;
+        const colunas = linha.split(/[,;\t]/);
+        const nome = colunas[0] ? colunas[0].trim() : '';
+        const cpf = colunas[1] ? colunas[1].trim() : '';
+        const endereco = colunas[2] ? colunas[2].trim() : '';
+        const telefone = colunas[3] ? colunas[3].trim() : '';
+
+        if(nome) {
+          const dados = {
+            usuario: usuarioAtualObj ? usuarioAtualObj.user : 'Admin',
+            nome,
+            cpf,
+            endereco,
+            telefone,
+            dataCriacao: new Date().toISOString().split('T')[0]
+          };
+          await window.fsAddDoc(window.fsCollection(window.db, "clientes"), dados);
+          importados++;
+        }
+      }
+
+      alert(`${importados} Clientes importados com sucesso!`);
+      document.getElementById('textoLoteClientes').value = '';
+      await carregarClientesNuvem();
+    }
+
+    function exportarEstoqueCSV() {
+      let csv = "Nome,CodigoBarras,Valor\n";
+      cachePecas.forEach(p => {
+        csv += `"${p.nome}","${p.codigoBarras || ''}",${p.valor}\n`;
+      });
+      downloadArquivo(csv, "estoque_backup.csv", "text/csv");
+    }
+
+    function baixarModeloEstoqueCSV() {
+      let csv = "Nome,CodigoBarras,Valor\nMemoria DDR4 8GB,789101112,150.00\nTeclado USB,789101113,45.00";
+      downloadArquivo(csv, "modelo_estoque.csv", "text/csv");
+    }
+
+    function exportarClientesCSV() {
+      let csv = "Nome,CPF_CNPJ,Endereco,Telefone\n";
+      cacheClientes.forEach(c => {
+        csv += `"${c.nome}","${c.cpf || ''}","${c.endereco || ''}","${c.telefone || ''}"\n`;
+      });
+      downloadArquivo(csv, "clientes_backup.csv", "text/csv");
+    }
+
+    function baixarModeloClientesCSV() {
+      let csv = "Nome,CPF_CNPJ,Endereco,Telefone\nCliente Exemplo,123.456.789-00,Rua Exemplo 100,11999998888";
+      downloadArquivo(csv, "modelo_clientes.csv", "text/csv");
+    }
+
+    function downloadArquivo(conteudo, nomeArquivo, tipo) {
+      const blob = new Blob([conteudo], { type: tipo });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = nomeArquivo;
+      a.click();
     }
 
     function formatarMoeda(val) {
@@ -694,6 +1070,10 @@
     }
 
     async function salvarDadosEmpresa() {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permEmpresa) {
+        return alert("Você não tem permissão para alterar os dados da empresa.");
+      }
+
       const emp = {
         nome: document.getElementById('empNome').value.trim(),
         cnpj: document.getElementById('empCNPJ').value.trim(),
@@ -735,6 +1115,10 @@
     }
 
     async function salvarCliente() {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permClientes) {
+        return alert("Você não tem permissão para cadastrar/editar clientes.");
+      }
+
       const idEdit = document.getElementById('cliIdEdit').value;
       const nome = document.getElementById('cliNome').value.trim();
       const cpf = document.getElementById('cliCPF').value.trim();
@@ -743,7 +1127,7 @@
 
       if(!nome) return alert("Preencha ao menos o nome do cliente.");
 
-      const dados = { usuario: usuarioAtual, nome, cpf, endereco, telefone, dataCriacao: new Date().toISOString().split('T')[0] };
+      const dados = { usuario: usuarioAtualObj ? usuarioAtualObj.user : 'N/A', nome, cpf, endereco, telefone, dataCriacao: new Date().toISOString().split('T')[0] };
 
       if(idEdit) {
         await window.fsUpdateDoc(window.fsDoc(window.db, "clientes", idEdit), dados);
@@ -758,6 +1142,10 @@
     }
 
     function editarCliente(id) {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permClientes) {
+        return alert("Você não tem permissão para editar clientes.");
+      }
+
       const cliente = cacheClientes.find(c => c.id == id);
       if(!cliente) return;
 
@@ -808,6 +1196,10 @@
     }
 
     async function deletarCliente(id) {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permClientes) {
+        return alert("Você não tem permissão para excluir clientes.");
+      }
+
       if(confirm("Deseja remover este cliente da nuvem?")) {
         await window.fsDeleteDoc(window.fsDoc(window.db, "clientes", id));
         await carregarClientesNuvem();
@@ -879,6 +1271,10 @@
     }
 
     async function salvarPeca() {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permEstoque) {
+        return alert("Você não tem permissão para cadastrar/editar no estoque.");
+      }
+
       const idEdit = document.getElementById('pecaIdEdit').value;
       const nome = document.getElementById('pecaNome').value.trim();
       const codigoBarras = document.getElementById('pecaCodigoBarras').value.trim();
@@ -906,6 +1302,10 @@
     }
 
     function editarPeca(id) {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permEstoque) {
+        return alert("Você não tem permissão para editar o estoque.");
+      }
+
       const peca = cachePecas.find(p => p.id == id);
       if(!peca) return;
 
@@ -972,6 +1372,10 @@
     }
 
     async function deletarPeca(id) {
+      if(usuarioAtualObj && !usuarioAtualObj.isAdmin && !usuarioAtualObj.permEstoque) {
+        return alert("Você não tem permissão para excluir do estoque.");
+      }
+
       if(confirm("Remover esta peça da nuvem?")) {
         await window.fsDeleteDoc(window.fsDoc(window.db, "pecas", id));
         await carregarPecasNuvem();
@@ -1204,7 +1608,7 @@
 
       const novaVenda = {
         tipo: 'venda',
-        usuario: usuarioAtual,
+        usuario: usuarioAtualObj ? usuarioAtualObj.user : 'Visitante',
         clienteId: cliente ? cliente.id : null,
         clienteNome: cliente ? cliente.nome : "Consumidor Final",
         modelo: `Venda PDV (${formaPagamento})`,
@@ -1240,7 +1644,7 @@
 
       const novoServico = {
         tipo: 'laudo',
-        usuario: usuarioAtual,
+        usuario: usuarioAtualObj ? usuarioAtualObj.user : 'Visitante',
         clienteId: cliente.id,
         clienteNome: cliente.nome,
         modelo,
@@ -1460,7 +1864,7 @@
       doc.line(60, nextY + 16, 150, nextY + 16);
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
-      doc.text(`Técnico: ${usuarioAtual}`, 105, nextY + 20, { align: "center" });
+      doc.text(`Técnico: ${usuarioAtualObj ? usuarioAtualObj.user : 'Visitante'}`, 105, nextY + 20, { align: "center" });
 
       if(fotosBase64.length > 0) {
         if (nextY + 30 > 180) { doc.addPage(); nextY = 20; } 
