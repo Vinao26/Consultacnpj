@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Pro | Controle de PDV e Rotina de Visita</title>
+    
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Libs Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --surface-card: #ffffff;
+            --surface-hover: #f1f5f9;
+            --surface-subtle: #f8fafc;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: rgba(79, 70, 229, 0.1);
+            --amber-accent: #f59e0b;
+            --amber-light: rgba(245, 158, 11, 0.12);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.12);
+            --danger: #ef4444;
+            --danger-light: rgba(239, 68, 68, 0.12);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --surface-card: #1e293b;
+                --surface-hover: #334155;
+                --surface-subtle: rgba(15, 23, 42, 0.5);
+                --primary: #6366f1;
+                --primary-hover: #4f46e5;
+                --primary-light: rgba(99, 102, 241, 0.15);
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 1050px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--surface-card);
+            padding: 20px 28px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+        
+        .app-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--text-main);
+        }
+        
+        .app-header h2 i {
+            color: var(--amber-accent);
+            background: var(--amber-light);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            font-size: 20px;
+        }
+
+        .global-actions-bar {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        button {
+            padding: 12px 18px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        button:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        .btn-pdf { background-color: #ef4444; }
+        .btn-pdf:hover { background-color: #dc2626; }
+        .btn-whatsapp { background-color: #10b981; }
+        .btn-whatsapp:hover { background-color: #059669; }
+        .btn-reset { background-color: #64748b; }
+        .btn-reset:hover { background-color: #475569; }
+        .btn-backup { background-color: #8b5cf6; }
+        .btn-backup:hover { background-color: #7c3aed; }
+        .btn-restore { background-color: #0284c7; }
+        .btn-restore:hover { background-color: #0369a1; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger-sm { background-color: #ef4444; padding: 6px 10px; font-size: 11px; border-radius: var(--radius-sm); }
+        .btn-danger-sm:hover { background-color: #dc2626; }
+        .btn-amber { background-color: #f59e0b; }
+        .btn-amber:hover { background-color: #d97706; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .metric-info span { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .metric-info strong { font-size: 22px; color: var(--text-main); font-weight: 800; display: block; margin-top: 2px; }
+
+        .summary-accordion {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-header {
+            padding: 18px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            user-select: none;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .summary-header:hover { background-color: var(--surface-hover); }
+        .summary-header-title { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--text-main); }
+
+        .summary-badges-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .summary-badge {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-badge-success { background-color: var(--success-light); color: var(--success); }
+        .summary-badge-amber { background-color: var(--amber-light); color: var(--amber-accent); }
+
+        .summary-content {
+            display: none;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--surface-subtle);
+        }
+
+        .client-summary-card {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 14px;
+        }
+
+        .client-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .type-tags-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .type-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .type-tag-routine { background: var(--amber-light); color: var(--amber-accent); }
+        .type-tag-manual { background: var(--primary-light); color: var(--primary); }
+
+        .steps-breakdown-list {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            background: var(--surface-subtle);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 900px) { .steps-breakdown-list { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 500px) { .steps-breakdown-list { grid-template-columns: repeat(2, 1fr); } }
+
+        .step-breakdown-item {
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: var(--surface-card);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .step-breakdown-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .step-breakdown-name {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Estilo para lista rápida de coberturas no resumo do PDV */
+        .summary-coverages-list {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .summary-coverage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-card);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+
+        .summary-coverage-text {
+            color: var(--text-main);
+            font-weight: 500;
+            word-break: break-word;
+            padding-right: 8px;
+        }
+
+        .positivacao-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: var(--surface-subtle);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .upload-section {
+            background-color: var(--surface-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .file-list-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .file-list-table th, .file-list-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-size: 13px; text-align: left; }
+        .file-list-table th { background: var(--surface-subtle); color: var(--text-muted); font-weight: 700; }
+
+        .filter-section {
+            display: none;
+            background-color: var(--surface-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-group h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        select:focus, input[type="text"]:focus { border-color: var(--primary); }
+
+        .autocomplete-container { position: relative; }
+        
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            z-index: 99;
+            top: calc(100% - 8px);
+            left: 0; right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: var(--surface-card);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .autocomplete-items div {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        
+        .autocomplete-items div:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .days-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            background: var(--surface-subtle);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .day-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .day-checkbox-item input:checked + span { color: var(--text-main); font-weight: 600; }
+
+        .routine-section {
+            display: none;
+            background: var(--surface-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .routine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .routine-header h3 {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-block {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .step-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .step-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--amber-accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-badge-pct {
+            background: var(--amber-light);
+            color: var(--amber-accent);
+            font-size: 12px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .routine-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .routine-item:last-child { border-bottom: none; }
+
+        .routine-item input[type="checkbox"] {
+            margin-top: 3px;
+            width: 20px;
+            height: 20px;
+            accent-color: var(--amber-accent);
+        }
+
+        .routine-label {
+            font-size: 13.5px;
+            color: var(--text-main);
+            font-weight: 500;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .add-task-box {
+            background: var(--surface-subtle);
+            border: 1px dashed var(--primary);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin-top: 16px;
+        }
+
+        .add-task-box h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .add-task-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .add-task-row .autocomplete-container { flex: 1; min-width: 240px; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            max-width: 500px;
+            width: 100%;
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-section {
+            display: none;
+            background-color: var(--surface-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        
+        .preview-section h3 {
+            padding: 20px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        
+        .preview-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .preview-table th, .preview-table td { padding: 14px 20px; border-bottom: 1px solid var(--border-color); font-size: 13.5px; text-align: left; }
+        .preview-table th { background-color: var(--surface-subtle); color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        .task-selected { background-color: var(--success-light) !important; }
+        .task-manual-row { background-color: var(--primary-light) !important; }
+        
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+        @media (max-width: 640px) {
+            body { padding: 12px 8px; }
+            .container { gap: 14px; }
+            .app-header h2 { font-size: 18px; }
+            .action-buttons button { width: 100%; }
+            .client-card-header { flex-direction: column; align-items: flex-start; }
+            .client-card-header button { width: 100%; }
+            .add-task-row { flex-direction: column; }
+            .add-task-row button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="app-header">
+            <h2><i class="fas fa-clipboard-list"></i> Controle de Tarefas e Rotina PDV</h2>
+        </div>
+
+        <!-- Global Actions -->
+        <div class="global-actions-bar">
+            <div class="action-buttons">
+                <button id="pdfBtn" class="btn-pdf"><i class="fas fa-file-pdf"></i> Exportar Relatório PDF</button>
+                <button id="whatsappBtn" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button id="resetSelectionBtn" class="btn-reset"><i class="fas fa-rotate-left"></i> Zerar Seleção</button>
+            </div>
+        </div>
+
+        <!-- Metrics Dashboard -->
+        <div class="metrics-grid" id="metricsPanel" style="display: none;">
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-calendar-day"></i></div>
+                <div class="metric-info">
+                    <span>Dias de Visita</span>
+                    <strong id="metricDays">0</strong>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-store"></i></div>
+                <div class="metric-info">
+                    <span>PDVs Cadastrados</span>
+                    <strong id="metricPdvs">0</strong>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon"><i class="fas fa-boxes-stacked"></i></div>
+                <div class="metric-info">
+                    <span>Produtos no Banco</span>
+                    <strong id="metricProducts">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Accordion -->
+        <div class="summary-accordion" id="summaryAccordion">
+            <div class="summary-header" id="summaryHeader">
+                <div class="summary-header-title">
+                    <i class="fas fa-clipboard-check" style="color: var(--primary);"></i>
+                    <span>Resumo Geral de Execução da Rota</span>
+                </div>
+                <div class="summary-badges-group">
+                    <span class="summary-badge">Atendidos: <strong id="clientCountBadge">0</strong></span>
+                    <span class="summary-badge summary-badge-amber">Rotinas: <strong id="routineTaskCounter">0</strong></span>
+                    <span class="summary-badge summary-badge-success">Coberturas: <strong id="manualTaskCounter">0</strong></span>
+                    <i class="fas fa-chevron-down" id="accordionIcon" style="color: var(--text-muted);"></i>
+                </div>
+            </div>
+            <div class="summary-content" id="summaryContent">
+                <div id="clientListContainer">
+                    <p style="color: var(--text-muted); text-align: center; padding: 10px;">Nenhuma tarefa ou rotina realizada ainda.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="action-buttons">
+                <button id="uploadBtn"><i class="fas fa-plus"></i> Importar Planilha Banco de Dados</button>
+                <button id="exportBackupBtn" class="btn-backup"><i class="fas fa-download"></i> Exportar Backup</button>
+                <button id="importBackupBtn" class="btn-restore"><i class="fas fa-upload"></i> Restaurar Backup</button>
+            </div>
+
+            <div id="loadedFilesContainer" style="margin-top: 20px; display: none;">
+                <label>Planilhas Alimenta-Banco (Ativas):</label>
+                <div class="table-responsive">
+                    <table class="file-list-table">
+                        <thead>
+                            <tr>
+                                <th>Nome do Arquivo</th>
+                                <th>Linhas / Registros Lidos</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileListTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scope Filters -->
+        <div class="filter-section" id="filterSection">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <h3><i class="fas fa-filter" style="color: var(--primary);"></i> Filtros de Escopo (Setor / Dias)</h3>
+                    
+                    <label for="rnFilter">Setor / RN</label>
+                    <select id="rnFilter"><option value="">Todos os Setores / RNs</option></select>
+                    
+                    <label>Dias de Visita Ativos</label>
+                    <div class="days-checkbox-grid" id="visitDaysCheckboxContainer"></div>
+                </div>
+                
+                <div class="filter-group">
+                    <h3><i class="fas fa-search" style="color: var(--primary);"></i> Selecionar PDV para Atendimento</h3>
+                    
+                    <div class="autocomplete-container">
+                        <label for="pdvFilter">Código do PDV</label>
+                        <input type="text" id="pdvFilter" placeholder="Digite o código do PDV...">
+                        <div id="pdvAutocomplete" class="autocomplete-items"></div>
+                    </div>
+                    
+                    <div class="autocomplete-container">
+                        <label for="fantasyNameFilter">Nome Fantasia do PDV</label>
+                        <input type="text" id="fantasyNameFilter" placeholder="Digite o nome do estabelecimento...">
+                        <div id="fantasyNameAutocomplete" class="autocomplete-items"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routine Steps Checklist Module -->
+        <div class="routine-section" id="routineSection">
+            <div class="routine-header">
+                <h3><i class="fas fa-list-check" style="color: var(--amber-accent);"></i> Passos da Rotina de Visita no PDV</h3>
+                <span id="activePdvBadge" class="summary-badge" style="background-color: var(--amber-light); color: var(--amber-accent);">PDV não selecionado</span>
+            </div>
+
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                Marque abaixo as etapas de avaliação do RN cumpridas durante a visita a este PDV:
+            </p>
+
+            <div id="routineStepsContainer"></div>
+
+            <!-- Adicionar Tarefa Manual com Autocomplete de Cobertura -->
+            <div class="add-task-box">
+                <h4><i class="fas fa-plus-circle"></i> Adicionar Tarefa / Cobertura de Produto</h4>
+                <div class="add-task-row">
+                    <div class="autocomplete-container">
+                        <input type="text" id="manualTaskInput" placeholder="Digite a cobertura ou frase (ex: Cobertura de Pepsi)..." style="margin-bottom:0;">
+                        <div id="productAutocomplete" class="autocomplete-items"></div>
+                    </div>
+                    <button id="addManualTaskBtn" class="btn-amber"><i class="fas fa-plus"></i> Adicionar Cobertura</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview & Found Tasks -->
+        <div class="preview-section" id="previewSection">
+            <h3><i class="fas fa-tasks" style="color: var(--primary);"></i> Tarefas e Coberturas do PDV Selecionado</h3>
+            <div class="table-responsive">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th width="60px">Status</th>
+                            <th>Tipo</th>
+                            <th>PDV</th>
+                            <th>Nome Fantasia</th>
+                            <th>Descrição da Tarefa / Produto</th>
+                            <th width="100px">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal for Selective Reading -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-card">
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main);"><i class="fas fa-sliders" style="color: var(--primary);"></i> Leitura Prévia de Planilha</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">
+                Selecione o Setor/RN para carregar estritamente os PDVs e produtos do seu setor.
+            </p>
+            <div>
+                <label for="modalRnSelect">Filtrar por Setor/RN:</label>
+                <select id="modalRnSelect"><option value="">Carregar todos os Setores</option></select>
+            </div>
+            <div>
+                <label>Dias de Visita Ativos:</label>
+                <div class="days-checkbox-grid" id="modalDaysContainer"></div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button id="modalConfirmBtn"><i class="fas fa-check"></i> Importar e Processar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = "GestorPro_PDV_DB";
+        const DB_VERSION = 1;
+        let db = null;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("appData")) {
+                        db.createObjectStore("appData", { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        async function saveStateToDB(data) {
+            if (!db) await initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(["appData"], "readwrite");
+                const store = transaction.objectStore("appData");
+                store.put({ id: "currentState", payload: data });
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = (e) => reject(e);
+            });
+        }
+
+        async function loadStateFromDB() {
+            if (!db) await initDB();
+            return new Promise((resolve) => {
+                const transaction = db.transaction(["appData"], "readonly");
+                const store = transaction.objectStore("appData");
+                const request = store.get("currentState");
+                request.onsuccess = () => resolve(request.result ? request.result.payload : null);
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loadedFilesContainer = document.getElementById('loadedFilesContainer');
+        const fileListTableBody = document.getElementById('fileListTableBody');
+        const metricsPanel = document.getElementById('metricsPanel');
+        const metricDays = document.getElementById('metricDays');
+        const metricPdvs = document.getElementById('metricPdvs');
+        const metricProducts = document.getElementById('metricProducts');
+        
+        const filterSection = document.getElementById('filterSection');
+        const rnFilter = document.getElementById('rnFilter');
+        const visitDaysCheckboxContainer = document.getElementById('visitDaysCheckboxContainer');
+        const pdvFilter = document.getElementById('pdvFilter');
+        const fantasyNameFilter = document.getElementById('fantasyNameFilter');
+        const pdvAutocomplete = document.getElementById('pdvAutocomplete');
+        const fantasyNameAutocomplete = document.getElementById('fantasyNameAutocomplete');
+        
+        const routineSection = document.getElementById('routineSection');
+        const activePdvBadge = document.getElementById('activePdvBadge');
+        const routineStepsContainer = document.getElementById('routineStepsContainer');
+        const manualTaskInput = document.getElementById('manualTaskInput');
+        const productAutocomplete = document.getElementById('productAutocomplete');
+        const addManualTaskBtn = document.getElementById('addManualTaskBtn');
+
+        const previewSection = document.getElementById('previewSection');
+        const previewTableBody = document.getElementById('previewTableBody');
+        const routineTaskCounter = document.getElementById('routineTaskCounter');
+        const manualTaskCounter = document.getElementById('manualTaskCounter');
+        
+        const importModal = document.getElementById('importModal');
+        const modalRnSelect = document.getElementById('modalRnSelect');
+        const modalDaysContainer = document.getElementById('modalDaysContainer');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+
+        let databaseFiles = [];
+        let currentData = [];
+        let pdvIndexMap = [];
+        let productCatalog = []; 
+        let selectedTasks = {}; 
+        
+        let tempRawImportedData = [];
+        let tempCurrentFileName = "";
+        let replacingIndex = -1;
+        let updateDebounceTimer = null;
+
+        const ROUTINE_STEPS = [
+            {
+                title: "Etapa 1: Planejamento e Focos do Dia",
+                shortName: "Planejamento",
+                items: [
+                    "Checou a aba de tarefas (rotina e compra), observou as que valem mais pontos e selecionou as que serão direcionadas na visita?",
+                    "Definiu os objetivos da visita com base no gap do que precisa ser entregue de Focos do Dia?",
+                    "Checou último pedido e cruzou o pedido em aberto (caso exista) com as tarefas do PDV?",
+                    "Checou o status do Loja Ideal e, se aplicável, da aderência ao Calendário Scanntech?",
+                    "Acessou a aba Club B e identificou as alavancas disponíveis que serão utilizadas na negociação?",
+                    "Verificou as solicitações do PDV?",
+                    "Elaborou uma proposta de vendas com base nas tarefas e Desafio GV?"
+                ]
+            },
+            {
+                title: "Etapa 2: Estoque, Geladeira e TTC",
+                shortName: "Estoque & Gel.",
+                items: [
+                    "Avaliou a disponibilidade de produtos no estoque e geladeira?",
+                    "Observou se a geladeira estava sem invasão? - Marcar OK em casos de N/A",
+                    "Complementou a proposta de Volume e de Portfólio com as oportunidades de Estoque e Geladeira? (CERV + NAB + MKTP)",
+                    "Checou a escadinha e posicionamento de TTC?",
+                    "Checou a disponibilidade e qualidade dos Materiais de Trade?"
+                ]
+            },
+            {
+                title: "Etapa 3: Nível de Serviço",
+                shortName: "Serviço",
+                items: [
+                    "Checou a satisfação do cliente com a CIA?",
+                    "Abordou o status e satisfação sobre a última entrega?",
+                    "Abordou solicitações abertas, finalizadas e novas?",
+                    "Alinhou expectativas sobre eventualidades? (feriado, entrega etc) - Marcar OK em casos de N/A"
+                ]
+            },
+            {
+                title: "Etapa 4: Negociação de Volume e Portfólio",
+                shortName: "Vol. & Portf.",
+                items: [
+                    "Reforçou para que o PDV consulte a aba de Ofertas (Promoções, Pontos e Descontos), Missões e Desafios?",
+                    "Negociou o incremento da proposta de venda baseado nas tarefas de Volume?",
+                    "Negociou o incremento da proposta de venda baseado nas tarefas de Portfólio?",
+                    "Reforçou todos os resgates, pontos, descontos recebidos e prazo de entrega?"
+                ]
+            },
+            {
+                title: "Etapa 5: Negociação de Alavancas e TTC",
+                shortName: "Alavancas & R$",
+                items: [
+                    "Reforçou sobre a política de preços e alinhou negociação para a próxima visita? (Escadinha de Preços, Cardápio etc)",
+                    "Em casos de PDM, reforçou as premissas a serem cumpridas? - Marcar OK em casos de N/A",
+                    "Em caso de geladeira invadida, atuou para solucionar a invasão? - Marcar OK em casos de N/A"
+                ]
+            },
+            {
+                title: "Etapa 6: Execução",
+                shortName: "Execução",
+                items: [
+                    "Alinhou uma execução mais completa para a próxima visita?"
+                ]
+            }
+        ];
+
+        const TOTAL_ROUTINE_ITEMS_COUNT = ROUTINE_STEPS.reduce((acc, step) => acc + step.items.length, 0);
+
+        function cleanString(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).trim();
+        }
+
+        function normalizeKey(str) {
+            return cleanString(str).toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "");
+        }
+
+        function formatDate(value) {
+            if (!value) return '';
+            if (value instanceof Date) return value.toLocaleDateString('pt-BR');
+            if (typeof value === 'number') {
+                const date = new Date((value - 25569) * 86400 * 1000);
+                return date.toLocaleDateString('pt-BR');
+            }
+            return cleanString(value);
+        }
+
+        function extractHeaderAndData(sheet) {
+            const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (!raw || raw.length === 0) return [];
+
+            let headerRowIndex = -1;
+            for (let i = 0; i < Math.min(15, raw.length); i++) {
+                const rowStr = (raw[i] || []).map(c => cleanString(c).toLowerCase()).join(' ');
+                if (
+                    rowStr.includes('cliente') || rowStr.includes('setor') || 
+                    rowStr.includes('frequencia') || rowStr.includes('produto') || 
+                    rowStr.includes('cod.produto') || rowStr.includes('desc.produto') ||
+                    rowStr.includes('codproduto') || rowStr.includes('descproduto')
+                ) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+
+            if (headerRowIndex === -1) headerRowIndex = 0;
+
+            const headers = (raw[headerRowIndex] || []).map(c => cleanString(c));
+            const rows = [];
+
+            for (let i = headerRowIndex + 1; i < raw.length; i++) {
+                const row = raw[i];
+                if (!row || row.length === 0) continue;
+                const obj = {};
+                let hasData = false;
+                headers.forEach((h, colIdx) => {
+                    if (h) {
+                        const val = row[colIdx];
+                        obj[h] = val !== undefined ? val : null;
+                        if (val !== null && val !== undefined && val !== '') hasData = true;
+                    }
+                });
+                if (hasData) rows.push(obj);
+            }
+            return rows;
+        }
+
+        function getFieldValue(item, targetType) {
+            const keys = Object.keys(item);
+
+            if (targetType === 'rn') {
+                for (let k of keys) {
+                    const nk = normalizeKey(k);
+                    if (nk.includes('codsetor') || nk.includes('setor')) return item[k];
+                }
+                for (let k of keys) {
+                    if (normalizeKey(k) === 'gv') return item[k];
+                }
+            }
+
+            for (let k of keys) {
+                const nk = normalizeKey(k);
+                if (targetType === 'visitDay' && (nk.includes('frequencia') || nk.includes('visita') || nk.includes('dia'))) return formatDate(item[k]);
+                if (targetType === 'pdv' && (nk.includes('codigocliente') || nk.includes('codcliente') || nk === 'cliente' || nk.includes('pdv'))) return item[k];
+                if (targetType === 'fantasyName' && (nk.includes('nomefantasia') || nk.includes('fantasia') || nk.includes('estabelecimento'))) return item[k];
+                if (targetType === 'prodCode' && (nk.includes('codproduto') || nk.includes('produtototal') || nk === 'codigo' || nk === 'cod')) return item[k];
+                if (targetType === 'prodDesc' && (nk.includes('descproduto') || nk.includes('descricao') || nk === 'produto' || nk.includes('desc'))) return item[k];
+            }
+            return null;
+        }
+
+        function generateTaskId(pdv, taskName) {
+            return `${pdv}_${taskName}`.trim();
+        }
+
+        uploadBtn.addEventListener('click', () => triggerFileInput(-1));
+
+        function triggerFileInput(replaceIdx = -1) {
+            replacingIndex = replaceIdx;
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.multiple = replaceIdx === -1;
+            fileInput.accept = '.xlsx, .xls, .csv';
+            
+            fileInput.onchange = (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) processFiles(files);
+            };
+            fileInput.click();
+        }
+
+        function processFiles(files) {
+            tempRawImportedData = [];
+            tempCurrentFileName = files.map(f => f.name).join(', ');
+
+            let loaded = 0;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    wb.SheetNames.forEach(sheetName => {
+                        const sheetData = extractHeaderAndData(wb.Sheets[sheetName]);
+                        tempRawImportedData = tempRawImportedData.concat(sheetData);
+                    });
+                    loaded++;
+                    if (loaded === files.length) openImportModal();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function openImportModal() {
+            modalRnSelect.innerHTML = '<option value="">Carregar todos os Setores / RNs</option>';
+            const uniqueRNs = [...new Set(tempRawImportedData.map(i => cleanString(getFieldValue(i, 'rn'))))].filter(Boolean).sort();
+            uniqueRNs.forEach(rn => modalRnSelect.innerHTML += `<option value="${rn}">Setor / RN ${rn}</option>`);
+
+            modalDaysContainer.innerHTML = '';
+            const uniqueDays = [...new Set(tempRawImportedData.map(i => cleanString(getFieldValue(i, 'visitDay'))))].filter(Boolean).sort();
+            if (uniqueDays.length > 0) {
+                uniqueDays.forEach(day => {
+                    modalDaysContainer.innerHTML += `
+                        <label class="day-checkbox-item">
+                            <input type="checkbox" value="${day}" checked>
+                            <span>${day}</span>
+                        </label>`;
+                });
+            } else {
+                modalDaysContainer.innerHTML = '<p style="font-size:12px; color:var(--text-muted);">Aviso: Nenhuma coluna de data/frequência identificada nesta exibição.</p>';
+            }
+            importModal.style.display = 'flex';
+        }
+
+        modalConfirmBtn.addEventListener('click', () => {
+            const selectedRn = modalRnSelect.value;
+            const checkedDays = Array.from(modalDaysContainer.querySelectorAll('input:checked')).map(cb => cb.value);
+
+            const filteredImport = tempRawImportedData.filter(item => {
+                const itemRn = cleanString(getFieldValue(item, 'rn'));
+                const rnMatch = !selectedRn || !itemRn || itemRn === cleanString(selectedRn);
+                
+                const itemDay = cleanString(getFieldValue(item, 'visitDay'));
+                const dayMatch = checkedDays.length === 0 || !itemDay || checkedDays.includes(itemDay);
+
+                return rnMatch && dayMatch;
+            });
+
+            if (replacingIndex >= 0) {
+                databaseFiles[replacingIndex] = { fileName: tempCurrentFileName, data: filteredImport };
+            } else {
+                databaseFiles.push({ fileName: tempCurrentFileName, data: filteredImport });
+            }
+
+            importModal.style.display = 'none';
+            rebuildDatabase();
+        });
+
+        function rebuildDatabase() {
+            currentData = [];
+            const prodMap = new Map();
+            const pdvMap = new Map();
+
+            databaseFiles.forEach(fileObj => {
+                fileObj.data.forEach(item => {
+                    currentData.push(item);
+
+                    const pCode = cleanString(getFieldValue(item, 'prodCode'));
+                    const pDesc = cleanString(getFieldValue(item, 'prodDesc'));
+                    
+                    if (pCode || pDesc) {
+                        const key = pCode ? pCode : pDesc.toLowerCase();
+                        if (!prodMap.has(key)) {
+                            prodMap.set(key, { code: pCode, desc: pDesc });
+                        }
+                    }
+
+                    const pdvCode = cleanString(getFieldValue(item, 'pdv'));
+                    const fantasy = cleanString(getFieldValue(item, 'fantasyName'));
+                    const rn = cleanString(getFieldValue(item, 'rn'));
+                    const visitDay = cleanString(getFieldValue(item, 'visitDay'));
+
+                    if (pdvCode && !pdvMap.has(pdvCode)) {
+                        pdvMap.set(pdvCode, { code: pdvCode, name: fantasy, rn: rn, visitDay: visitDay });
+                    }
+                });
+            });
+
+            productCatalog = Array.from(prodMap.values());
+            pdvIndexMap = Array.from(pdvMap.values());
+
+            renderFileList();
+            updateDashboardMetrics();
+            updateFilters();
+            setupProductAutocomplete();
+            applyFilters();
+            updateClientSummary();
+            saveState();
+        }
+
+        function renderFileList() {
+            if (databaseFiles.length === 0) {
+                loadedFilesContainer.style.display = 'none';
+                filterSection.style.display = 'none';
+                metricsPanel.style.display = 'none';
+                routineSection.style.display = 'none';
+                previewSection.style.display = 'none';
+                return;
+            }
+
+            loadedFilesContainer.style.display = 'block';
+            filterSection.style.display = 'block';
+            metricsPanel.style.display = 'grid';
+            fileListTableBody.innerHTML = '';
+
+            databaseFiles.forEach((file, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><b>${file.fileName}</b></td>
+                    <td>${file.data.length} registros</td>
+                    <td>
+                        <button onclick="triggerFileInput(${index})" style="padding: 6px 12px; font-size: 12px;"><i class="fas fa-sync"></i> Substituir</button>
+                        <button onclick="removeFile(${index})" class="btn-danger" style="padding: 6px 12px; font-size: 12px;"><i class="fas fa-trash"></i> Excluir</button>
+                    </td>
+                `;
+                fileListTableBody.appendChild(row);
+            });
+        }
+
+        window.removeFile = function(index) {
+            if (confirm("Deseja remover esta planilha do seu banco de dados?")) {
+                databaseFiles.splice(index, 1);
+                rebuildDatabase();
+            }
+        };
+
+        function updateDashboardMetrics() {
+            if (currentData.length === 0) {
+                metricsPanel.style.display = 'none';
+                return;
+            }
+
+            const selectedRN = rnFilter.value;
+            const checkedDays = Array.from(document.querySelectorAll('.filter-day-cb:checked')).map(cb => cb.value);
+
+            const activePdvs = pdvIndexMap.filter(p => {
+                const rnMatch = !selectedRN || p.rn === cleanString(selectedRN);
+                const dayMatch = checkedDays.length === 0 || !p.visitDay || checkedDays.includes(p.visitDay);
+                return rnMatch && dayMatch;
+            });
+
+            const daysSet = new Set(activePdvs.map(p => p.visitDay).filter(Boolean));
+
+            metricDays.textContent = daysSet.size || 1;
+            metricPdvs.textContent = activePdvs.length;
+            metricProducts.textContent = productCatalog.length;
+        }
+
+        function updateFilters() {
+            rnFilter.innerHTML = '<option value="">Todos os Setores / RNs</option>';
+
+            const uniqueRNs = [...new Set(pdvIndexMap.map(i => i.rn))].filter(Boolean).sort();
+            uniqueRNs.forEach(rn => rnFilter.innerHTML += `<option value="${rn}">Setor ${rn}</option>`);
+
+            visitDaysCheckboxContainer.innerHTML = '';
+            const uniqueVisitDays = [...new Set(pdvIndexMap.map(i => i.visitDay))].filter(Boolean).sort();
+            uniqueVisitDays.forEach(day => {
+                const label = document.createElement('label');
+                label.className = 'day-checkbox-item';
+                label.innerHTML = `<input type="checkbox" class="filter-day-cb" value="${day}" checked> <span>${day}</span>`;
+                label.querySelector('input').addEventListener('change', () => { 
+                    updateDashboardMetrics();
+                    applyFilters(); 
+                    saveState(); 
+                });
+                visitDaysCheckboxContainer.appendChild(label);
+            });
+
+            setupPdvAutocomplete();
+        }
+
+        function setupPdvAutocomplete() {
+            pdvFilter.addEventListener('input', function() {
+                const input = this.value.toLowerCase().trim();
+                pdvAutocomplete.innerHTML = '';
+                if (input.length < 1) return;
+
+                const selectedRN = rnFilter.value;
+                const checkedDays = Array.from(document.querySelectorAll('.filter-day-cb:checked')).map(cb => cb.value);
+
+                const matches = pdvIndexMap.filter(p => {
+                    const rnMatch = !selectedRN || p.rn === cleanString(selectedRN);
+                    const dayMatch = checkedDays.length === 0 || !p.visitDay || checkedDays.includes(p.visitDay);
+                    return rnMatch && dayMatch && p.code.toLowerCase().includes(input);
+                }).slice(0, 10);
+
+                matches.forEach(p => {
+                    const item = document.createElement('div');
+                    item.textContent = `${p.code} - ${p.name}`;
+                    item.addEventListener('click', function() {
+                        pdvFilter.value = p.code;
+                        fantasyNameFilter.value = p.name;
+                        pdvAutocomplete.innerHTML = '';
+                        applyFilters();
+                        saveState();
+                    });
+                    pdvAutocomplete.appendChild(item);
+                });
+            });
+
+            fantasyNameFilter.addEventListener('input', function() {
+                const input = this.value.toLowerCase().trim();
+                fantasyNameAutocomplete.innerHTML = '';
+                if (input.length < 1) return;
+
+                const selectedRN = rnFilter.value;
+                const checkedDays = Array.from(document.querySelectorAll('.filter-day-cb:checked')).map(cb => cb.value);
+
+                const matches = pdvIndexMap.filter(p => {
+                    const rnMatch = !selectedRN || p.rn === cleanString(selectedRN);
+                    const dayMatch = checkedDays.length === 0 || !p.visitDay || checkedDays.includes(p.visitDay);
+                    return rnMatch && dayMatch && p.name.toLowerCase().includes(input);
+                }).slice(0, 10);
+
+                matches.forEach(p => {
+                    const item = document.createElement('div');
+                    item.textContent = `${p.name} (${p.code})`;
+                    item.addEventListener('click', function() {
+                        fantasyNameFilter.value = p.name;
+                        pdvFilter.value = p.code;
+                        fantasyNameAutocomplete.innerHTML = '';
+                        applyFilters();
+                        saveState();
+                    });
+                    fantasyNameAutocomplete.appendChild(item);
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (e.target !== pdvFilter) pdvAutocomplete.innerHTML = '';
+                if (e.target !== fantasyNameFilter) fantasyNameAutocomplete.innerHTML = '';
+            });
+        }
+
+        function setupProductAutocomplete() {
+            manualTaskInput.addEventListener('input', function() {
+                const text = this.value;
+                const cursorPos = this.selectionStart;
+                
+                const textUpToCursor = text.substring(0, cursorPos);
+                const words = textUpToCursor.split(/[\s,]+/);
+                const currentTerm = words[words.length - 1].toLowerCase().trim();
+
+                productAutocomplete.innerHTML = '';
+                if (currentTerm.length < 2) return;
+
+                const matches = productCatalog.filter(p => 
+                    String(p.code).toLowerCase().includes(currentTerm) || 
+                    String(p.desc).toLowerCase().includes(currentTerm)
+                ).slice(0, 10);
+
+                matches.forEach(prod => {
+                    const item = document.createElement('div');
+                    const prodName = prod.desc ? prod.desc : prod.code;
+                    item.textContent = prod.code ? `${prod.code} - ${prod.desc}` : prod.desc;
+                    
+                    item.addEventListener('click', function() {
+                        const lastWordIndex = textUpToCursor.lastIndexOf(words[words.length - 1]);
+                        const newText = text.substring(0, lastWordIndex) + prodName + text.substring(cursorPos);
+                        
+                        manualTaskInput.value = newText;
+                        productAutocomplete.innerHTML = '';
+                        manualTaskInput.focus();
+                    });
+                    productAutocomplete.appendChild(item);
+                });
+            });
+
+            document.addEventListener('click', (e) => { 
+                if (e.target !== manualTaskInput) productAutocomplete.innerHTML = ''; 
+            });
+        }
+
+        function applyFilters() {
+            const selectedRN = rnFilter.value;
+            const selectedVisitDays = Array.from(document.querySelectorAll('.filter-day-cb:checked')).map(cb => cb.value);
+            const pdvText = pdvFilter.value.trim().toLowerCase();
+            const fantasyNameText = fantasyNameFilter.value.trim().toLowerCase();
+
+            if (!pdvText && !fantasyNameText) {
+                routineSection.style.display = 'none';
+                previewSection.style.display = 'none';
+                return;
+            }
+
+            const filteredData = currentData.filter(item => {
+                const itemRn = cleanString(getFieldValue(item, 'rn'));
+                const itemDay = cleanString(getFieldValue(item, 'visitDay'));
+                const itemPdv = cleanString(getFieldValue(item, 'pdv')).toLowerCase();
+                const itemName = cleanString(getFieldValue(item, 'fantasyName')).toLowerCase();
+
+                const rnMatch = !selectedRN || itemRn === cleanString(selectedRN);
+                const visitDayMatch = selectedVisitDays.length === 0 || !itemDay || selectedVisitDays.includes(itemDay);
+                const pdvMatch = !pdvText || itemPdv.includes(pdvText);
+                const nameMatch = !fantasyNameText || itemName.includes(fantasyNameText);
+                
+                return rnMatch && visitDayMatch && pdvMatch && nameMatch;
+            });
+
+            let activePdv = pdvFilter.value.trim();
+            let activeName = fantasyNameFilter.value.trim();
+            if (filteredData.length > 0) {
+                activePdv = getFieldValue(filteredData[0], 'pdv') || activePdv;
+                activeName = getFieldValue(filteredData[0], 'fantasyName') || activeName;
+            }
+
+            renderRoutineChecklist(activePdv, activeName);
+            renderPreviewTable(filteredData, activePdv, activeName);
+            
+            routineSection.style.display = 'block';
+            previewSection.style.display = 'block';
+        }
+
+        function renderRoutineChecklist(pdv, fantasyName) {
+            activePdvBadge.textContent = `PDV: ${pdv} - ${fantasyName || 'Atendimento'}`;
+            routineStepsContainer.innerHTML = '';
+
+            const fragment = document.createDocumentFragment();
+
+            ROUTINE_STEPS.forEach((step, stepIndex) => {
+                const stepBlock = document.createElement('div');
+                stepBlock.className = 'step-block';
+                stepBlock.id = `stepBlock_${stepIndex}`;
+                
+                let completedInStep = 0;
+                step.items.forEach((_, itemIndex) => {
+                    const taskId = generateTaskId(pdv, `ROTINA_${stepIndex}_${itemIndex}`);
+                    if (selectedTasks[taskId]) completedInStep++;
+                });
+
+                const stepPct = Math.round((completedInStep / step.items.length) * 100);
+
+                let stepHtml = `
+                    <div class="step-header-flex">
+                        <div class="step-title"><i class="fas fa-check-double"></i> ${step.title}</div>
+                        <span class="step-badge-pct" id="stepBadge_${stepIndex}">${stepPct}% Concluído (${completedInStep}/${step.items.length})</span>
+                    </div>
+                `;
+                
+                step.items.forEach((itemText, itemIndex) => {
+                    const taskId = generateTaskId(pdv, `ROTINA_${stepIndex}_${itemIndex}`);
+                    const isChecked = !!selectedTasks[taskId];
+
+                    stepHtml += `
+                        <div class="routine-item">
+                            <input type="checkbox" id="cb_${taskId}" ${isChecked ? 'checked' : ''} onchange="fastToggleTask('${pdv}', '${fantasyName}', 'ROTINA_${stepIndex}_${itemIndex}', '${escapeHtml(itemText)}', this.checked, ${stepIndex}, true)">
+                            <label for="cb_${taskId}" class="routine-label">${itemText}</label>
+                        </div>
+                    `;
+                });
+
+                stepBlock.innerHTML = stepHtml;
+                fragment.appendChild(stepBlock);
+            });
+
+            routineStepsContainer.appendChild(fragment);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        }
+
+        window.fastToggleTask = function(pdv, name, taskKey, taskLabel, isChecked, stepIdx, isRoutine) {
+            const taskId = generateTaskId(pdv, taskKey);
+            if (isChecked) {
+                selectedTasks[taskId] = { 
+                    taskId: taskId,
+                    taskKey: taskKey,
+                    pdv: pdv, 
+                    name: name, 
+                    task: taskLabel, 
+                    isRoutine: isRoutine, 
+                    stepIndex: stepIdx 
+                };
+            } else {
+                delete selectedTasks[taskId];
+            }
+            
+            if (stepIdx >= 0 && ROUTINE_STEPS[stepIdx]) {
+                const totalInStep = ROUTINE_STEPS[stepIdx].items.length;
+                let completedInStep = 0;
+                ROUTINE_STEPS[stepIdx].items.forEach((_, i) => {
+                    if (selectedTasks[generateTaskId(pdv, `ROTINA_${stepIdx}_${i}`)]) completedInStep++;
+                });
+                const badgeEl = document.getElementById(`stepBadge_${stepIdx}`);
+                if (badgeEl) {
+                    const pct = Math.round((completedInStep / totalInStep) * 100);
+                    badgeEl.textContent = `${pct}% Concluído (${completedInStep}/${totalInStep})`;
+                }
+            }
+
+            clearTimeout(updateDebounceTimer);
+            updateDebounceTimer = setTimeout(() => {
+                requestAnimationFrame(() => {
+                    updateTaskCounters();
+                    updateClientSummary();
+                    saveState();
+                });
+            }, 100);
+        };
+
+        function toggleTaskSelection(pdv, name, taskKey, taskLabel, isChecked, stepIdx, isRoutine) {
+            fastToggleTask(pdv, name, taskKey, taskLabel, isChecked, stepIdx, isRoutine);
+            applyFilters();
+        }
+
+        window.deleteManualTask = function(taskId) {
+            if (confirm("Deseja excluir esta cobertura/tarefa adicionada?")) {
+                delete selectedTasks[taskId];
+                const rowEl = document.getElementById(`row_manual_${taskId}`);
+                if (rowEl) rowEl.remove();
+
+                applyFilters();
+                updateTaskCounters();
+                updateClientSummary();
+                saveState();
+            }
+        };
+
+        window.deleteEntirePdv = function(pdvCode) {
+            if (confirm(`Deseja remover completamente o PDV [${pdvCode}] e todas as suas tarefas/rotinas registradas?`)) {
+                Object.keys(selectedTasks).forEach(key => {
+                    if (key.startsWith(pdvCode + "_")) {
+                        delete selectedTasks[key];
+                    }
+                });
+
+                if (pdvFilter.value.trim() === pdvCode) {
+                    pdvFilter.value = '';
+                    fantasyNameFilter.value = '';
+                    routineSection.style.display = 'none';
+                    previewSection.style.display = 'none';
+                }
+
+                updateTaskCounters();
+                updateClientSummary();
+                saveState();
+            }
+        };
+
+        addManualTaskBtn.addEventListener('click', () => {
+            let taskText = manualTaskInput.value.trim();
+            const pdvText = pdvFilter.value.trim() || 'GERAL';
+            const fantasyNameText = fantasyNameFilter.value.trim() || 'Atendimento';
+
+            if (!taskText) return alert('Por favor, digite a descrição da cobertura.');
+
+            const taskKey = `MANUAL_${Date.now()}`;
+            toggleTaskSelection(pdvText, fantasyNameText, taskKey, taskText, true, -1, false);
+            manualTaskInput.value = '';
+        });
+
+        function renderPreviewTable(data, activePdv, activeName) {
+            previewTableBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            const currentPdvClean = cleanString(activePdv);
+            const manualTasksForThisPdv = Object.values(selectedTasks).filter(t => !t.isRoutine && cleanString(t.pdv) === currentPdvClean);
+
+            manualTasksForThisPdv.forEach(taskObj => {
+                const row = document.createElement('tr');
+                row.className = 'task-manual-row';
+                row.id = `row_manual_${taskObj.taskId}`;
+
+                row.innerHTML = `
+                    <td><input type="checkbox" checked onchange="fastToggleTask('${taskObj.pdv}', '${taskObj.name}', '${taskObj.taskKey}', '${escapeHtml(taskObj.task)}', this.checked, -1, false)"></td>
+                    <td><span class="type-tag type-tag-manual"><i class="fas fa-box"></i> COBERTURA</span></td>
+                    <td><b>${taskObj.pdv}</b></td>
+                    <td>${taskObj.name}</td>
+                    <td><b>${taskObj.task}</b></td>
+                    <td><button onclick="deleteManualTask('${taskObj.taskId}')" class="btn-danger-sm"><i class="fas fa-trash"></i> Excluir</button></td>
+                `;
+                fragment.appendChild(row);
+            });
+            
+            data.forEach((item, idx) => {
+                const row = document.createElement('tr');
+                const pdvVal = getFieldValue(item, 'pdv') || activePdv;
+                const nameVal = getFieldValue(item, 'fantasyName') || activeName;
+                const taskDesc = getFieldValue(item, 'prodDesc') || getFieldValue(item, 'prodCode') || 'Tarefa/Produto';
+                
+                const taskKey = `SHEET_${idx}_${taskDesc}`;
+                const taskId = generateTaskId(pdvVal, taskKey);
+                const isSelected = !!selectedTasks[taskId];
+
+                if (isSelected) row.classList.add('task-selected');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = isSelected;
+                checkbox.addEventListener('change', function() {
+                    toggleTaskSelection(pdvVal, nameVal, taskKey, taskDesc, this.checked, -1, false);
+                });
+
+                const checkboxCell = document.createElement('td'); checkboxCell.appendChild(checkbox); row.appendChild(checkboxCell);
+                
+                const typeTd = document.createElement('td');
+                typeTd.innerHTML = `<span class="type-tag type-tag-routine"><i class="fas fa-file-excel"></i> PLANILHA</span>`;
+                row.appendChild(typeTd);
+
+                row.appendChild(createElement('td', pdvVal || '-'));
+                row.appendChild(createElement('td', nameVal || '-'));
+                row.appendChild(createElement('td', taskDesc));
+                row.appendChild(createElement('td', '-'));
+
+                fragment.appendChild(row);
+            });
+
+            previewTableBody.appendChild(fragment);
+
+            if (manualTasksForThisPdv.length === 0 && data.length === 0) {
+                previewTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--text-muted);">Nenhuma tarefa de planilha ou cobertura cadastrada para este PDV.</td></tr>`;
+            }
+        }
+
+        function createElement(tag, text) {
+            const el = document.createElement(tag);
+            el.textContent = text;
+            return el;
+        }
+
+        function updateTaskCounters() {
+            let routineCount = 0;
+            let manualCount = 0;
+
+            Object.values(selectedTasks).forEach(item => {
+                if (item.isRoutine) routineCount++;
+                else manualCount++;
+            });
+
+            routineTaskCounter.textContent = routineCount;
+            manualTaskCounter.textContent = manualCount;
+        }
+
+        function updateClientSummary() {
+            const tasksByPDV = {};
+
+            Object.values(selectedTasks).forEach(item => {
+                const pdv = item.pdv || 'Sem PDV';
+                if (!tasksByPDV[pdv]) {
+                    tasksByPDV[pdv] = { 
+                        name: item.name, 
+                        totalCount: 0, 
+                        routineCount: 0, 
+                        manualCount: 0, 
+                        steps: Array(ROUTINE_STEPS.length).fill(0),
+                        manualTasksList: []
+                    };
+                }
+                tasksByPDV[pdv].totalCount++;
+                if (item.isRoutine) {
+                    tasksByPDV[pdv].routineCount++;
+                    if (item.stepIndex !== undefined && item.stepIndex >= 0) {
+                        tasksByPDV[pdv].steps[item.stepIndex]++;
+                    }
+                } else {
+                    tasksByPDV[pdv].manualCount++;
+                    tasksByPDV[pdv].manualTasksList.push(item);
+                }
+            });
+
+            const pdvKeys = Object.keys(tasksByPDV);
+            document.getElementById('clientCountBadge').textContent = pdvKeys.length;
+            const clientListContainer = document.getElementById('clientListContainer');
+            clientListContainer.innerHTML = '';
+
+            if (pdvKeys.length === 0) {
+                clientListContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 10px;">Nenhuma tarefa ou rotina realizada ainda.</p>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            pdvKeys.forEach(pdv => {
+                const client = tasksByPDV[pdv];
+                const totalRoutinePct = Math.round((client.routineCount / TOTAL_ROUTINE_ITEMS_COUNT) * 100);
+
+                let stepsHtml = `<div class="steps-breakdown-list">`;
+                ROUTINE_STEPS.forEach((step, idx) => {
+                    const done = client.steps[idx] || 0;
+                    const stepPct = Math.round((done / step.items.length) * 100);
+                    stepsHtml += `
+                        <div class="step-breakdown-item">
+                            <div class="step-breakdown-header">
+                                <span>${step.shortName}</span>
+                                <span style="color: var(--amber-accent); font-weight:800;">${stepPct}%</span>
+                            </div>
+                            <div class="step-breakdown-name">${done}/${step.items.length} ok</div>
+                        </div>`;
+                });
+                stepsHtml += `</div>`;
+
+                // Renderiza lista rápida de coberturas logo abaixo do PDV com botão de lixeira para exclusão direta
+                let coveragesHtml = '';
+                if (client.manualTasksList.length > 0) {
+                    let itemsHtml = '';
+                    client.manualTasksList.forEach(mTask => {
+                        itemsHtml += `
+                            <div class="summary-coverage-item">
+                                <span class="summary-coverage-text"><i class="fas fa-box" style="color: var(--primary); font-size:10px; margin-right:4px;"></i> ${mTask.task}</span>
+                                <button onclick="deleteManualTask('${mTask.taskId}')" class="btn-danger-sm" title="Excluir Cobertura" style="padding: 3px 6px; font-size: 10px;"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `;
+                    });
+                    coveragesHtml = `
+                        <div style="margin-top: 6px;">
+                            <label style="margin-bottom:4px; font-size:10.5px;">Coberturas / Tarefas Realizadas:</label>
+                            <div class="summary-coverages-list">${itemsHtml}</div>
+                        </div>
+                    `;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'client-summary-card';
+                card.innerHTML = `
+                    <div class="client-card-header">
+                        <div>
+                            <strong style="font-size: 16px; color: var(--text-main);">${client.name}</strong><br>
+                            <span style="font-size: 13px; color: var(--text-muted);">Código PDV: <b>${pdv}</b></span>
+                            <div class="type-tags-container">
+                                <span class="type-tag type-tag-routine"><i class="fas fa-check-square"></i> Rotinas: ${client.routineCount}/${TOTAL_ROUTINE_ITEMS_COUNT}</span>
+                                <span class="type-tag type-tag-manual"><i class="fas fa-box"></i> Coberturas: ${client.manualCount}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="editClientTasks('${pdv}')" style="padding: 8px 14px; font-size: 12px;"><i class="fas fa-edit"></i> Visualizar / Editar</button>
+                            <button onclick="deleteEntirePdv('${pdv}')" class="btn-danger-sm" style="padding: 8px 12px; font-size: 12px;"><i class="fas fa-trash"></i> Excluir PDV</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="margin-bottom:8px;">Desempenho Detalhado por Etapa da Rotina:</label>
+                        ${stepsHtml}
+                    </div>
+
+                    ${coveragesHtml}
+
+                    <div class="positivacao-box">
+                        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:800;">
+                            <span>Positivação da Rotina de Visita:</span>
+                            <span style="color: var(--success);">${totalRoutinePct}% Concluído</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${totalRoutinePct}%;"></div>
+                        </div>
+                        <span style="font-size:11px; color:var(--text-muted); margin-top:2px;">Total de Itens/Coberturas Realizados no PDV: <b>${client.totalCount}</b></span>
+                    </div>
+                `;
+                fragment.appendChild(card);
+            });
+
+            clientListContainer.appendChild(fragment);
+        }
+
+        window.editClientTasks = function(pdv) {
+            const pdvInfo = pdvIndexMap.find(p => p.code === pdv);
+            pdvFilter.value = pdv;
+            if (pdvInfo) fantasyNameFilter.value = pdvInfo.name;
+            applyFilters();
+            routineSection.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        rnFilter.addEventListener('change', () => { 
+            updateDashboardMetrics();
+            applyFilters(); 
+            saveState(); 
+        });
+
+        document.getElementById('summaryHeader').addEventListener('click', () => {
+            const summaryContent = document.getElementById('summaryContent');
+            const accordionIcon = document.getElementById('accordionIcon');
+            const isVisible = summaryContent.style.display === 'block';
+            summaryContent.style.display = isVisible ? 'none' : 'block';
+            accordionIcon.className = isVisible ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+        });
+
+        document.getElementById('resetSelectionBtn').addEventListener('click', async () => {
+            if (Object.keys(selectedTasks).length === 0) return alert('Nenhuma tarefa selecionada.');
+            if (confirm('Deseja zerar todas as rotinas e tarefas marcadas como concluídas?')) {
+                selectedTasks = {};
+                updateTaskCounters();
+                updateClientSummary();
+                applyFilters();
+                await saveState();
+            }
+        });
+
+        document.getElementById('whatsappBtn').addEventListener('click', () => {
+            if (Object.keys(selectedTasks).length === 0) return alert('Nenhuma tarefa selecionada.');
+
+            const tasksByPDV = {};
+            Object.values(selectedTasks).forEach(item => {
+                const pdv = item.pdv;
+                if (!tasksByPDV[pdv]) {
+                    tasksByPDV[pdv] = { 
+                        name: item.name, 
+                        routineCount: 0, 
+                        manualTasks: [],
+                        steps: Array(ROUTINE_STEPS.length).fill(0) 
+                    };
+                }
+                
+                if (item.isRoutine) {
+                    tasksByPDV[pdv].routineCount++;
+                    if (item.stepIndex !== undefined && item.stepIndex >= 0) {
+                        tasksByPDV[pdv].steps[item.stepIndex]++;
+                    }
+                } else {
+                    tasksByPDV[pdv].manualTasks.push(item);
+                }
+            });
+
+            let message = `*RESUMO DE EXECUÇÃO DA ROTA*\n`;
+            message += `------------------------------------\n\n`;
+
+            for (const [pdv, data] of Object.entries(tasksByPDV)) {
+                const totalRoutinePct = Math.round((data.routineCount / TOTAL_ROUTINE_ITEMS_COUNT) * 100);
+                
+                message += `📍 *PDV:* ${data.name} (${pdv})\n`;
+                message += `📊 *Positivação da Rotina:* ${totalRoutinePct}%\n\n`;
+                
+                message += `*Etapas da Rotina:*\n`;
+                ROUTINE_STEPS.forEach((step, idx) => {
+                    const done = data.steps[idx] || 0;
+                    message += `• Etapa ${idx + 1} (${step.shortName}): ${done} de ${step.items.length}\n`;
+                });
+
+                if (data.manualTasks.length > 0) {
+                    message += `\n📦 *Coberturas do Cliente:*\n`;
+                    data.manualTasks.forEach(t => {
+                        message += `  - ${t.task}\n`;
+                    });
+                }
+                
+                message += `\n------------------------------------\n\n`;
+            }
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        });
+
+        document.getElementById('pdfBtn').addEventListener('click', () => {
+            if (Object.keys(selectedTasks).length === 0) return alert('Nenhuma tarefa selecionada para gerar relatório.');
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const tasksByPDV = {};
+            let globalTotalRoutine = 0;
+            let globalTotalManual = 0;
+
+            Object.values(selectedTasks).forEach(item => {
+                const pdv = item.pdv;
+                if (!tasksByPDV[pdv]) {
+                    tasksByPDV[pdv] = { 
+                        name: item.name, 
+                        tasks: [], 
+                        routineCount: 0, 
+                        manualCount: 0, 
+                        totalCount: 0,
+                        steps: Array(ROUTINE_STEPS.length).fill(0)
+                    };
+                }
+                tasksByPDV[pdv].tasks.push(item);
+                tasksByPDV[pdv].totalCount++;
+                if (item.isRoutine) {
+                    tasksByPDV[pdv].routineCount++;
+                    globalTotalRoutine++;
+                    if (item.stepIndex !== undefined && item.stepIndex >= 0) {
+                        tasksByPDV[pdv].steps[item.stepIndex]++;
+                    }
+                } else {
+                    tasksByPDV[pdv].manualCount++;
+                    globalTotalManual++;
+                }
+            });
+
+            doc.setFillColor(15, 23, 42); 
+            doc.rect(0, 0, 210, 30, 'F');
+            doc.setFillColor(79, 70, 229); 
+            doc.rect(0, 28, 210, 2, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('GESTOR PRO | EXECUTIVO DE ROTA E COMPLIANCE PDV', 14, 16);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(203, 213, 225);
+            doc.text(`Emissão: ${dateStr} às ${timeStr} | Total PDVs Atendidos: ${Object.keys(tasksByPDV).length}`, 14, 24);
+
+            let startY = 36;
+
+            Object.entries(tasksByPDV).forEach(([pdv, data]) => {
+                if (startY > 240) {
+                    doc.addPage();
+                    startY = 20;
+                }
+
+                const totalPct = Math.round((data.routineCount / TOTAL_ROUTINE_ITEMS_COUNT) * 100);
+
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(226, 232, 240);
+                doc.roundedRect(14, startY, 182, 38, 3, 3, 'FD');
+
+                doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+                doc.text(`${data.name} (PDV: ${pdv})`, 18, startY + 7);
+
+                doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+                doc.setTextColor(16, 185, 129);
+                doc.text(`Positivação Geral: ${totalPct}%`, 150, startY + 7);
+
+                doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+                doc.text(`Rotinas Concluídas: ${data.routineCount}/${TOTAL_ROUTINE_ITEMS_COUNT} | Coberturas Registradas: ${data.manualCount}`, 18, startY + 12);
+
+                const boxWidth = 28;
+                const boxHeight = 18;
+                const boxGap = 2;
+                const startX = 18;
+                const boxesY = startY + 15;
+
+                ROUTINE_STEPS.forEach((step, idx) => {
+                    const done = data.steps[idx] || 0;
+                    const stepPct = Math.round((done / step.items.length) * 100);
+                    const currentX = startX + (idx * (boxWidth + boxGap));
+
+                    doc.setFillColor(255, 255, 255);
+                    doc.setDrawColor(203, 213, 225);
+                    doc.roundedRect(currentX, boxesY, boxWidth, boxHeight, 2, 2, 'FD');
+
+                    doc.setFontSize(6); doc.setFont('helvetica', 'bold'); doc.setTextColor(79, 70, 229);
+                    doc.text(`Etapa ${idx + 1}`, currentX + 3, boxesY + 5);
+
+                    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42);
+                    doc.text(`${stepPct}%`, currentX + 3, boxesY + 10);
+
+                    doc.setFontSize(5.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 116, 139);
+                    doc.text(`${done}/${step.items.length} itens`, currentX + 3, boxesY + 14);
+
+                    doc.setFillColor(226, 232, 240);
+                    doc.rect(currentX + 3, boxesY + 15.5, 22, 1.5, 'F');
+                    if (stepPct > 0) {
+                        doc.setFillColor(16, 185, 129);
+                        doc.rect(currentX + 3, boxesY + 15.5, (22 * stepPct) / 100, 1.5, 'F');
+                    }
+                });
+
+                startY += 42;
+
+                const pdvDetailRows = data.tasks.map(t => [
+                    t.isRoutine ? 'Rotina' : 'Cobertura',
+                    t.task
+                ]);
+
+                doc.autoTable({
+                    startY: startY,
+                    margin: { left: 14, right: 14 },
+                    head: [['Tipo de Ação', 'Descrição do Item / Produto Registrado']],
+                    body: pdvDetailRows,
+                    theme: 'plain',
+                    headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold', fontSize: 7 },
+                    bodyStyles: { fontSize: 7, textColor: [30, 41, 59], cellPadding: 2 },
+                    columnStyles: { 0: { cellWidth: 28, fontStyle: 'bold' } }
+                });
+
+                startY = doc.lastAutoTable.finalY + 8;
+            });
+
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(7.5);
+                doc.setTextColor(148, 163, 184);
+                doc.text(`Gestor Pro © - Relatório de Rota de Campo - Página ${i} de ${totalPages}`, 105, 290, { align: 'center' });
+            }
+
+            doc.save(`Relatorio_Rota_Executivo_${dateStr.replace(/\//g, '-')}.pdf`);
+        });
+
+        document.getElementById('exportBackupBtn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(getCurrentState())], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `backup_rotina_pdv_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+        });
+
+        document.getElementById('importBackupBtn').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    restoreState(JSON.parse(event.target.result));
+                    await saveState();
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        });
+
+        function getCurrentState() {
+            return {
+                selectedTasks: selectedTasks,
+                databaseFiles: databaseFiles
+            };
+        }
+
+        async function saveState() {
+            try {
+                await saveStateToDB(getCurrentState());
+            } catch (err) {
+                console.error("Erro ao salvar no banco local:", err);
+            }
+        }
+
+        function restoreState(state) {
+            if (!state) return;
+            if (state.selectedTasks) selectedTasks = state.selectedTasks;
+            if (state.databaseFiles) databaseFiles = state.databaseFiles;
+            
+            rebuildDatabase();
+            updateTaskCounters();
+            updateClientSummary();
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedState = await loadStateFromDB();
+            if (savedState) restoreState(savedState);
+        });
+    </script>
+</body>
+</html>
