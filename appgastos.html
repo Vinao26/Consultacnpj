@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Finance App Premium</title>
+
+    <!-- Fontes e Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configurações do seu Firebase extraídas do código fornecido
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+          authDomain: "bancoia.firebaseapp.com",
+          projectId: "bancoia",
+          storageBucket: "bancoia.firebasestorage.app",
+          messagingSenderId: "32042568752",
+          appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Exportação global para controle dos scripts da aplicação
+        window.db = db;
+        window.fs = { collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs };
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --purple-glow: rgba(139, 92, 246, 0.25);
+            --green-glow: rgba(16, 185, 129, 0.25);
+            --red-glow: rgba(239, 68, 68, 0.25);
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; overflow-x: hidden; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+        /* Header e Usuário */
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px 16px; background: var(--card-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border); border-radius: 20px; box-shadow: var(--shadow);
+        }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar { 
+            width: 42px; height: 42px; border-radius: 50%; 
+            background: linear-gradient(135deg, var(--accent-purple), #ec4899); 
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff;
+            box-shadow: 0 4px 12px var(--purple-glow);
+        }
+        .user-details h2 { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        .user-details p { font-size: 11px; color: var(--text-muted); }
+
+        .btn-icon { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); }
+        .btn-icon:active { transform: scale(0.95); }
+
+        /* Card de Resumo Financeiro */
+        .summary-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            border: 1px solid var(--card-border); border-radius: 24px; padding: 20px;
+            box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden;
+        }
+        .summary-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%); pointer-events: none;
+        }
+        .balance-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .balance-value { font-size: 28px; font-weight: 800; color: #fff; margin-top: 4px; }
+
+        .summary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-box { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); padding: 12px; border-radius: 16px; }
+        .stat-box.income { border-left: 4px solid var(--accent-green); }
+        .stat-box.expense { border-left: 4px solid var(--accent-red); }
+        .stat-title { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        .stat-amount { font-size: 16px; font-weight: 700; margin-top: 4px; }
+        .income .stat-amount { color: var(--accent-green); }
+        .expense .stat-amount { color: var(--accent-red); }
+
+        /* Formulário de Lançamento */
+        .form-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+        .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .type-btn { padding: 12px; border-radius: 14px; border: 1px solid var(--card-border); background: rgba(255,255,255,0.03); color: var(--text-muted); font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition); }
+        .type-btn.active.despesa { background: var(--accent-red); color: #fff; border-color: var(--accent-red); box-shadow: 0 4px 15px var(--red-glow); }
+        .type-btn.active.receita { background: var(--accent-green); color: #fff; border-color: var(--accent-green); box-shadow: 0 4px 15px var(--green-glow); }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; margin-bottom: 12px; }
+        .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: rgba(0, 0, 0, 0.2); color: #fff; font-size: 14px; outline: none; transition: var(--transition); }
+        .input-field:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 3px var(--purple-glow); }
+
+        /* Autocomplete Customizado */
+        .autocomplete-list {
+            position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--card-border);
+            border-radius: 12px; max-height: 160px; overflow-y: auto; z-index: 100; box-shadow: var(--shadow); margin-top: 4px; display: none;
+        }
+        .autocomplete-item { padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); user-select: none; }
+        .autocomplete-item:hover { background: rgba(255,255,255,0.05); }
+
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-purple), #6366f1); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--purple-glow); transition: var(--transition); margin-top: 6px; }
+        .btn-submit:active { transform: scale(0.98); }
+
+        /* Estrutura Expansível de Anos, Meses e Dias */
+        .tree-container { display: flex; flex-direction: column; gap: 12px; }
+        .year-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 18px; overflow: hidden; }
+        .year-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255, 255, 255, 0.02); font-weight: 800; font-size: 16px; }
+        .year-content { display: none; padding: 12px; flex-direction: column; gap: 10px; border-top: 1px solid var(--card-border); }
+        
+        .month-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; }
+        .month-header { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; font-size: 14px; }
+        .month-content { display: none; padding: 10px; flex-direction: column; gap: 8px; border-top: 1px solid var(--card-border); }
+
+        /* Fechamento do Mês */
+        .month-closing { background: rgba(139, 92, 246, 0.1); border: 1px dashed var(--accent-purple); padding: 10px 12px; border-radius: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        .month-closing-row { display: flex; justify-content: space-between; }
+
+        .day-group { display: flex; flex-direction: column; gap: 6px; }
+        .day-title { font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 10px; }
+        .item-info { display: flex; flex-direction: column; gap: 2px; }
+        .item-desc { font-size: 13px; font-weight: 600; }
+        .item-meta { font-size: 10px; color: var(--text-muted); display: flex; gap: 8px; }
+        .item-value { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .item-value.receita { color: var(--accent-green); }
+        .item-value.despesa { color: var(--accent-red); }
+
+        /* Modais */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+        .modal-body { background: #1e293b; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+        .modal-title { font-size: 16px; font-weight: 800; }
+
+        .btn-secondary { background: var(--card-border); color: #fff; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-danger { background: var(--accent-red); color: #fff; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="user-info">
+            <div class="user-avatar" id="avatarLetter">U</div>
+            <div class="user-details">
+                <h2 id="userNameDisplay">Carregando...</h2>
+                <p>Perfil de Usuário</p>
+            </div>
+        </div>
+        <button class="btn-icon" onclick="abrirModalUsuario()"><i class="fas fa-user-edit"></i> Editar</button>
+    </header>
+
+    <!-- Resumo Financero Global -->
+    <div class="summary-card">
+        <div>
+            <span class="balance-label">Saldo Atual</span>
+            <div class="balance-value" id="globalBalance">R$ 0,00</div>
+        </div>
+        <div class="summary-stats">
+            <div class="stat-box income">
+                <div class="stat-title"><i class="fas fa-arrow-down"></i> Entradas</div>
+                <div class="stat-amount" id="globalIncome">R$ 0,00</div>
+            </div>
+            <div class="stat-box expense">
+                <div class="stat-title"><i class="fas fa-arrow-up"></i> Saídas</div>
+                <div class="stat-amount" id="globalExpense">R$ 0,00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Novo Lançamento -->
+    <div class="form-card">
+        <div class="type-selector">
+            <button type="button" class="type-btn active despesa" id="btnTypeDespesa" onclick="selecionarTipo('despesa')">
+                <i class="fas fa-arrow-circle-up"></i> Gastos
+            </button>
+            <button type="button" class="type-btn receita" id="btnTypeReceita" onclick="selecionarTipo('receita')">
+                <i class="fas fa-arrow-circle-down"></i> Entradas
+            </button>
+        </div>
+
+        <form id="formLancamento" onsubmit="salvarLancamento(event)">
+            <div class="form-group">
+                <label>Descrição</label>
+                <input type="text" id="descInput" class="input-field" placeholder="Ex: Salário, Supermercado..." autocomplete="off" required oninput="filtrarAutocomplete()" onfocus="filtrarAutocomplete()">
+                <div class="autocomplete-list" id="autocompleteBox"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Valor (R$)</label>
+                <input type="number" step="0.01" id="valorInput" class="input-field" placeholder="0,00" required>
+            </div>
+
+            <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> Cadastrar Lançamento</button>
+        </form>
+    </div>
+
+    <!-- Árvore Registros -->
+    <div class="tree-container" id="treeContainer">
+        <!-- Renderizado dinamicamente -->
+    </div>
+</div>
+
+<!-- Modal Primeiro Acesso / Nome de Usuário -->
+<div class="modal-overlay" id="modalUser">
+    <div class="modal-body">
+        <h3 class="modal-title" id="modalUserTitle">Bem-vindo(a)!</h3>
+        <p style="font-size: 12px; color: var(--text-muted);">Por favor, informe seu nome para registrar quem efetuou os lançamentos neste dispositivo.</p>
+        <div class="form-group">
+            <label>Seu Nome</label>
+            <input type="text" id="usernameInput" class="input-field" placeholder="Ex: João Silva">
+        </div>
+        <button type="button" class="btn-submit" onclick="salvarUsuario()">Salvar Nome</button>
+    </div>
+</div>
+
+<!-- Modal Exclusão Autocomplete -->
+<div class="modal-overlay" id="modalDeleteAuto">
+    <div class="modal-body">
+        <h3 class="modal-title">Remover da Sugestão</h3>
+        <p style="font-size: 13px; color: var(--text-muted);" id="deleteAutoText">Deseja excluir este item do autocomplete?</p>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn-secondary" onclick="fecharModalDeleteAuto()">Cancelar</button>
+            <button class="btn-danger" id="btnConfirmDeleteAuto">Excluir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edição Lançamento -->
+<div class="modal-overlay" id="modalEditItem">
+    <div class="modal-body">
+        <h3 class="modal-title">Editar Lançamento</h3>
+        <input type="hidden" id="editItemId">
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" id="editDescInput" class="input-field">
+        </div>
+        <div class="form-group">
+            <label>Valor (R$)</label>
+            <input type="number" step="0.01" id="editValorInput" class="input-field">
+        </div>
+        <div class="form-group">
+            <label>Tipo</label>
+            <select id="editTipoInput" class="input-field" style="background:#0f172a;">
+                <option value="despesa">Gasto (Saída)</option>
+                <option value="receita">Entrada (Receita)</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn-secondary" onclick="fecharModalEditItem()">Cancelar</button>
+            <button class="btn-danger" onclick="excluirItemEditado()"><i class="fas fa-trash"></i></button>
+            <button class="btn-submit" style="margin-top:0; width:auto;" onclick="salvarItemEditado()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let tipoAtual = 'despesa';
+    let usuarioAtual = localStorage.getItem('finance_user') || '';
+    let autocompleteItems = [];
+    let todosLancamentos = [];
+    let itemAutoParaDeletar = null;
+    let pressTimer = null;
+
+    const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        verificarUsuario();
+        carregarAutocomplete();
+        escutarLancamentos();
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#descInput') && !e.target.closest('#autocompleteBox')) {
+                document.getElementById('autocompleteBox').style.display = 'none';
+            }
+        });
+    });
+
+    // --- MÓDULO DE USUÁRIO ---
+    function verificarUsuario() {
+        if (!usuarioAtual) {
+            document.getElementById('modalUserTitle').innerText = 'Primeiro Acesso';
+            document.getElementById('modalUser').style.display = 'flex';
+        } else {
+            atualizarUIUsuario();
+        }
+    }
+
+    function abrirModalUsuario() {
+        document.getElementById('usernameInput').value = usuarioAtual;
+        document.getElementById('modalUserTitle').innerText = 'Alterar Usuário';
+        document.getElementById('modalUser').style.display = 'flex';
+    }
+
+    function salvarUsuario() {
+        const nome = document.getElementById('usernameInput').value.trim();
+        if (!nome) return alert('Por favor, informe um nome válido.');
+        
+        usuarioAtual = nome;
+        localStorage.setItem('finance_user', usuarioAtual);
+        atualizarUIUsuario();
+        document.getElementById('modalUser').style.display = 'none';
+    }
+
+    function atualizarUIUsuario() {
+        document.getElementById('userNameDisplay').innerText = usuarioAtual;
+        document.getElementById('avatarLetter').innerText = usuarioAtual.charAt(0).toUpperCase();
+    }
+
+    // --- FORMULÁRIO E TIPOS ---
+    function selecionarTipo(tipo) {
+        tipoAtual = tipo;
+        const btnDespesa = document.getElementById('btnTypeDespesa');
+        const btnReceita = document.getElementById('btnTypeReceita');
+
+        if (tipo === 'despesa') {
+            btnDespesa.classList.add('active', 'despesa');
+            btnReceita.classList.remove('active', 'receita');
+        } else {
+            btnReceita.classList.add('active', 'receita');
+            btnDespesa.classList.remove('active', 'despesa');
+        }
+    }
+
+    // --- AUTOCOMPLETE (FIREBASE) ---
+    async function carregarAutocomplete() {
+        const { collection, onSnapshot } = window.fs;
+        onSnapshot(collection(window.db, "autocomplete"), (snapshot) => {
+            autocompleteItems = [];
+            snapshot.forEach(doc => {
+                autocompleteItems.push({ id: doc.id, ...doc.data() });
+            });
+        });
+    }
+
+    async function aprenderAutocomplete(texto) {
+        const existe = autocompleteItems.some(i => i.texto.toLowerCase() === texto.toLowerCase());
+        if (!existe && texto.trim() !== '') {
+            const { collection, addDoc } = window.fs;
+            await addDoc(collection(window.db, "autocomplete"), { texto: texto.trim() });
+        }
+    }
+
+    function filtrarAutocomplete() {
+        const val = document.getElementById('descInput').value.toLowerCase().trim();
+        const box = document.getElementById('autocompleteBox');
+        box.innerHTML = '';
+
+        if (!val) { box.style.display = 'none'; return; }
+
+        const filtrados = autocompleteItems.filter(i => i.texto.toLowerCase().includes(val));
+        if (filtrados.length === 0) { box.style.display = 'none'; return; }
+
+        filtrados.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.innerHTML = `<span>${item.texto}</span> <i class="fas fa-history" style="font-size:10px; opacity:0.5;"></i>`;
+            
+            // Clique rápido -> Preencher
+            div.onclick = () => {
+                document.getElementById('descInput').value = item.texto;
+                box.style.display = 'none';
+            };
+
+            // Press and Hold -> Modal Exclusão
+            div.addEventListener('touchstart', () => startPressHold(item), {passive: true});
+            div.addEventListener('touchend', cancelPressHold, {passive: true});
+            div.addEventListener('mousedown', () => startPressHold(item));
+            div.addEventListener('mouseup', cancelPressHold);
+            div.addEventListener('mouseleave', cancelPressHold);
+
+            box.appendChild(div);
+        });
+
+        box.style.display = 'block';
+    }
+
+    function startPressHold(item) {
+        pressTimer = window.setTimeout(() => {
+            itemAutoParaDeletar = item;
+            document.getElementById('deleteAutoText').innerText = `Deseja remover "${item.texto}" das sugestões de autocomplete?`;
+            document.getElementById('modalDeleteAuto').style.display = 'flex';
+        }, 800);
+    }
+
+    function cancelPressHold() {
+        if (pressTimer) clearTimeout(pressTimer);
+    }
+
+    function fecharModalDeleteAuto() {
+        document.getElementById('modalDeleteAuto').style.display = 'none';
+        itemAutoParaDeletar = null;
+    }
+
+    document.getElementById('btnConfirmDeleteAuto').onclick = async () => {
+        if (itemAutoParaDeletar) {
+            const { doc, deleteDoc } = window.fs;
+            await deleteDoc(doc(window.db, "autocomplete", itemAutoParaDeletar.id));
+            fecharModalDeleteAuto();
+            document.getElementById('autocompleteBox').style.display = 'none';
+        }
+    };
+
+    // --- LANÇAMENTOS (FIREBASE FIRESTORE) ---
+    async function salvarLancamento(e) {
+        e.preventDefault();
+        const desc = document.getElementById('descInput').value.trim();
+        const valor = parseFloat(document.getElementById('valorInput').value);
+
+        if (!desc || isNaN(valor)) return alert('Preencha os campos corretamente.');
+
+        const agora = new Date();
+        const lancamento = {
+            descricao: desc,
+            valor: valor,
+            tipo: tipoAtual,
+            usuario: usuarioAtual,
+            dataHora: agora.toISOString(),
+            ano: agora.getFullYear(),
+            mes: agora.getMonth(),
+            dia: agora.getDate()
+        };
+
+        const { collection, addDoc } = window.fs;
+        await addDoc(collection(window.db, "lancamentos"), lancamento);
+        await aprenderAutocomplete(desc);
+
+        document.getElementById('descInput').value = '';
+        document.getElementById('valorInput').value = '';
+        document.getElementById('autocompleteBox').style.display = 'none';
+    }
+
+    function escutarLancamentos() {
+        const { collection, onSnapshot } = window.fs;
+        onSnapshot(collection(window.db, "lancamentos"), (snapshot) => {
+            todosLancamentos = [];
+            snapshot.forEach(doc => {
+                todosLancamentos.push({ id: doc.id, ...doc.data() });
+            });
+            renderizarPainel();
+        });
+    }
+
+    // --- RENDERIZAÇÃO E ÁRVORE EXPANSÍVEL ---
+    function renderizarPainel() {
+        let recTotal = 0, despTotal = 0;
+        const estrutura = {};
+
+        todosLancamentos.forEach(item => {
+            if (item.tipo === 'receita') recTotal += item.valor;
+            else despTotal += item.valor;
+
+            const d = new Date(item.dataHora);
+            const ano = d.getFullYear();
+            const mes = d.getMonth();
+            const dia = d.getDate();
+
+            if (!estrutura[ano]) estrutura[ano] = {};
+            if (!estrutura[ano][mes]) estrutura[ano][mes] = {};
+            if (!estrutura[ano][mes][dia]) estrutura[ano][mes][dia] = [];
+
+            estrutura[ano][mes][dia].push(item);
+        });
+
+        // Atualizar Resumo Financeiro
+        document.getElementById('globalIncome').innerText = `R$ ${recTotal.toFixed(2)}`;
+        document.getElementById('globalExpense').innerText = `R$ ${despTotal.toFixed(2)}`;
+        document.getElementById('globalBalance').innerText = `R$ ${(recTotal - despTotal).toFixed(2)}`;
+
+        // Construir Árvore
+        const container = document.getElementById('treeContainer');
+        container.innerHTML = '';
+
+        const anosOrdenados = Object.keys(estrutura).sort((a, b) => b - a);
+
+        anosOrdenados.forEach(ano => {
+            const anoCard = document.createElement('div');
+            anoCard.className = 'year-card';
+
+            const anoHeader = document.createElement('div');
+            anoHeader.className = 'year-header';
+            anoHeader.innerHTML = `<span><i class="fas fa-calendar-alt" style="color:var(--accent-purple);"></i> ${ano}</span> <i class="fas fa-chevron-down" style="font-size:12px;"></i>`;
+            anoHeader.onclick = () => toggleElement(anoContent);
+
+            const anoContent = document.createElement('div');
+            anoContent.className = 'year-content';
+
+            const meses = estrutura[ano];
+            const mesesOrdenados = Object.keys(meses).sort((a, b) => b - a);
+
+            mesesOrdenados.forEach(mes => {
+                const mesCard = document.createElement('div');
+                mesCard.className = 'month-card';
+
+                // Cálculo Fechamento do Mês
+                let mesRec = 0, mesDesp = 0;
+                Object.values(meses[mes]).flat().forEach(i => {
+                    if (i.tipo === 'receita') mesRec += i.valor;
+                    else mesDesp += i.valor;
+                });
+
+                const mesHeader = document.createElement('div');
+                mesHeader.className = 'month-header';
+                mesHeader.innerHTML = `<span>${mesesNomes[mes]}</span> <span style="font-size:12px; opacity:0.8;">Saldo: R$ ${(mesRec - mesDesp).toFixed(2)}</span>`;
+                mesHeader.onclick = () => toggleElement(mesContent);
+
+                const mesContent = document.createElement('div');
+                mesContent.className = 'month-content';
+
+                // Fechamento Detalhado
+                const fechamentoDiv = document.createElement('div');
+                fechamentoDiv.className = 'month-closing';
+                fechamentoDiv.innerHTML = `
+                    <div class="month-closing-row"><b>Fechamento do Mês:</b> <span>${mesesNomes[mes]} / ${ano}</span></div>
+                    <div class="month-closing-row" style="color:var(--accent-green);"><span>Entradas:</span> <span>+ R$ ${mesRec.toFixed(2)}</span></div>
+                    <div class="month-closing-row" style="color:var(--accent-red);"><span>Saídas:</span> <span>- R$ ${mesDesp.toFixed(2)}</span></div>
+                    <div class="month-closing-row" style="font-weight:800; margin-top:4px; border-top:1px solid var(--card-border); padding-top:4px;">
+                        <span>Resultado Final:</span> <span>R$ ${(mesRec - mesDesp).toFixed(2)}</span>
+                    </div>
+                `;
+                mesContent.appendChild(fechamentoDiv);
+
+                const dias = meses[mes];
+                const diasOrdenados = Object.keys(dias).sort((a, b) => b - a);
+
+                diasOrdenados.forEach(dia => {
+                    const diaGroup = document.createElement('div');
+                    diaGroup.className = 'day-group';
+                    diaGroup.innerHTML = `<div class="day-title">Dia ${String(dia).padStart(2, '0')}</div>`;
+
+                    dias[dia].forEach(item => {
+                        const dObj = new Date(item.dataHora);
+                        const horaStr = `${String(dObj.getHours()).padStart(2, '0')}:${String(dObj.getMinutes()).padStart(2, '0')}`;
+
+                        const itemCard = document.createElement('div');
+                        itemCard.className = 'item-card';
+                        itemCard.innerHTML = `
+                            <div class="item-info">
+                                <span class="item-desc">${item.descricao}</span>
+                                <div class="item-meta">
+                                    <span><i class="far fa-clock"></i> ${horaStr}</span>
+                                    <span><i class="far fa-user"></i> ${item.usuario || 'Anônimo'}</span>
+                                </div>
+                            </div>
+                            <div class="item-value ${item.tipo}">
+                                <span>${item.tipo === 'receita' ? '+' : '-'} R$ ${parseFloat(item.valor).toFixed(2)}</span>
+                                <button class="btn-icon" style="padding:4px 8px;" onclick="abrirModalEdicao('${item.id}')"><i class="fas fa-pen"></i></button>
+                            </div>
+                        `;
+                        diaGroup.appendChild(itemCard);
+                    });
+
+                    mesContent.appendChild(diaGroup);
+                });
+
+                mesCard.appendChild(mesHeader);
+                mesCard.appendChild(mesContent);
+                anoContent.appendChild(mesCard);
+            });
+
+            anoCard.appendChild(anoHeader);
+            anoCard.appendChild(anoContent);
+            container.appendChild(anoCard);
+        });
+    }
+
+    function toggleElement(el) {
+        el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    // --- MODAL DE EDIÇÃO / EXCLUSÃO DE LANÇAMENTOS ---
+    function abrirModalEdicao(id) {
+        const item = todosLancamentos.find(i => i.id === id);
+        if (!item) return;
+
+        document.getElementById('editItemId').value = item.id;
+        document.getElementById('editDescInput').value = item.descricao;
+        document.getElementById('editValorInput').value = item.valor;
+        document.getElementById('editTipoInput').value = item.tipo;
+
+        document.getElementById('modalEditItem').style.display = 'flex';
+    }
+
+    function fecharModalEditItem() {
+        document.getElementById('modalEditItem').style.display = 'none';
+    }
+
+    async function salvarItemEditado() {
+        const id = document.getElementById('editItemId').value;
+        const desc = document.getElementById('editDescInput').value.trim();
+        const valor = parseFloat(document.getElementById('editValorInput').value);
+        const tipo = document.getElementById('editTipoInput').value;
+
+        if (!desc || isNaN(valor)) return alert('Preencha os campos corretamente.');
+
+        const { doc, updateDoc } = window.fs;
+        await updateDoc(doc(window.db, "lancamentos", id), {
+            descricao: desc,
+            valor: valor,
+            tipo: tipo
+        });
+
+        fecharModalEditItem();
+    }
+
+    async function excluirItemEditado() {
+        if (confirm("Tem certeza que deseja excluir este lançamento?")) {
+            const id = document.getElementById('editItemId').value;
+            const { doc, deleteDoc } = window.fs;
+            await deleteDoc(doc(window.db, "lancamentos", id));
+            fecharModalEditItem();
+        }
+    }
+</script>
+
+</body>
+</html>
