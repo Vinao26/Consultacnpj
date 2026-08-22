@@ -9,14 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- Biblioteca para Captura Perfeita de Imagem -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
-            getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs 
+            getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, writeBatch 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Configurações do seu Firebase extraídas do código fornecido
         const firebaseConfig = {
           apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
           authDomain: "bancoia.firebaseapp.com",
@@ -29,9 +31,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Exportação global para controle dos scripts da aplicação
         window.db = db;
-        window.fs = { collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs };
+        window.fs = { collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, writeBatch };
     </script>
 
     <style>
@@ -49,14 +50,25 @@
             --red-glow: rgba(239, 68, 68, 0.25);
             --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-theme {
+            --bg-main: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --purple-glow: rgba(139, 92, 246, 0.12);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --input-bg: rgba(255, 255, 255, 0.9);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; overflow-x: hidden; }
+        body { background: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; overflow-x: hidden; transition: var(--transition); }
 
         .container { max-width: 500px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 
-        /* Header e Usuário */
         header { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 12px 16px; background: var(--card-bg); backdrop-filter: blur(12px);
@@ -75,18 +87,17 @@
         .btn-icon { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); }
         .btn-icon:active { transform: scale(0.95); }
 
-        /* Card de Resumo Financeiro */
         .summary-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            background: var(--card-bg);
             border: 1px solid var(--card-border); border-radius: 24px; padding: 20px;
             box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; position: relative; overflow: hidden;
+            backdrop-filter: blur(12px);
         }
-        .summary-card::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%); pointer-events: none;
-        }
+        .balance-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .balance-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .balance-value { font-size: 28px; font-weight: 800; color: #fff; margin-top: 4px; }
+        .balance-value { font-size: 28px; font-weight: 800; color: var(--text-main); margin-top: 4px; }
+
+        .balance-actions { display: flex; gap: 8px; }
 
         .summary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-box { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); padding: 12px; border-radius: 16px; }
@@ -97,45 +108,66 @@
         .income .stat-amount { color: var(--accent-green); }
         .expense .stat-amount { color: var(--accent-red); }
 
-        /* Formulário de Lançamento */
+        .balance-expand-panel {
+            display: none; flex-direction: column; gap: 8px; margin-top: 10px;
+            padding-top: 12px; border-top: 1px dashed var(--card-border);
+        }
+        .month-toggle-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; background: rgba(0,0,0,0.05); border-radius: 10px; font-size: 12px;
+            border: 1px solid var(--card-border);
+        }
+        .btn-toggle-month {
+            width: 28px; height: 28px; border-radius: 8px; border: none; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .btn-toggle-month.included { background: var(--accent-green); color: #fff; }
+        .btn-toggle-month.excluded { background: var(--accent-red); color: #fff; }
+
         .form-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
         .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
         .type-btn { padding: 12px; border-radius: 14px; border: 1px solid var(--card-border); background: rgba(255,255,255,0.03); color: var(--text-muted); font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: var(--transition); }
         .type-btn.active.despesa { background: var(--accent-red); color: #fff; border-color: var(--accent-red); box-shadow: 0 4px 15px var(--red-glow); }
         .type-btn.active.receita { background: var(--accent-green); color: #fff; border-color: var(--accent-green); box-shadow: 0 4px 15px var(--green-glow); }
 
-        .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; margin-bottom: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; position: relative; margin-bottom: 14px; }
         .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: rgba(0, 0, 0, 0.2); color: #fff; font-size: 14px; outline: none; transition: var(--transition); }
+        .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text-main); font-size: 14px; outline: none; transition: var(--transition); width: 100%; }
         .input-field:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 3px var(--purple-glow); }
 
-        /* Autocomplete Customizado */
         .autocomplete-list {
-            position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--card-border);
-            border-radius: 12px; max-height: 160px; overflow-y: auto; z-index: 100; box-shadow: var(--shadow); margin-top: 4px; display: none;
+            position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; max-height: 160px; overflow-y: auto; z-index: 100; box-shadow: var(--shadow); margin-top: 4px; display: none; backdrop-filter: blur(16px);
         }
-        .autocomplete-item { padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); user-select: none; }
+        .autocomplete-item { padding: 10px 14px; font-size: 13px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); user-select: none; }
         .autocomplete-item:hover { background: rgba(255,255,255,0.05); }
 
-        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-purple), #6366f1); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--purple-glow); transition: var(--transition); margin-top: 6px; }
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-purple), #6366f1); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--purple-glow); transition: var(--transition); margin-top: 4px; }
         .btn-submit:active { transform: scale(0.98); }
 
-        /* Estrutura Expansível de Anos, Meses e Dias */
         .tree-container { display: flex; flex-direction: column; gap: 12px; }
         .year-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 18px; overflow: hidden; }
         .year-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255, 255, 255, 0.02); font-weight: 800; font-size: 16px; }
         .year-content { display: none; padding: 12px; flex-direction: column; gap: 10px; border-top: 1px solid var(--card-border); }
         
-        .month-card { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; }
+        .month-card { background: rgba(0, 0, 0, 0.05); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; }
         .month-header { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; font-size: 14px; }
         .month-content { display: none; padding: 10px; flex-direction: column; gap: 8px; border-top: 1px solid var(--card-border); }
 
-        /* Fechamento do Mês */
-        .month-closing { background: rgba(139, 92, 246, 0.1); border: 1px dashed var(--accent-purple); padding: 10px 12px; border-radius: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-        .month-closing-row { display: flex; justify-content: space-between; }
+        .month-closing { background: rgba(139, 92, 246, 0.1); border: 1px dashed var(--accent-purple); padding: 10px 12px; border-radius: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+        .month-closing-row { display: flex; justify-content: space-between; align-items: center; }
+        
+        .btn-action-sm { padding: 6px 10px; border-radius: 8px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: var(--transition); }
+        .btn-action-sm.open { background: var(--accent-green); color: #fff; }
+        .btn-action-sm.closed { background: var(--accent-red); color: #fff; }
+        .btn-action-sm.add { background: var(--accent-purple); color: #fff; }
+        .btn-action-sm.img { background: #0284c7; color: #fff; }
+
+        .btn-delete-month { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: var(--transition); }
 
         .day-group { display: flex; flex-direction: column; gap: 6px; }
-        .day-title { font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .day-title { font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 4px 6px; border-bottom: 1px solid var(--card-border); }
 
         .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 10px; }
         .item-info { display: flex; flex-direction: column; gap: 2px; }
@@ -145,19 +177,32 @@
         .item-value.receita { color: var(--accent-green); }
         .item-value.despesa { color: var(--accent-red); }
 
-        /* Modais */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
-        .modal-body { background: #1e293b; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+        .modal-body { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); backdrop-filter: blur(20px); }
         .modal-title { font-size: 16px; font-weight: 800; }
 
-        .btn-secondary { background: var(--card-border); color: #fff; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-secondary { background: var(--card-border); color: var(--text-main); border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
         .btn-danger { background: var(--accent-red); color: #fff; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+        /* AREA DE IMPRESSÃO VISÍVEL APENAS DURANTE A CAPTURA */
+        #reportCaptureArea {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 650px;
+            background: #ffffff;
+            color: #0f172a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding: 32px;
+            z-index: -9999;
+            visibility: hidden;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Header -->
     <header>
         <div class="user-info">
             <div class="user-avatar" id="avatarLetter">U</div>
@@ -169,26 +214,44 @@
         <button class="btn-icon" onclick="abrirModalUsuario()"><i class="fas fa-user-edit"></i> Editar</button>
     </header>
 
-    <!-- Resumo Financero Global -->
+    <!-- Resumo Financeiro Global -->
     <div class="summary-card">
-        <div>
-            <span class="balance-label">Saldo Atual</span>
-            <div class="balance-value" id="globalBalance">R$ 0,00</div>
+        <div class="balance-header">
+            <div>
+                <span class="balance-label">Saldo Acumulado</span>
+                <div class="balance-value" id="globalBalance">R$ 0,00</div>
+            </div>
+            <div class="balance-actions">
+                <button class="btn-icon" style="color:var(--accent-red);" onclick="confirmarZerarSaldo()" title="Zerar Saldo Total">
+                    <i class="fas fa-trash-alt"></i> Zerar
+                </button>
+                <button class="btn-icon" onclick="toggleElement(document.getElementById('balanceExpandPanel'))">
+                    <i class="fas fa-sliders-h"></i> Detalhar
+                </button>
+            </div>
         </div>
+
+        <div class="balance-expand-panel" id="balanceExpandPanel">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+                Incluir/Excluir Mês do Saldo Global:
+            </span>
+            <div id="monthTogglesContainer" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
         <div class="summary-stats">
             <div class="stat-box income">
-                <div class="stat-title"><i class="fas fa-arrow-down"></i> Entradas</div>
+                <div class="stat-title"><i class="fas fa-arrow-down"></i> Entradas Selecionadas</div>
                 <div class="stat-amount" id="globalIncome">R$ 0,00</div>
             </div>
             <div class="stat-box expense">
-                <div class="stat-title"><i class="fas fa-arrow-up"></i> Saídas</div>
+                <div class="stat-title"><i class="fas fa-arrow-up"></i> Saídas Selecionadas</div>
                 <div class="stat-amount" id="globalExpense">R$ 0,00</div>
             </div>
         </div>
     </div>
 
     <!-- Novo Lançamento -->
-    <div class="form-card">
+    <div class="form-card" id="formCard">
         <div class="type-selector">
             <button type="button" class="type-btn active despesa" id="btnTypeDespesa" onclick="selecionarTipo('despesa')">
                 <i class="fas fa-arrow-circle-up"></i> Gastos
@@ -210,21 +273,26 @@
                 <input type="number" step="0.01" id="valorInput" class="input-field" placeholder="0,00" required>
             </div>
 
+            <div class="form-group">
+                <label>Data do Registro</label>
+                <input type="date" id="dataInput" class="input-field" required>
+            </div>
+
             <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> Cadastrar Lançamento</button>
         </form>
     </div>
 
-    <!-- Árvore Registros -->
-    <div class="tree-container" id="treeContainer">
-        <!-- Renderizado dinamicamente -->
-    </div>
+    <div class="tree-container" id="treeContainer"></div>
 </div>
 
-<!-- Modal Primeiro Acesso / Nome de Usuário -->
+<!-- CONTAINER INVISÍVEL PARA TIRA-FOTO / RELATÓRIO -->
+<div id="reportCaptureArea"></div>
+
+<!-- Modal Usuário -->
 <div class="modal-overlay" id="modalUser">
     <div class="modal-body">
         <h3 class="modal-title" id="modalUserTitle">Bem-vindo(a)!</h3>
-        <p style="font-size: 12px; color: var(--text-muted);">Por favor, informe seu nome para registrar quem efetuou os lançamentos neste dispositivo.</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Informe seu nome para registrar quem efetuou os lançamentos neste dispositivo.</p>
         <div class="form-group">
             <label>Seu Nome</label>
             <input type="text" id="usernameInput" class="input-field" placeholder="Ex: João Silva">
@@ -233,7 +301,7 @@
     </div>
 </div>
 
-<!-- Modal Exclusão Autocomplete -->
+<!-- Modal Delete Autocomplete -->
 <div class="modal-overlay" id="modalDeleteAuto">
     <div class="modal-body">
         <h3 class="modal-title">Remover da Sugestão</h3>
@@ -245,7 +313,7 @@
     </div>
 </div>
 
-<!-- Modal Edição Lançamento -->
+<!-- Modal Edição -->
 <div class="modal-overlay" id="modalEditItem">
     <div class="modal-body">
         <h3 class="modal-title">Editar Lançamento</h3>
@@ -259,8 +327,12 @@
             <input type="number" step="0.01" id="editValorInput" class="input-field">
         </div>
         <div class="form-group">
+            <label>Data</label>
+            <input type="date" id="editDataInput" class="input-field">
+        </div>
+        <div class="form-group">
             <label>Tipo</label>
-            <select id="editTipoInput" class="input-field" style="background:#0f172a;">
+            <select id="editTipoInput" class="input-field" style="background:var(--input-bg);">
                 <option value="despesa">Gasto (Saída)</option>
                 <option value="receita">Entrada (Receita)</option>
             </select>
@@ -276,6 +348,8 @@
 <script>
     let tipoAtual = 'despesa';
     let usuarioAtual = localStorage.getItem('finance_user') || '';
+    let mesExcluidosSaldo = JSON.parse(localStorage.getItem('meses_excluidos_saldo') || '[]');
+    let fechamentosMes = {};
     let autocompleteItems = [];
     let todosLancamentos = [];
     let itemAutoParaDeletar = null;
@@ -284,8 +358,11 @@
     const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
     window.addEventListener('DOMContentLoaded', async () => {
+        aplicarTemaAutomatico();
         verificarUsuario();
+        definirDataAtualNoInput();
         carregarAutocomplete();
+        escutarFechamentos();
         escutarLancamentos();
         
         document.addEventListener('click', (e) => {
@@ -295,7 +372,23 @@
         });
     });
 
-    // --- MÓDULO DE USUÁRIO ---
+    function definirDataAtualNoInput() {
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('dataInput').value = hoje;
+    }
+
+    function aplicarTemaAutomatico() {
+        const horaAtual = new Date().getHours();
+        const eNoite = horaAtual < 6 || horaAtual >= 18;
+        const prefereModoEscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (!prefereModoEscuro && !eNoite) {
+            document.body.classList.add('light-theme');
+        } else {
+            document.body.classList.remove('light-theme');
+        }
+    }
+
     function verificarUsuario() {
         if (!usuarioAtual) {
             document.getElementById('modalUserTitle').innerText = 'Primeiro Acesso';
@@ -326,7 +419,6 @@
         document.getElementById('avatarLetter').innerText = usuarioAtual.charAt(0).toUpperCase();
     }
 
-    // --- FORMULÁRIO E TIPOS ---
     function selecionarTipo(tipo) {
         tipoAtual = tipo;
         const btnDespesa = document.getElementById('btnTypeDespesa');
@@ -341,14 +433,11 @@
         }
     }
 
-    // --- AUTOCOMPLETE (FIREBASE) ---
     async function carregarAutocomplete() {
         const { collection, onSnapshot } = window.fs;
         onSnapshot(collection(window.db, "autocomplete"), (snapshot) => {
             autocompleteItems = [];
-            snapshot.forEach(doc => {
-                autocompleteItems.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach(doc => autocompleteItems.push({ id: doc.id, ...doc.data() }));
         });
     }
 
@@ -375,13 +464,11 @@
             div.className = 'autocomplete-item';
             div.innerHTML = `<span>${item.texto}</span> <i class="fas fa-history" style="font-size:10px; opacity:0.5;"></i>`;
             
-            // Clique rápido -> Preencher
             div.onclick = () => {
                 document.getElementById('descInput').value = item.texto;
                 box.style.display = 'none';
             };
 
-            // Press and Hold -> Modal Exclusão
             div.addEventListener('touchstart', () => startPressHold(item), {passive: true});
             div.addEventListener('touchend', cancelPressHold, {passive: true});
             div.addEventListener('mousedown', () => startPressHold(item));
@@ -420,24 +507,84 @@
         }
     };
 
-    // --- LANÇAMENTOS (FIREBASE FIRESTORE) ---
+    function escutarFechamentos() {
+        const { collection, onSnapshot } = window.fs;
+        onSnapshot(collection(window.db, "fechamentos"), (snapshot) => {
+            fechamentosMes = {};
+            snapshot.forEach(doc => {
+                fechamentosMes[doc.id] = doc.data().fechado;
+            });
+            renderizarPainel();
+        });
+    }
+
+    async function alternarFechamentoMes(chaveMes, estadoAtual) {
+        const { doc, setDoc } = window.fs;
+        await setDoc(doc(window.db, "fechamentos", chaveMes), { fechado: !estadoAtual });
+    }
+
+    async function apagarMesCompleto(ano, mes) {
+        const nomeMes = mesesNomes[mes];
+        if (confirm(`Tem certeza que deseja APAGAR TODOS os lançamentos de ${nomeMes}/${ano}? Esta ação é irreversível!`)) {
+            const { doc, deleteDoc, writeBatch } = window.fs;
+            const batch = writeBatch(window.db);
+
+            const itensParaDeletar = todosLancamentos.filter(i => {
+                const d = new Date(i.dataHora);
+                return d.getFullYear() === parseInt(ano) && d.getMonth() === parseInt(mes);
+            });
+
+            itensParaDeletar.forEach(item => {
+                const ref = doc(window.db, "lancamentos", item.id);
+                batch.delete(ref);
+            });
+
+            await batch.commit();
+            
+            const chaveMes = `${ano}-${mes}`;
+            await deleteDoc(doc(window.db, "fechamentos", chaveMes));
+        }
+    }
+
+    async function confirmarZerarSaldo() {
+        if (confirm("ATENÇÃO: Você deseja ZERAR O SALDO TOTAL? Isso excluirá TODOS os lançamentos cadastrados do sistema permanentemente!")) {
+            const { doc, writeBatch } = window.fs;
+            const batch = writeBatch(window.db);
+
+            todosLancamentos.forEach(item => {
+                const ref = doc(window.db, "lancamentos", item.id);
+                batch.delete(ref);
+            });
+
+            await batch.commit();
+        }
+    }
+
+    function lancarNoMesEspecifico(ano, mes) {
+        const mesFmt = String(parseInt(mes) + 1).padStart(2, '0');
+        document.getElementById('dataInput').value = `${ano}-${mesFmt}-01`;
+        document.getElementById('formCard').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('descInput').focus();
+    }
+
     async function salvarLancamento(e) {
         e.preventDefault();
         const desc = document.getElementById('descInput').value.trim();
         const valor = parseFloat(document.getElementById('valorInput').value);
+        const dataSelecionada = document.getElementById('dataInput').value;
 
-        if (!desc || isNaN(valor)) return alert('Preencha os campos corretamente.');
+        if (!desc || isNaN(valor) || !dataSelecionada) return alert('Preencha todos os campos corretamente.');
 
+        const [ano, mes, dia] = dataSelecionada.split('-').map(Number);
         const agora = new Date();
+        const dataFinal = new Date(ano, mes - 1, dia, agora.getHours(), agora.getMinutes(), agora.getSeconds());
+
         const lancamento = {
             descricao: desc,
             valor: valor,
             tipo: tipoAtual,
             usuario: usuarioAtual,
-            dataHora: agora.toISOString(),
-            ano: agora.getFullYear(),
-            mes: agora.getMonth(),
-            dia: agora.getDate()
+            dataHora: dataFinal.toISOString()
         };
 
         const { collection, addDoc } = window.fs;
@@ -446,6 +593,7 @@
 
         document.getElementById('descInput').value = '';
         document.getElementById('valorInput').value = '';
+        definirDataAtualNoInput();
         document.getElementById('autocompleteBox').style.display = 'none';
     }
 
@@ -453,40 +601,65 @@
         const { collection, onSnapshot } = window.fs;
         onSnapshot(collection(window.db, "lancamentos"), (snapshot) => {
             todosLancamentos = [];
-            snapshot.forEach(doc => {
-                todosLancamentos.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach(doc => todosLancamentos.push({ id: doc.id, ...doc.data() }));
             renderizarPainel();
         });
     }
 
-    // --- RENDERIZAÇÃO E ÁRVORE EXPANSÍVEL ---
     function renderizarPainel() {
-        let recTotal = 0, despTotal = 0;
         const estrutura = {};
+        const totaisPorMes = {};
+        const agora = new Date();
+        const anoAtual = agora.getFullYear();
+        const mesAtual = agora.getMonth();
 
         todosLancamentos.forEach(item => {
-            if (item.tipo === 'receita') recTotal += item.valor;
-            else despTotal += item.valor;
-
             const d = new Date(item.dataHora);
             const ano = d.getFullYear();
             const mes = d.getMonth();
             const dia = d.getDate();
+            const chaveMes = `${ano}-${mes}`;
 
             if (!estrutura[ano]) estrutura[ano] = {};
             if (!estrutura[ano][mes]) estrutura[ano][mes] = {};
             if (!estrutura[ano][mes][dia]) estrutura[ano][mes][dia] = [];
 
+            if (!totaisPorMes[chaveMes]) totaisPorMes[chaveMes] = { rec: 0, desp: 0, ano, mes };
+            if (item.tipo === 'receita') totaisPorMes[chaveMes].rec += item.valor;
+            else totaisPorMes[chaveMes].desp += item.valor;
+
             estrutura[ano][mes][dia].push(item);
         });
 
-        // Atualizar Resumo Financeiro
-        document.getElementById('globalIncome').innerText = `R$ ${recTotal.toFixed(2)}`;
-        document.getElementById('globalExpense').innerText = `R$ ${despTotal.toFixed(2)}`;
-        document.getElementById('globalBalance').innerText = `R$ ${(recTotal - despTotal).toFixed(2)}`;
+        const togglesContainer = document.getElementById('monthTogglesContainer');
+        togglesContainer.innerHTML = '';
 
-        // Construir Árvore
+        let globalRec = 0, globalDesp = 0;
+
+        Object.keys(totaisPorMes).sort().reverse().forEach(chaveMes => {
+            const dados = totaisPorMes[chaveMes];
+            const estaExcluido = mesExcluidosSaldo.includes(chaveMes);
+
+            if (!estaExcluido) {
+                globalRec += dados.rec;
+                globalDesp += dados.desp;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'month-toggle-item';
+            div.innerHTML = `
+                <span><b>${mesesNomes[dados.mes]} / ${dados.ano}</b>: R$ ${(dados.rec - dados.desp).toFixed(2)}</span>
+                <button class="btn-toggle-month ${estaExcluido ? 'excluded' : 'included'}" onclick="alternarMesNoSaldo('${chaveMes}')">
+                    ${estaExcluido ? '-' : '+'}
+                </button>
+            `;
+            togglesContainer.appendChild(div);
+        });
+
+        document.getElementById('globalIncome').innerText = `R$ ${globalRec.toFixed(2)}`;
+        document.getElementById('globalExpense').innerText = `R$ ${globalDesp.toFixed(2)}`;
+        document.getElementById('globalBalance').innerText = `R$ ${(globalRec - globalDesp).toFixed(2)}`;
+
         const container = document.getElementById('treeContainer');
         container.innerHTML = '';
 
@@ -496,13 +669,24 @@
             const anoCard = document.createElement('div');
             anoCard.className = 'year-card';
 
+            const eAnoAtual = parseInt(ano) === anoAtual;
+
             const anoHeader = document.createElement('div');
             anoHeader.className = 'year-header';
-            anoHeader.innerHTML = `<span><i class="fas fa-calendar-alt" style="color:var(--accent-purple);"></i> ${ano}</span> <i class="fas fa-chevron-down" style="font-size:12px;"></i>`;
+            anoHeader.innerHTML = `
+                <span><i class="fas fa-calendar-alt" style="color:var(--accent-purple);"></i> ${ano}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button class="btn-action-sm img" onclick="event.stopPropagation(); gerarImagemAnual('${ano}')" title="Baixar Extrato em Imagem do Ano">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <i class="fas fa-chevron-down" style="font-size:12px;"></i>
+                </div>
+            `;
             anoHeader.onclick = () => toggleElement(anoContent);
 
             const anoContent = document.createElement('div');
             anoContent.className = 'year-content';
+            if (eAnoAtual) anoContent.style.display = 'flex';
 
             const meses = estrutura[ano];
             const mesesOrdenados = Object.keys(meses).sort((a, b) => b - a);
@@ -510,27 +694,45 @@
             mesesOrdenados.forEach(mes => {
                 const mesCard = document.createElement('div');
                 mesCard.className = 'month-card';
+                const eMesAtual = eAnoAtual && parseInt(mes) === mesAtual;
+                const chaveMes = `${ano}-${mes}`;
+                const estaFechado = !!fechamentosMes[chaveMes];
 
-                // Cálculo Fechamento do Mês
-                let mesRec = 0, mesDesp = 0;
-                Object.values(meses[mes]).flat().forEach(i => {
-                    if (i.tipo === 'receita') mesRec += i.valor;
-                    else mesDesp += i.valor;
-                });
+                let mesRec = totaisPorMes[chaveMes]?.rec || 0;
+                let mesDesp = totaisPorMes[chaveMes]?.desp || 0;
 
                 const mesHeader = document.createElement('div');
                 mesHeader.className = 'month-header';
-                mesHeader.innerHTML = `<span>${mesesNomes[mes]}</span> <span style="font-size:12px; opacity:0.8;">Saldo: R$ ${(mesRec - mesDesp).toFixed(2)}</span>`;
+                mesHeader.innerHTML = `
+                    <span>${mesesNomes[mes]} ${estaFechado ? '<i class="fas fa-lock" style="font-size:11px; color:var(--accent-red);"></i>' : ''}</span> 
+                    <span style="font-size:12px; opacity:0.8;">Saldo: R$ ${(mesRec - mesDesp).toFixed(2)}</span>
+                `;
                 mesHeader.onclick = () => toggleElement(mesContent);
 
                 const mesContent = document.createElement('div');
                 mesContent.className = 'month-content';
+                if (eMesAtual) mesContent.style.display = 'flex';
 
-                // Fechamento Detalhado
                 const fechamentoDiv = document.createElement('div');
                 fechamentoDiv.className = 'month-closing';
                 fechamentoDiv.innerHTML = `
-                    <div class="month-closing-row"><b>Fechamento do Mês:</b> <span>${mesesNomes[mes]} / ${ano}</span></div>
+                    <div class="month-closing-row">
+                        <b>Ações do Mês:</b> 
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn-action-sm img" onclick="gerarImagemMensal(${ano}, ${mes})" title="Baixar Extrato em Imagem do Mês">
+                                <i class="fas fa-image"></i> Relatório
+                            </button>
+                            <button class="btn-action-sm add" onclick="lancarNoMesEspecifico(${ano}, ${mes})">
+                                <i class="fas fa-plus"></i> Lançar
+                            </button>
+                            <button class="btn-action-sm ${estaFechado ? 'closed' : 'open'}" onclick="alternarFechamentoMes('${chaveMes}', ${estaFechado})">
+                                <i class="fas fa-${estaFechado ? 'lock' : 'unlock'}"></i> ${estaFechado ? 'Reabrir' : 'Fechar'}
+                            </button>
+                            <button class="btn-delete-month" onclick="apagarMesCompleto(${ano}, ${mes})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="month-closing-row" style="color:var(--accent-green);"><span>Entradas:</span> <span>+ R$ ${mesRec.toFixed(2)}</span></div>
                     <div class="month-closing-row" style="color:var(--accent-red);"><span>Saídas:</span> <span>- R$ ${mesDesp.toFixed(2)}</span></div>
                     <div class="month-closing-row" style="font-weight:800; margin-top:4px; border-top:1px solid var(--card-border); padding-top:4px;">
@@ -583,18 +785,31 @@
         });
     }
 
+    function alternarMesNoSaldo(chaveMes) {
+        if (mesExcluidosSaldo.includes(chaveMes)) {
+            mesExcluidosSaldo = mesExcluidosSaldo.filter(m => m !== chaveMes);
+        } else {
+            mesExcluidosSaldo.push(chaveMes);
+        }
+        localStorage.setItem('meses_excluidos_saldo', JSON.stringify(mesExcluidosSaldo));
+        renderizarPainel();
+    }
+
     function toggleElement(el) {
         el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
     }
 
-    // --- MODAL DE EDIÇÃO / EXCLUSÃO DE LANÇAMENTOS ---
     function abrirModalEdicao(id) {
         const item = todosLancamentos.find(i => i.id === id);
         if (!item) return;
 
+        const d = new Date(item.dataHora);
+        const dataStr = d.toISOString().split('T')[0];
+
         document.getElementById('editItemId').value = item.id;
         document.getElementById('editDescInput').value = item.descricao;
         document.getElementById('editValorInput').value = item.valor;
+        document.getElementById('editDataInput').value = dataStr;
         document.getElementById('editTipoInput').value = item.tipo;
 
         document.getElementById('modalEditItem').style.display = 'flex';
@@ -608,15 +823,21 @@
         const id = document.getElementById('editItemId').value;
         const desc = document.getElementById('editDescInput').value.trim();
         const valor = parseFloat(document.getElementById('editValorInput').value);
+        const dataSelecionada = document.getElementById('editDataInput').value;
         const tipo = document.getElementById('editTipoInput').value;
 
-        if (!desc || isNaN(valor)) return alert('Preencha os campos corretamente.');
+        if (!desc || isNaN(valor) || !dataSelecionada) return alert('Preencha os campos corretamente.');
+
+        const [ano, mes, dia] = dataSelecionada.split('-').map(Number);
+        const agora = new Date();
+        const dataFinal = new Date(ano, mes - 1, dia, agora.getHours(), agora.getMinutes(), agora.getSeconds());
 
         const { doc, updateDoc } = window.fs;
         await updateDoc(doc(window.db, "lancamentos", id), {
             descricao: desc,
             valor: valor,
-            tipo: tipo
+            tipo: tipo,
+            dataHora: dataFinal.toISOString()
         });
 
         fecharModalEditItem();
@@ -629,6 +850,230 @@
             await deleteDoc(doc(window.db, "lancamentos", id));
             fecharModalEditItem();
         }
+    }
+
+    // --- GERADOR DE COMPROVANTE/EXTRATO EM IMAGEM (100% FUNCIONAL E BONITO) ---
+    function gerarImagemMensal(ano, mes) {
+        const nomeMes = mesesNomes[mes];
+        const lancamentosMes = todosLancamentos.filter(i => {
+            const d = new Date(i.dataHora);
+            return d.getFullYear() === parseInt(ano) && d.getMonth() === parseInt(mes);
+        }).sort((a,b) => new Date(a.dataHora) - new Date(b.dataHora));
+
+        let rec = 0, desp = 0;
+        lancamentosMes.forEach(i => {
+            if(i.tipo === 'receita') rec += i.valor;
+            else desp += i.valor;
+        });
+        const saldo = rec - desp;
+        const percComprometido = rec > 0 ? Math.min(Math.round((desp / rec) * 100), 100) : (desp > 0 ? 100 : 0);
+        
+        let statusTexto = "Excelente (Contas em Dia)";
+        let statusCor = "#10b981";
+        if(percComprometido > 50 && percComprometido <= 85) {
+            statusTexto = "Atenção (Gastos Medianos)";
+            statusCor = "#f59e0b";
+        } else if(percComprometido > 85) {
+            statusTexto = "Alerta (Gastos Elevados)";
+            statusCor = "#ef4444";
+        }
+
+        let tabelaHTML = '';
+        lancamentosMes.forEach(i => {
+            const d = new Date(i.dataHora);
+            const dataFmt = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+            const eReceita = i.tipo === 'receita';
+
+            tabelaHTML += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px 12px; font-size: 11px; color: #64748b; font-weight: 600;">${dataFmt}</td>
+                    <td style="padding: 10px 12px; font-size: 12px; font-weight: 700; color: #0f172a;">${i.descricao}</td>
+                    <td style="padding: 10px 12px; font-size: 11px; color: #94a3b8;">${i.usuario || 'Anônimo'}</td>
+                    <td style="padding: 10px 12px; font-size: 12px; font-weight: 800; text-align: right; color: ${eReceita ? '#10b981' : '#ef4444'};">
+                        ${eReceita ? '+' : '-'} R$ ${i.valor.toFixed(2)}
+                    </td>
+                </tr>
+            `;
+        });
+
+        const container = document.getElementById('reportCaptureArea');
+        container.style.visibility = 'visible';
+
+        container.innerHTML = `
+            <div style="background: #6366f1; padding: 22px; border-radius: 16px; color: #ffffff; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="font-size: 20px; font-weight: 800; margin-bottom: 2px;">Relatório Financeiro</h1>
+                    <p style="font-size: 12px; opacity: 0.9;">${nomeMes} de ${ano}</p>
+                </div>
+                <div style="text-align: right; background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 10px;">
+                    <span style="font-size: 9px; text-transform: uppercase; opacity: 0.8;">Usuário</span>
+                    <div style="font-size: 12px; font-weight: 700;">${usuarioAtual || 'Usuário'}</div>
+                </div>
+            </div>
+
+            <!-- CARDS TOTALIZADORES -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: #f0fdf4; border: 1px solid #dcfce7; padding: 12px; border-radius: 12px;">
+                    <span style="font-size: 9px; color: #15803d; font-weight: 800; text-transform: uppercase;">Entradas</span>
+                    <div style="font-size: 16px; font-weight: 800; color: #16a34a; margin-top: 2px;">R$ ${rec.toFixed(2)}</div>
+                </div>
+                <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 12px; border-radius: 12px;">
+                    <span style="font-size: 9px; color: #b91c1c; font-weight: 800; text-transform: uppercase;">Saídas</span>
+                    <div style="font-size: 16px; font-weight: 800; color: #dc2626; margin-top: 2px;">R$ ${desp.toFixed(2)}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px;">
+                    <span style="font-size: 9px; color: #475569; font-weight: 800; text-transform: uppercase;">Resultado</span>
+                    <div style="font-size: 16px; font-weight: 800; color: ${saldo >= 0 ? '#16a34a' : '#dc2626'}; margin-top: 2px;">R$ ${saldo.toFixed(2)}</div>
+                </div>
+            </div>
+
+            <!-- BARRA DE SAÚDE DA CONTA -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 700; color: #334155;">Uso da Renda: ${percComprometido}%</span>
+                    <span style="font-size: 10px; font-weight: 800; color: ${statusCor}; background: #ffffff; padding: 2px 8px; border-radius: 12px; border: 1px solid #e2e8f0;">${statusTexto}</span>
+                </div>
+                <div style="height: 8px; width: 100%; background: #e2e8f0; border-radius: 8px; overflow: hidden;">
+                    <div style="height: 100%; width: ${percComprometido}%; background: ${statusCor}; border-radius: 8px;"></div>
+                </div>
+            </div>
+
+            <!-- TABELA COMPLETA -->
+            <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase;">Data</th>
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase;">Descrição</th>
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase;">Autor</th>
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase; text-align: right;">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tabelaHTML || '<tr><td colspan="4" style="text-align:center; padding: 20px; font-size: 12px; color: #94a3b8;">Nenhum registro no mês.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="text-align: center; font-size: 10px; color: #94a3b8;">
+                Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
+            </div>
+        `;
+
+        html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Relatorio_${nomeMes}_${ano}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            container.style.visibility = 'hidden';
+            container.innerHTML = '';
+        });
+    }
+
+    function gerarImagemAnual(ano) {
+        const lancamentosAno = todosLancamentos.filter(i => {
+            const d = new Date(i.dataHora);
+            return d.getFullYear() === parseInt(ano);
+        });
+
+        let recTotal = 0, despTotal = 0;
+        const resumosMeses = {};
+
+        for(let m=0; m<12; m++) resumosMeses[m] = { rec:0, desp:0 };
+
+        lancamentosAno.forEach(i => {
+            const m = new Date(i.dataHora).getMonth();
+            if(i.tipo === 'receita') {
+                recTotal += i.valor;
+                resumosMeses[m].rec += i.valor;
+            } else {
+                despTotal += i.valor;
+                resumosMeses[m].desp += i.valor;
+            }
+        });
+
+        let linhasMeses = '';
+        for(let m=0; m<12; m++) {
+            const r = resumosMeses[m].rec;
+            const d = resumosMeses[m].desp;
+            if(r === 0 && d === 0) continue;
+
+            const saldoM = r - d;
+            linhasMeses += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px 12px; font-size: 12px; font-weight: 700; color: #0f172a;">${mesesNomes[m]}</td>
+                    <td style="padding: 10px 12px; font-size: 12px; color: #16a34a; font-weight: 600;">+ R$ ${r.toFixed(2)}</td>
+                    <td style="padding: 10px 12px; font-size: 12px; color: #dc2626; font-weight: 600;">- R$ ${d.toFixed(2)}</td>
+                    <td style="padding: 10px 12px; font-size: 12px; font-weight: 800; text-align: right; color: ${saldoM>=0 ? '#16a34a' : '#dc2626'};">
+                        R$ ${saldoM.toFixed(2)}
+                    </td>
+                </tr>
+            `;
+        }
+
+        const container = document.getElementById('reportCaptureArea');
+        container.style.visibility = 'visible';
+
+        container.innerHTML = `
+            <div style="background: #0f172a; padding: 22px; border-radius: 16px; color: #ffffff; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="font-size: 20px; font-weight: 800; margin-bottom: 2px;">Balanço Anual Consolidado</h1>
+                    <p style="font-size: 12px; opacity: 0.9;">Ano Exercício • ${ano}</p>
+                </div>
+                <div style="text-align: right; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 10px;">
+                    <span style="font-size: 9px; text-transform: uppercase; opacity: 0.8;">Usuário</span>
+                    <div style="font-size: 12px; font-weight: 700;">${usuarioAtual || 'Usuário'}</div>
+                </div>
+            </div>
+
+            <!-- CARDS ANUAIS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: #f0fdf4; border: 1px solid #dcfce7; padding: 12px; border-radius: 12px;">
+                    <span style="font-size: 9px; color: #15803d; font-weight: 800; text-transform: uppercase;">Total Entradas</span>
+                    <div style="font-size: 16px; font-weight: 800; color: #16a34a; margin-top: 2px;">R$ ${recTotal.toFixed(2)}</div>
+                </div>
+                <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 12px; border-radius: 12px;">
+                    <span style="font-size: 9px; color: #b91c1c; font-weight: 800; text-transform: uppercase;">Total Saídas</span>
+                    <div style="font-size: 16px; font-weight: 800; color: #dc2626; margin-top: 2px;">R$ ${despTotal.toFixed(2)}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px;">
+                    <span style="font-size: 9px; color: #475569; font-weight: 800; text-transform: uppercase;">Resultado Anual</span>
+                    <div style="font-size: 16px; font-weight: 800; color: ${(recTotal - despTotal) >= 0 ? '#16a34a' : '#dc2626'}; margin-top: 2px;">R$ ${(recTotal - despTotal).toFixed(2)}</div>
+                </div>
+            </div>
+
+            <!-- TABELA ANUAL -->
+            <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: #f1f5f9; border-bottom: 1px solid #e2e8f0;">
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase;">Mês</th>
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase;">Entradas</th>
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase;">Saídas</th>
+                            <th style="padding: 8px 12px; font-size: 10px; color: #475569; font-weight: 800; text-transform: uppercase; text-align: right;">Saldo Mês</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linhasMeses || '<tr><td colspan="4" style="text-align:center; padding: 20px; font-size: 12px; color: #94a3b8;">Nenhum registro neste ano.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="text-align: center; font-size: 10px; color: #94a3b8;">
+                Relatório Anual gerado em ${new Date().toLocaleDateString('pt-BR')}
+            </div>
+        `;
+
+        html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Balanço_Anual_${ano}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            container.style.visibility = 'hidden';
+            container.innerHTML = '';
+        });
     }
 </script>
 
