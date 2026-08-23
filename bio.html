@@ -13,7 +13,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
-            getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc 
+            getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -29,7 +29,7 @@
         const db = getFirestore(app);
 
         window.db = db;
-        window.fs = { collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc };
+        window.fs = { collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch };
     </script>
 
     <style>
@@ -86,21 +86,22 @@
         }
         .action-chip:hover { background: var(--btn-hover); transform: translateY(-1px); }
 
+        /* AVISO DE SINCRONIZAÇÃO DA ORDEM */
+        #syncStatusToast {
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95); color: #38bdf8; padding: 8px 16px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; border: 1px solid rgba(56, 189, 248, 0.3); z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+        }
+
         /* GRUPOS E LINKS */
         .links-container { display: flex; flex-direction: column; gap: 16px; width: 100%; }
-        .link-group-wrapper { display: flex; flex-direction: column; gap: 10px; width: 100%; }
         
-        .link-group-title {
-            font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
-            color: var(--accent); margin-top: 6px; padding-left: 4px; display: flex; align-items: center; gap: 8px;
-        }
-        .link-group-title::after { content: ""; flex: 1; height: 1px; background: var(--card-border); }
-
         .bio-link-card {
             display: flex; align-items: center; justify-content: space-between;
             background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
             padding: 14px 18px; text-decoration: none; color: var(--text-main); font-weight: 700; font-size: 14px;
-            box-shadow: var(--shadow); backdrop-filter: blur(12px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow); backdrop-filter: blur(12px); transition: transform 0.2s, border-color 0.2s;
             position: relative; overflow: hidden; width: 100%;
         }
         .card-style-pill { border-radius: 50px; padding-left: 20px; padding-right: 20px; }
@@ -110,21 +111,21 @@
         .card-style-banner { border-radius: 16px; background: linear-gradient(135deg, var(--card-bg), rgba(255,255,255,0.05)); border: 1px solid var(--accent); }
 
         .bio-link-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 8px 25px var(--accent-glow); background: var(--btn-hover); }
-        .bio-link-content { display: flex; align-items: center; gap: 14px; z-index: 1; }
+        .bio-link-content { display: flex; align-items: center; gap: 14px; z-index: 1; flex: 1; cursor: pointer; }
         .bio-link-icon { font-size: 18px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--accent); border-radius: 8px; object-fit: cover; }
         
-        .bio-link-actions { display: none; gap: 6px; z-index: 2; }
+        .bio-link-actions { display: none; gap: 4px; z-index: 2; align-items: center; }
         .admin-mode .bio-link-actions { display: flex; }
         
-        .icon-btn-mini { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 4px; }
-        .icon-btn-mini:hover { color: var(--text-main); }
+        .icon-btn-mini { background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--text-muted); cursor: pointer; font-size: 11px; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .icon-btn-mini:hover { color: var(--text-main); background: var(--btn-hover); border-color: var(--accent); }
+        .icon-btn-mini:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .embedded-html-frame {
             width: 100%; min-height: 400px; border: 1px solid var(--card-border); border-radius: var(--radius);
             background: var(--card-bg); backdrop-filter: blur(16px); overflow: hidden; box-shadow: var(--shadow);
         }
 
-        /* BARRA DE PROGRESSO DO UPLOAD */
         .progress-bar-container { width: 100%; background: var(--btn-bg); border-radius: 8px; height: 8px; overflow: hidden; display: none; margin-top: 6px; border: 1px solid var(--card-border); }
         .progress-bar-fill { height: 100%; width: 0%; background: #10b981; transition: width 0.1s ease; }
 
@@ -136,6 +137,7 @@
         .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--btn-bg); color: var(--text-main); font-size: 14px; outline: none; transition: all 0.3s; width: 100%; }
         .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        select.input-field option { background: #111827; color: #fff; }
 
         .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--accent-glow); transition: all 0.3s; }
         .btn-secondary { background: var(--btn-bg); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
@@ -171,15 +173,18 @@
 
         <!-- CONTROLES EXCLUSIVOS DO ADMIN -->
         <div class="admin-controls admin-only" id="adminControlsPanel">
-            <button class="action-chip" onclick="abrirModalTemas()"><i class="fas fa-palette" style="color:var(--accent);"></i> Temas & Layouts</button>
+            <button class="action-chip" onclick="abrirModalTemas()"><i class="fas fa-palette" style="color:var(--accent);"></i> Tema desta Aba</button>
             <button class="action-chip" onclick="gerarTemaAleatorio()"><i class="fas fa-dice" style="color:#10b981;"></i> Aleatório</button>
-            <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Perfil & Fundo</button>
+            <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Perfil & Senha</button>
             <button class="action-chip" onclick="abrirModalLink()"><i class="fas fa-plus"></i> Novo Link</button>
-            <button class="action-chip" onclick="abrirModalSenha()"><i class="fas fa-key" style="color:#f59e0b;"></i> Senha</button>
+            <button class="action-chip" onclick="abrirModalSenhaMaster()"><i class="fas fa-key" style="color:#f59e0b;"></i> Senha Master</button>
         </div>
     </div>
 
-    <!-- CONTAINER DE LINKS COM GRUPOS -->
+    <!-- TOAST DE SINCRONIZAÇÃO -->
+    <div id="syncStatusToast"><i class="fas fa-spinner fa-spin"></i> Sincronizando ordem com o Firebase...</div>
+
+    <!-- CONTAINER DE LINKS COM SETAS DE ORDENAÇÃO -->
     <div class="links-container" id="linksContainer"></div>
 
     <!-- CONTAINER HTML -->
@@ -202,7 +207,7 @@
 <div class="modal-overlay" id="modalLogin">
     <div class="modal-body" style="max-width: 320px; text-align: center;">
         <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-shield-alt" style="color:var(--accent);"></i> Acesso Restrito</h3>
-        <p style="font-size:12px; color:var(--text-muted);">Insira a senha de administrador:</p>
+        <p style="font-size:12px; color:var(--text-muted);">Insira a senha master de administrador:</p>
         <input type="password" id="adminPasswordInput" class="input-field" placeholder="Senha">
         <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
             <button class="btn-secondary" onclick="fecharModalLogin()">Cancelar</button>
@@ -211,16 +216,29 @@
     </div>
 </div>
 
-<!-- MODAL ALTERAR SENHA ADMIN -->
-<div class="modal-overlay" id="modalSenha">
+<!-- MODAL SENHA DA ABA (PARA VISITANTES) -->
+<div class="modal-overlay" id="modalSenhaAba">
+    <div class="modal-body" style="max-width: 320px; text-align: center;">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-lock" style="color:#f59e0b;"></i> Aba Protegida</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Esta aba exige uma senha para ser acessada:</p>
+        <input type="password" id="senhaAbaInput" class="input-field" placeholder="Senha da aba">
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
+            <button class="btn-secondary" onclick="voltarParaAbaSegura()">Voltar</button>
+            <button class="btn-submit" onclick="desbloquearAbaAtual()">Desbloquear</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ALTERAR SENHA MASTER -->
+<div class="modal-overlay" id="modalSenhaMaster">
     <div class="modal-body" style="max-width: 320px;">
-        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-key" style="color:var(--accent);"></i> Mudar Senha Admin</h3>
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-key" style="color:var(--accent);"></i> Mudar Senha Master</h3>
         <div class="form-group">
-            <label>Nova Senha</label>
+            <label>Nova Senha Master</label>
             <input type="password" id="novaSenhaInput" class="input-field" placeholder="Digite a nova senha">
         </div>
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
-            <button class="btn-secondary" onclick="document.getElementById('modalSenha').style.display='none'">Cancelar</button>
+            <button class="btn-secondary" onclick="document.getElementById('modalSenhaMaster').style.display='none'">Cancelar</button>
             <button class="btn-submit" onclick="salvarNovaSenha()">Atualizar</button>
         </div>
     </div>
@@ -242,17 +260,20 @@
         </div>
         <div class="form-group">
             <label>Grupo / Categoria</label>
-            <input type="text" id="linkGroup" class="input-field" placeholder="Ex: Redes Sociais, Projetos">
+            <select id="linkGroupSelect" class="input-field" onchange="document.getElementById('linkGroup').value = this.value;" style="margin-bottom:6px;">
+                <option value="">-- Selecionar Grupo Existente --</option>
+            </select>
+            <input type="text" id="linkGroup" class="input-field" placeholder="Ou digite um novo grupo...">
         </div>
         <div class="form-group">
-            <label>Ícone ou Upload de Imagem (Compactado Automaticamente)</label>
+            <label>Ícone ou Upload de Imagem</label>
             <div style="display:flex; gap:8px;">
-                <input type="text" id="linkIcon" class="input-field" placeholder="Ex: fab fa-instagram ou imagem">
+                <input type="text" id="linkIcon" class="input-field" placeholder="Ex: fab fa-instagram">
                 <input type="file" id="linkImageFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 300, 300, 'linkIcon', 'linkProgressBar', 'linkProgressFill', 'linkUploadStatus')">
                 <button class="btn-secondary" onclick="document.getElementById('linkImageFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
             </div>
             <div class="progress-bar-container" id="linkProgressBar"><div class="progress-bar-fill" id="linkProgressFill"></div></div>
-            <span id="linkUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Imagem compactada e pronta!</span>
+            <span id="linkUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Imagem pronta!</span>
         </div>
 
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
@@ -262,14 +283,18 @@
     </div>
 </div>
 
-<!-- MODAL PERFIL E FUNDO -->
+<!-- MODAL PERFIL E SEGURANÇA DA ABA -->
 <div class="modal-overlay" id="modalPerfil">
     <div class="modal-body">
-        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-user-cog" style="color:var(--accent);"></i> Configurações da Aba & Visual</h3>
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-user-cog" style="color:var(--accent);"></i> Configurações da Aba & Senha</h3>
         
         <div class="form-group">
             <label>Nome da Aba no Topo</label>
             <input type="text" id="configAbaNome" class="input-field">
+        </div>
+        <div class="form-group">
+            <label>Senha de Proteção desta Aba (Opcional - Deixe em branco para livre acesso)</label>
+            <input type="text" id="configAbaSenha" class="input-field" placeholder="Ex: segredo123">
         </div>
         <div class="form-group">
             <label>Tipo de Página</label>
@@ -289,24 +314,24 @@
                 <textarea id="configBio" class="input-field" rows="2" style="resize:none;"></textarea>
             </div>
             <div class="form-group" style="margin-top:10px;">
-                <label>Foto de Avatar (Compactado Automaticamente)</label>
+                <label>Foto de Avatar</label>
                 <div style="display:flex; gap:8px;">
-                    <input type="url" id="configAvatar" class="input-field" placeholder="URL ou clique em Upload">
+                    <input type="url" id="configAvatar" class="input-field" placeholder="URL ou Upload">
                     <input type="file" id="avatarFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 400, 400, 'configAvatar', 'avatarProgressBar', 'avatarProgressFill', 'avatarUploadStatus')">
                     <button class="btn-secondary" onclick="document.getElementById('avatarFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
                 </div>
                 <div class="progress-bar-container" id="avatarProgressBar"><div class="progress-bar-fill" id="avatarProgressFill"></div></div>
-                <span id="avatarUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Avatar compactado!</span>
+                <span id="avatarUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Avatar pronto!</span>
             </div>
             <div class="form-group" style="margin-top:10px;">
-                <label>Background Geral (Compactado Automaticamente)</label>
+                <label>Background Geral</label>
                 <div style="display:flex; gap:8px;">
-                    <input type="url" id="configBgImage" class="input-field" placeholder="URL ou clique em Upload">
+                    <input type="url" id="configBgImage" class="input-field" placeholder="URL ou Upload">
                     <input type="file" id="bgFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 1200, 1200, 'configBgImage', 'bgProgressBar', 'bgProgressFill', 'bgUploadStatus')">
                     <button class="btn-secondary" onclick="document.getElementById('bgFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
                 </div>
                 <div class="progress-bar-container" id="bgProgressBar"><div class="progress-bar-fill" id="bgProgressFill"></div></div>
-                <span id="bgUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Fundo compactado!</span>
+                <span id="bgUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Fundo pronto!</span>
             </div>
         </div>
 
@@ -327,13 +352,17 @@
     </div>
 </div>
 
-<!-- MODAL CRIAR ABA (APENAS ADMIN) -->
+<!-- MODAL CRIAR ABA -->
 <div class="modal-overlay" id="modalNovaAba">
     <div class="modal-body">
         <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-plus-circle" style="color:#10b981;"></i> Criar Nova Aba</h3>
         <div class="form-group">
             <label>Nome da Aba</label>
             <input type="text" id="novaAbaNomeInput" class="input-field" placeholder="Ex: Projetos">
+        </div>
+        <div class="form-group">
+            <label>Senha de Proteção (Opcional)</label>
+            <input type="text" id="novaAbaSenhaInput" class="input-field" placeholder="Deixe em branco se livre">
         </div>
         <div class="form-group">
             <label>Tipo</label>
@@ -364,14 +393,14 @@
     </div>
 </div>
 
-<!-- MODAL TEMAS -->
+<!-- MODAL 20 TEMAS -->
 <div class="modal-overlay" id="modalTemas">
     <div class="modal-body" style="max-width: 520px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-palette" style="color:var(--accent);"></i> Temas & Layouts Inspirados</h3>
+            <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-palette" style="color:var(--accent);"></i> Escolher Tema para esta Aba</h3>
             <button class="btn-secondary" onclick="fecharModalTemas()"><i class="fas fa-times"></i></button>
         </div>
-        <p style="font-size:11px; color:var(--text-muted);">10 estilos baseados em design profissional de bio de links (Nude, Dourado, Minimalista e Dark Luxury):</p>
+        <p style="font-size:11px; color:var(--text-muted);">Cada aba possui seu próprio design exclusivo:</p>
         <div class="themes-grid" id="themesGridContainer" style="margin-top:4px;"></div>
     </div>
 </div>
@@ -380,22 +409,32 @@
     let abas = [];
     let links = [];
     let abaAtivaId = 'bio_principal';
-    let temaAtualId = 'luxe_nude_gold';
     let isAdminLogado = false;
     let senhaAdminAtual = localStorage.getItem('hub_admin_pass') || 'vinao123';
+    let abasDesbloqueadas = {}; 
+    let isReordering = false; // Trava contra conflitos de concorrência
 
-    // 10 TEMAS INSPIRADOS NOS MODELOS ENVIADOS (FOTOS)
     const listaDeTemas = [
-        { id: 'luxe_nude_gold', nome: '1. Luxe Nude & Gold (Estilo Tatiele/Marina)', bg: '#1c1714', card: 'rgba(56, 46, 41, 0.75)', text: '#fbf7f4', muted: '#d4af37', accent: '#d4af37', glow: 'rgba(212, 175, 55, 0.3)', align: 'center', cardStyle: 'pill' },
-        { id: 'studio_barbara_teal', nome: '2. Studio Barbara Teal & Sand', bg: '#062829', card: 'rgba(23, 70, 71, 0.7)', text: '#f3efe6', muted: '#93c5fd', accent: '#e2b86d', glow: 'rgba(226, 184, 109, 0.35)', align: 'center', cardStyle: 'banner' },
+        { id: 'luxe_nude_gold', nome: '1. Luxe Nude & Gold', bg: '#1c1714', card: 'rgba(56, 46, 41, 0.75)', text: '#fbf7f4', muted: '#d4af37', accent: '#d4af37', glow: 'rgba(212, 175, 55, 0.3)', align: 'center', cardStyle: 'pill' },
+        { id: 'studio_barbara_teal', nome: '2. Studio Teal & Sand', bg: '#062829', card: 'rgba(23, 70, 71, 0.7)', text: '#f3efe6', muted: '#93c5fd', accent: '#e2b86d', glow: 'rgba(226, 184, 109, 0.35)', align: 'center', cardStyle: 'banner' },
         { id: 'editorial_quinn_dark', nome: '3. Editorial Quinn Black & Serif', bg: '#0b0b0b', card: 'rgba(24, 24, 24, 0.85)', text: '#ffffff', muted: '#a3a3a3', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.25)', align: 'center', cardStyle: 'sharp' },
         { id: 'larissa_almeida_chic', nome: '4. Larissa Beauty Minimal', bg: '#141211', card: 'rgba(42, 36, 33, 0.8)', text: '#fdf8f6', muted: '#c5a880', accent: '#c5a880', glow: 'rgba(197, 168, 128, 0.3)', align: 'center', cardStyle: 'pill' },
-        { id: 'soft_beige_clean', nome: '5. Soft Beige Professional', bg: '#f2ece4', card: 'rgba(255, 255, 255, 0.9)', text: '#2c2421', muted: '#786d65', accent: '#9a7b5c', glow: 'rgba(154, 123, 92, 0.25)', align: 'center', cardStyle: 'standard' },
-        { id: 'midnight_obsidian', nome: '6. Midnight Obsidian Pro', bg: '#0b0f19', card: 'rgba(17, 24, 39, 0.75)', text: '#f9fafb', muted: '#9ca3af', accent: '#6366f1', glow: 'rgba(99, 102, 241, 0.35)', align: 'center', cardStyle: 'standard' },
-        { id: 'cyber_neon_grid', nome: '7. Cyberpunk Neon Grid', bg: '#030305', card: 'rgba(15, 15, 20, 0.9)', text: '#00ffcc', muted: '#d946ef', accent: '#ff007f', glow: 'rgba(255, 0, 127, 0.5)', align: 'center', cardStyle: 'neon' },
-        { id: 'emerald_lux_pill', nome: '8. Emerald Luxury Pills', bg: '#022c22', card: 'rgba(6, 78, 59, 0.6)', text: '#ecfdf5', muted: '#6ee7b7', accent: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', align: 'center', cardStyle: 'pill' },
-        { id: 'royal_glass', nome: '9. Royal Amethyst Glass', bg: '#1e1b4b', card: 'rgba(49, 46, 129, 0.4)', text: '#e0e7ff', muted: '#a5b4fc', accent: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.4)', align: 'center', cardStyle: 'glass' },
-        { id: 'minimal_light', nome: '10. Minimal Clean Light', bg: '#f8fafc', card: 'rgba(255, 255, 255, 0.95)', text: '#0f172a', muted: '#64748b', accent: '#2563eb', glow: 'rgba(37, 99, 235, 0.2)', align: 'center', cardStyle: 'standard' }
+        { id: 'marina_costa_nude', nome: '5. Marina Costa Warm Luxury', bg: '#231f1c', card: 'rgba(64, 54, 48, 0.75)', text: '#fdfbf7', muted: '#d6c0a5', accent: '#d6c0a5', glow: 'rgba(214, 192, 165, 0.3)', align: 'center', cardStyle: 'standard' },
+        { id: 'tatiele_nails_gold', nome: '6. Tatiele Nails & Gold', bg: '#11100f', card: 'rgba(38, 35, 32, 0.8)', text: '#ffffff', muted: '#dfbe7e', accent: '#dfbe7e', glow: 'rgba(223, 190, 126, 0.35)', align: 'center', cardStyle: 'banner' },
+        { id: 'soft_beige_clean', nome: '7. Soft Beige Professional', bg: '#f2ece4', card: 'rgba(255, 255, 255, 0.9)', text: '#2c2421', muted: '#786d65', accent: '#9a7b5c', glow: 'rgba(154, 123, 92, 0.25)', align: 'center', cardStyle: 'standard' },
+        { id: 'midnight_obsidian', nome: '8. Midnight Obsidian Pro', bg: '#0b0f19', card: 'rgba(17, 24, 39, 0.75)', text: '#f9fafb', muted: '#9ca3af', accent: '#6366f1', glow: 'rgba(99, 102, 241, 0.35)', align: 'center', cardStyle: 'standard' },
+        { id: 'cyber_neon_grid', nome: '9. Cyberpunk Neon Grid', bg: '#030305', card: 'rgba(15, 15, 20, 0.9)', text: '#00ffcc', muted: '#d946ef', accent: '#ff007f', glow: 'rgba(255, 0, 127, 0.5)', align: 'center', cardStyle: 'neon' },
+        { id: 'emerald_lux_pill', nome: '10. Emerald Luxury Pills', bg: '#022c22', card: 'rgba(6, 78, 59, 0.6)', text: '#ecfdf5', muted: '#6ee7b7', accent: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', align: 'center', cardStyle: 'pill' },
+        { id: 'royal_glass', nome: '11. Royal Amethyst Glass', bg: '#1e1b4b', card: 'rgba(49, 46, 129, 0.4)', text: '#e0e7ff', muted: '#a5b4fc', accent: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.4)', align: 'center', cardStyle: 'glass' },
+        { id: 'minimal_light', nome: '12. Minimal Clean Light', bg: '#f8fafc', card: 'rgba(255, 255, 255, 0.95)', text: '#0f172a', muted: '#64748b', accent: '#2563eb', glow: 'rgba(37, 99, 235, 0.2)', align: 'center', cardStyle: 'standard' },
+        { id: 'sunset_glow', nome: '13. Sunset Orange Vibe', bg: '#1c0f0d', card: 'rgba(56, 28, 23, 0.75)', text: '#fff7ed', muted: '#fdba74', accent: '#f97316', glow: 'rgba(249, 115, 22, 0.4)', align: 'center', cardStyle: 'pill' },
+        { id: 'rose_gold_elegance', nome: '14. Rose Gold Elegance', bg: '#1a1215', card: 'rgba(51, 32, 39, 0.8)', text: '#fff1f2', muted: '#fda4af', accent: '#fb7185', glow: 'rgba(251, 113, 133, 0.35)', align: 'center', cardStyle: 'standard' },
+        { id: 'arctic_frost', nome: '15. Arctic Frost Blue', bg: '#082f49', card: 'rgba(14, 116, 144, 0.5)', text: '#f0f9ff', muted: '#7dd3fc', accent: '#38bdf8', glow: 'rgba(56, 189, 248, 0.4)', align: 'center', cardStyle: 'glass' },
+        { id: 'monochrome_slate', nome: '16. Monochrome Slate', bg: '#18181b', card: 'rgba(39, 39, 42, 0.8)', text: '#fafafa', muted: '#a1a1aa', accent: '#f43f5e', glow: 'rgba(244, 63, 94, 0.3)', align: 'center', cardStyle: 'sharp' },
+        { id: 'coffee_caramel', nome: '17. Coffee & Caramel', bg: '#17120e', card: 'rgba(46, 35, 27, 0.8)', text: '#fef3c7', muted: '#d97706', accent: '#f59e0b', glow: 'rgba(245, 158, 11, 0.35)', align: 'center', cardStyle: 'pill' },
+        { id: 'matrix_terminal', nome: '18. Matrix Terminal Green', bg: '#02230a', card: 'rgba(5, 46, 22, 0.85)', text: '#bbf7d0', muted: '#4ade80', accent: '#22c55e', glow: 'rgba(34, 197, 94, 0.4)', align: 'center', cardStyle: 'sharp' },
+        { id: 'neon_purple_punk', nome: '19. Deep Purple Punk', bg: '#12071f', card: 'rgba(35, 13, 61, 0.8)', text: '#f3e8ff', muted: '#d8b4fe', accent: '#c084fc', glow: 'rgba(192, 132, 252, 0.4)', align: 'center', cardStyle: 'neon' },
+        { id: 'pure_carbon', nome: '20. Pure Carbon Minimal', bg: '#000000', card: 'rgba(20, 20, 20, 0.9)', text: '#ffffff', muted: '#71717a', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.2)', align: 'center', cardStyle: 'pill' }
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -408,7 +447,8 @@
             isAdminLogado = false;
             document.body.classList.remove('admin-mode');
             document.getElementById('loginLogoutBtn').innerHTML = '<i class="fas fa-lock"></i> Admin';
-            renderizarAbasTop(); // Remove botão de criar aba para visitantes
+            renderizarAbasTop();
+            renderizarLinks();
             alert('Você saiu do modo administrador.');
         } else {
             document.getElementById('adminPasswordInput').value = '';
@@ -423,7 +463,8 @@
             isAdminLogado = true;
             document.body.classList.add('admin-mode');
             document.getElementById('loginLogoutBtn').innerHTML = '<i class="fas fa-lock-open"></i> Sair Admin';
-            renderizarAbasTop(); // Mostra o botão de nova aba apenas para admin
+            renderizarAbasTop();
+            renderizarLinks();
             fecharModalLogin();
             alert('Acesso Administrador concedido!');
         } else {
@@ -431,9 +472,9 @@
         }
     }
 
-    function abrirModalSenha() {
+    function abrirModalSenhaMaster() {
         document.getElementById('novaSenhaInput').value = '';
-        document.getElementById('modalSenha').style.display = 'flex';
+        document.getElementById('modalSenhaMaster').style.display = 'flex';
     }
 
     function salvarNovaSenha() {
@@ -441,8 +482,8 @@
         if (!novaSenha) return alert('Digite uma senha válida!');
         senhaAdminAtual = novaSenha;
         localStorage.setItem('hub_admin_pass', novaSenha);
-        document.getElementById('modalSenha').style.display = 'none';
-        alert('Senha de administrador alterada com sucesso!');
+        document.getElementById('modalSenhaMaster').style.display = 'none';
+        alert('Senha master alterada com sucesso!');
     }
 
     function comprimirEConverterImagem(inputElement, maxWidth, maxHeight, targetInputId, barContainerId, barFillId, statusId) {
@@ -500,10 +541,6 @@
                 }, 300);
             };
         };
-        reader.onerror = function() {
-            barContainer.style.display = 'none';
-            alert('Erro ao processar a imagem.');
-        };
         reader.readAsDataURL(file);
     }
 
@@ -516,8 +553,9 @@
                 const defaultAba = {
                     nome: 'Principal',
                     tipo: 'bio',
+                    senhaAba: '',
                     perfilNome: 'Alexandre Developer',
-                    perfilBio: 'Criador de soluções web e sistemas inteligentes.',
+                    perfilBio: 'Criador de soluções web.',
                     perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
                     bgImage: '',
                     footerText: 'Criado com Hub Pro & Firebase',
@@ -543,9 +581,12 @@
 
         abas.forEach(a => {
             const btn = document.createElement('button');
+            const temSenha = a.senhaAba && a.senhaAba.trim() !== '';
+            let iconeLock = temSenha && !isAdminLogado && !abasDesbloqueadas[a.id] ? '<i class="fas fa-lock" style="color:#f59e0b; margin-left:4px;"></i>' : '';
+            
             btn.className = `tab-btn ${a.id === abaAtivaId ? 'active' : ''}`;
-            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome}`;
-            btn.onclick = () => mudarAba(a.id);
+            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome} ${iconeLock}`;
+            btn.onclick = () => tentarMudarAba(a.id);
             container.appendChild(btn);
         });
 
@@ -558,7 +599,42 @@
         }
     }
 
-    function mudarAba(id) {
+    function tentarMudarAba(id) {
+        const abaAlvo = abas.find(a => a.id === id);
+        if (!abaAlvo) return;
+
+        if (abaAlvo.senhaAba && abaAlvo.senhaAba.trim() !== '' && !isAdminLogado && !abasDesbloqueadas[id]) {
+            abaAtivaId = id; 
+            document.getElementById('senhaAbaInput').value = '';
+            document.getElementById('modalSenhaAba').style.display = 'flex';
+            return;
+        }
+
+        mudarAbaDireto(id);
+    }
+
+    function desbloquearAbaAtual() {
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        const senhaDigitada = document.getElementById('senhaAbaInput').value;
+
+        if (abaAtual && senhaDigitada === abaAtual.senhaAba) {
+            abasDesbloqueadas[abaAtivaId] = true;
+            document.getElementById('modalSenhaAba').style.display = 'none';
+            renderizarAbasTop();
+            carregarConteudoAbaAtiva();
+        } else {
+            alert('Senha incorreta!');
+        }
+    }
+
+    function voltarParaAbaSegura() {
+        document.getElementById('modalSenhaAba').style.display = 'none';
+        if (abas.length > 0) abaAtivaId = abas[0].id;
+        renderizarAbasTop();
+        carregarConteudoAbaAtiva();
+    }
+
+    function mudarAbaDireto(id) {
         abaAtivaId = id;
         renderizarAbasTop();
         carregarConteudoAbaAtiva();
@@ -568,6 +644,11 @@
     function carregarConteudoAbaAtiva() {
         const abaAtual = abas.find(a => a.id === abaAtivaId);
         if (!abaAtual) return;
+
+        if (abaAtual.senhaAba && abaAtual.senhaAba.trim() !== '' && !isAdminLogado && !abasDesbloqueadas[abaAtivaId]) {
+            document.getElementById('modalSenhaAba').style.display = 'flex';
+            return;
+        }
 
         aplicarTemaVisual(abaAtual.temaId || 'luxe_nude_gold', abaAtual.bgImage || '');
         document.getElementById('footerTextDisplay').innerText = abaAtual.footerText || 'Criado com Hub Pro & Firebase';
@@ -595,11 +676,36 @@
 
             if (unsubscribeLinks) unsubscribeLinks();
             unsubscribeLinks = window.fs.onSnapshot(window.fs.collection(window.db, `links_${abaAtivaId}`), (snapshot) => {
+                // Se estivermos reordenando ativamente, evitamos puxar o snapshot para não causar conflito visual local
+                if (isReordering) return;
+
                 links = [];
                 snapshot.forEach(doc => links.push({ id: doc.id, ...doc.data() }));
+                links.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
                 renderizarLinks();
+                atualizarSelectGrupos();
             });
         }
+    }
+
+    function atualizarSelectGrupos() {
+        const select = document.getElementById('linkGroupSelect');
+        if (!select) return;
+        
+        const gruposUnicos = new Set();
+        links.forEach(l => {
+            if (l.grupo && l.grupo.trim() !== '') {
+                gruposUnicos.add(l.grupo.trim());
+            }
+        });
+
+        select.innerHTML = '<option value="">-- Selecionar Grupo Existente --</option>';
+        gruposUnicos.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = g;
+            select.appendChild(opt);
+        });
     }
 
     function renderizarLinks() {
@@ -611,60 +717,90 @@
             return;
         }
 
-        const grupos = {};
-        links.forEach(l => {
-            const grupoNome = l.grupo && l.grupo.trim() !== '' ? l.grupo.trim() : 'Geral';
-            if (!grupos[grupoNome]) grupos[grupoNome] = [];
-            grupos[grupoNome].push(l);
-        });
-
         const abaAtual = abas.find(a => a.id === abaAtivaId);
         const t = listaDeTemas.find(item => item.id === (abaAtual?.temaId || 'luxe_nude_gold')) || listaDeTemas[0];
         const estiloCardClass = `card-style-${t.cardStyle || 'standard'}`;
 
-        for (const [nomeGrupo, listaDoGrupo] of Object.entries(grupos)) {
-            const grupoWrapper = document.createElement('div');
-            grupoWrapper.className = 'link-group-wrapper';
+        links.forEach((l, index) => {
+            const a = document.createElement('div');
+            a.className = `bio-link-card ${estiloCardClass}`;
 
-            if (nomeGrupo !== 'Geral' || Object.keys(grupos).length > 1) {
-                const titleEl = document.createElement('div');
-                titleEl.className = 'link-group-title';
-                titleEl.innerHTML = `<i class="fas fa-layer-group"></i> ${nomeGrupo}`;
-                grupoWrapper.appendChild(titleEl);
+            let iconeHtml = '';
+            if (l.icon && (l.icon.startsWith('http') || l.icon.startsWith('data:image'))) {
+                iconeHtml = `<img src="${l.icon}" class="bio-link-icon" alt="ícone">`;
+            } else {
+                iconeHtml = `<i class="${l.icon || 'fas fa-link'} bio-link-icon"></i>`;
             }
 
-            listaDoGrupo.forEach(l => {
-                const a = document.createElement('a');
-                a.className = `bio-link-card ${estiloCardClass}`;
-                a.href = l.url;
-                a.target = '_blank';
+            let botoesSetas = '';
+            if (isAdminLogado) {
+                const desabilitado = isReordering ? 'disabled' : '';
+                const btnSubir = index > 0 ? `<button class="icon-btn-mini" ${desabilitado} onclick="event.stopPropagation(); moverLink(${index}, -1)" title="Mover para Cima"><i class="fas fa-arrow-up"></i></button>` : '';
+                const btnDescer = index < links.length - 1 ? `<button class="icon-btn-mini" ${desabilitado} onclick="event.stopPropagation(); moverLink(${index}, 1)" title="Mover para Baixo"><i class="fas fa-arrow-down"></i></button>` : '';
+                botoesSetas = `${btnSubir}${btnDescer}`;
+            }
 
-                let iconeHtml = '';
-                if (l.icon && (l.icon.startsWith('http') || l.icon.startsWith('data:image'))) {
-                    iconeHtml = `<img src="${l.icon}" class="bio-link-icon" alt="ícone">`;
-                } else {
-                    iconeHtml = `<i class="${l.icon || 'fas fa-link'} bio-link-icon"></i>`;
-                }
+            a.innerHTML = `
+                <div class="bio-link-content" onclick="window.open('${l.url}', '_blank')">
+                    ${iconeHtml}
+                    <div>
+                        <div style="font-size:14px; font-weight:700;">${l.title}</div>
+                        ${l.grupo && l.grupo.trim() !== '' ? `<div style="font-size:10px; color:var(--accent); font-weight:600; text-transform:uppercase; margin-top:2px;">${l.grupo}</div>` : ''}
+                    </div>
+                </div>
+                <div class="bio-link-actions">
+                    ${botoesSetas}
+                    <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}')" title="Editar"><i class="fas fa-pen"></i></button>
+                    <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); excluirLink('${l.id}')" title="Excluir" style="color:#ef4444;"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(a);
+        });
+    }
 
-                a.innerHTML = `
-                    <div class="bio-link-content">
-                        ${iconeHtml}
-                        <span>${l.title}</span>
-                    </div>
-                    <div class="bio-link-actions" onclick="event.preventDefault();">
-                        <button class="icon-btn-mini" onclick="abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}')"><i class="fas fa-pen"></i></button>
-                        <button class="icon-btn-mini" onclick="excluirLink('${l.id}')"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
-                grupoWrapper.appendChild(a);
+    // Função de reordenação refinada com Batch Write do Firebase e travas de concorrência
+    async function moverLink(index, direcao) {
+        if (!isAdminLogado || isReordering) return;
+        
+        const novoIndice = index + direcao;
+        if (novoIndice < 0 || novoIndice >= links.length) return;
+
+        isReordering = true; // Ativa a trava de bloqueio de concorrência
+        
+        const toast = document.getElementById('syncStatusToast');
+        toast.style.display = 'block';
+
+        // Atualização instantânea na interface local
+        const itemMovido = links.splice(index, 1)[0];
+        links.splice(novoIndice, 0, itemMovido);
+        renderizarLinks(); // Atualiza botões desabilitados instantaneamente
+
+        try {
+            // Criação de um lote atômico (WriteBatch) para enviar todas as novas ordens de uma vez só
+            const batch = window.fs.writeBatch(window.db);
+            
+            links.forEach((linkItem, idx) => {
+                const docRef = window.fs.doc(window.db, `links_${abaAtivaId}`, linkItem.id);
+                batch.update(docRef, { ordem: idx });
             });
 
-            container.appendChild(grupoWrapper);
+            await batch.commit(); // Executa o lote de forma síncrona e segura no Firestore
+        } catch (error) {
+            console.error("Erro crítico ao sincronizar ordem:", error);
+            alert("Erro ao salvar ordem no banco. Tente novamente.");
+            // Recarrega os dados caso ocorra falha de rede
+            carregarConteudoAbaAtiva();
+        } finally {
+            // Aguarda um pequeno respiro de segurança (300ms) para liberar as travas e evitar loops do snapshot
+            setTimeout(() => {
+                isReordering = false;
+                toast.style.display = 'none';
+                renderizarLinks();
+            }, 300);
         }
     }
 
     function aplicarTemaVisual(temaId, bgImageUrl) {
-        temaAtualId = temaId;
         const t = listaDeTemas.find(item => item.id === temaId) || listaDeTemas[0];
         const root = document.documentElement;
         
@@ -711,6 +847,7 @@
 
     function popularGridTemas() {
         const grid = document.getElementById('themesGridContainer');
+        if (!grid) return;
         grid.innerHTML = '';
         listaDeTemas.forEach(t => {
             const div = document.createElement('div');
@@ -734,15 +871,20 @@
         document.getElementById('linkTitle').value = '';
         document.getElementById('linkUrl').value = '';
         document.getElementById('linkGroup').value = '';
+        document.getElementById('linkGroupSelect').value = '';
         document.getElementById('linkIcon').value = 'fas fa-globe';
         document.getElementById('linkProgressBar').style.display = 'none';
+        atualizarSelectGrupos();
         document.getElementById('modalLink').style.display = 'flex';
     }
+
     function abrirModalLinkEditar(id, title, url, icon, grupo) {
         document.getElementById('editLinkId').value = id;
         document.getElementById('linkTitle').value = title;
         document.getElementById('linkUrl').value = url;
         document.getElementById('linkGroup').value = grupo || '';
+        atualizarSelectGrupos();
+        document.getElementById('linkGroupSelect').value = grupo || '';
         document.getElementById('linkIcon').value = icon || 'fas fa-globe';
         document.getElementById('linkProgressBar').style.display = 'none';
         document.getElementById('modalLink').style.display = 'flex';
@@ -763,7 +905,8 @@
             if (id) {
                 await window.fs.setDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id), { title, url, icon, grupo }, { merge: true });
             } else {
-                await window.fs.addDoc(colRef, { title, url, icon, grupo, criadoEm: new Date().toISOString() });
+                const novaOrdem = links.length;
+                await window.fs.addDoc(colRef, { title, url, icon, grupo, ordem: novaOrdem, criadoEm: new Date().toISOString() });
             }
             fecharModalLink();
         } catch (error) {
@@ -772,16 +915,19 @@
     }
 
     async function excluirLink(id) {
+        if (!isAdminLogado) return;
         if (confirm("Deseja remover este link?")) {
             await window.fs.deleteDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id));
         }
     }
 
     function abrirModalPerfil() {
+        if (!isAdminLogado) return;
         const abaAtual = abas.find(a => a.id === abaAtivaId);
         if (!abaAtual) return;
 
         document.getElementById('configAbaNome').value = abaAtual.nome;
+        document.getElementById('configAbaSenha').value = abaAtual.senhaAba || '';
         document.getElementById('configTipoAba').value = abaAtual.tipo || 'bio';
         document.getElementById('configNome').value = abaAtual.perfilNome || '';
         document.getElementById('configBio').value = abaAtual.perfilBio || '';
@@ -804,7 +950,9 @@
     }
 
     async function salvarConfigPerfil() {
+        if (!isAdminLogado) return;
         const nome = document.getElementById('configAbaNome').value.trim();
+        const senhaAba = document.getElementById('configAbaSenha').value.trim();
         const tipo = document.getElementById('configTipoAba').value;
         const perfilNome = document.getElementById('configNome').value.trim();
         const perfilBio = document.getElementById('configBio').value.trim();
@@ -816,7 +964,7 @@
 
         try {
             await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), {
-                nome, tipo, perfilNome, perfilBio, perfilAvatar, bgImage, htmlCode
+                nome, senhaAba, tipo, perfilNome, perfilBio, perfilAvatar, bgImage, htmlCode
             }, { merge: true });
 
             fecharModalPerfil();
@@ -826,19 +974,23 @@
     }
 
     function abrirModalRodape() {
+        if (!isAdminLogado) return;
         const abaAtual = abas.find(a => a.id === abaAtivaId);
         document.getElementById('footerTextInput').value = abaAtual?.footerText || 'Criado com Hub Pro & Firebase';
         document.getElementById('modalRodape').style.display = 'flex';
     }
 
     async function salvarRodapeText() {
+        if (!isAdminLogado) return;
         const footerText = document.getElementById('footerTextInput').value.trim();
         await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { footerText }, { merge: true });
         document.getElementById('modalRodape').style.display = 'none';
     }
 
     function abrirModalNovaAba() { 
-        if (!isAdminLogado) return alert('Acesso negado!');
+        if (!isAdminLogado) return;
+        document.getElementById('novaAbaNomeInput').value = '';
+        document.getElementById('novaAbaSenhaInput').value = '';
         document.getElementById('modalNovaAba').style.display = 'flex'; 
     }
     function fecharModalNovaAba() { document.getElementById('modalNovaAba').style.display = 'none'; }
@@ -846,6 +998,7 @@
     async function criarNovaAba() {
         if (!isAdminLogado) return;
         const nome = document.getElementById('novaAbaNomeInput').value.trim();
+        const senhaAba = document.getElementById('novaAbaSenhaInput').value.trim();
         const tipo = document.getElementById('novaAbaTipoInput').value;
 
         if (!nome) return alert('Digite um nome para a aba!');
@@ -853,19 +1006,19 @@
         const newId = 'aba_' + Date.now();
         await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", newId), {
             nome,
+            senhaAba,
             tipo,
             perfilNome: nome,
             perfilBio: 'Nova página criada.',
             perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
             bgImage: '',
             footerText: 'Criado com Hub Pro & Firebase',
-            temaId: temaAtualId,
+            temaId: 'luxe_nude_gold',
             htmlCode: ''
         });
 
-        document.getElementById('novaAbaNomeInput').value = '';
         fecharModalNovaAba();
-        mudarAba(newId);
+        mudarAbaDireto(newId);
     }
 
     async function excluirAbaAtual() {
@@ -877,7 +1030,10 @@
         }
     }
 
-    function abrirModalTemas() { document.getElementById('modalTemas').style.display = 'flex'; }
+    function abrirModalTemas() { 
+        if (!isAdminLogado) return;
+        document.getElementById('modalTemas').style.display = 'flex'; 
+    }
     function fecharModalTemas() { document.getElementById('modalTemas').style.display = 'none'; }
 </script>
 
