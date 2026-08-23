@@ -314,6 +314,10 @@
             <input type="text" id="configAbaNome" class="input-field">
         </div>
         <div class="form-group">
+            <label>Título da Guia do Navegador (Browser Title)</label>
+            <input type="text" id="configBrowserTitle" class="input-field" placeholder="Ex: Meu Hub Profissional">
+        </div>
+        <div class="form-group">
             <label>Senha de Proteção desta Aba (Opcional)</label>
             <input type="text" id="configAbaSenha" class="input-field" placeholder="Ex: segredo123">
         </div>
@@ -434,7 +438,7 @@
     let senhaAdminAtual = localStorage.getItem('hub_admin_pass') || 'vinao123';
     let abasDesbloqueadas = {}; 
     let isReordering = false; 
-    let linkPendenteUrl = ''; // Para redirecionamento de link com senha
+    let linkPendenteUrl = ''; 
 
     const listaDeTemas = [
         { id: 'luxe_nude_gold', nome: '1. Luxe Nude & Gold', bg: '#1c1714', card: 'rgba(56, 46, 41, 0.75)', text: '#fbf7f4', muted: '#d4af37', accent: '#d4af37', glow: 'rgba(212, 175, 55, 0.3)', align: 'center', cardStyle: 'pill' },
@@ -574,6 +578,7 @@
             if (abas.length === 0) {
                 const defaultAba = {
                     nome: 'Principal',
+                    browserTitle: 'Bio Profissional & Hub de Links Pro',
                     tipo: 'bio',
                     senhaAba: '',
                     perfilNome: 'Alexandre Developer',
@@ -588,7 +593,6 @@
                 return;
             }
 
-            // Define aba ativa inicial respeitando a escolhida como principal pelo admin, caso exista
             if (!abaAtivaId) {
                 const abaPrincipalDefinida = abas.find(a => a.principal === true);
                 abaAtivaId = abaPrincipalDefinida ? abaPrincipalDefinida.id : abas[0].id;
@@ -694,6 +698,10 @@
             return;
         }
 
+        // Atualiza o título na guia do navegador dinamicamente
+        const titleVal = abaAtual.browserTitle || abaAtual.nome || 'Bio Profissional & Hub de Links Pro';
+        document.getElementById('pageTitleHead').innerText = titleVal;
+
         aplicarTemaVisual(abaAtual.temaId || 'luxe_nude_gold', abaAtual.bgImage || '');
         document.getElementById('footerTextDisplay').innerText = abaAtual.footerText || 'Criado com Hub Pro & Firebase';
 
@@ -754,7 +762,6 @@
     function acionarLink(url, senhaLink) {
         if (!isAdminLogado && senhaLink && senhaLink.trim() !== '') {
             linkPendenteUrl = url;
-            // Armazena temporalmente a senha correta associada
             window._senhaAlvoLinkAtual = senhaLink.trim();
             document.getElementById('senhaLinkInput').value = '';
             document.getElementById('modalSenhaLink').style.display = 'flex';
@@ -991,6 +998,7 @@
         if (!abaAtual) return;
 
         document.getElementById('configAbaNome').value = abaAtual.nome;
+        document.getElementById('configBrowserTitle').value = abaAtual.browserTitle || '';
         document.getElementById('configAbaSenha').value = abaAtual.senhaAba || '';
         document.getElementById('configTipoAba').value = abaAtual.tipo || 'bio';
         document.getElementById('configNome').value = abaAtual.perfilNome || '';
@@ -1016,6 +1024,7 @@
     async function salvarConfigPerfil() {
         if (!isAdminLogado) return;
         const nome = document.getElementById('configAbaNome').value.trim();
+        const browserTitle = document.getElementById('configBrowserTitle').value.trim();
         const senhaAba = document.getElementById('configAbaSenha').value.trim();
         const tipo = document.getElementById('configTipoAba').value;
         const perfilNome = document.getElementById('configNome').value.trim();
@@ -1028,7 +1037,7 @@
 
         try {
             await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), {
-                nome, senhaAba, tipo, perfilNome, perfilBio, perfilAvatar, bgImage, htmlCode
+                nome, browserTitle, senhaAba, tipo, perfilNome, perfilBio, perfilAvatar, bgImage, htmlCode
             }, { merge: true });
 
             fecharModalPerfil();
@@ -1070,6 +1079,7 @@
         const newId = 'aba_' + Date.now();
         await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", newId), {
             nome,
+            browserTitle: nome + ' | Hub Pro',
             senhaAba,
             tipo,
             perfilNome: nome,
