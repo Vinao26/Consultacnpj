@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="pageTitleHead">Gestão Financeira Multicontas</title>
+
+    <!-- Fontes e Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Biblioteca para Relatório em Foto -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+          authDomain: "bancoia.firebaseapp.com",
+          projectId: "bancoia",
+          storageBucket: "bancoia.firebasestorage.app",
+          messagingSenderId: "32042568752",
+          appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.fs = { collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc };
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-blue: #2563eb;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --blue-glow: rgba(37, 99, 235, 0.2);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: #ffffff;
+            --stat-box-bg: rgba(0, 0, 0, 0.03);
+            --btn-icon-bg: rgba(0, 0, 0, 0.04);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-main: #0f172a;
+                --card-bg: rgba(30, 41, 59, 0.7);
+                --card-border: rgba(255, 255, 255, 0.08);
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --accent-blue: #3b82f6;
+                --accent-green: #10b981;
+                --accent-orange: #f59e0b;
+                --accent-purple: #a78bfa;
+                --blue-glow: rgba(59, 130, 246, 0.25);
+                --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+                --input-bg: rgba(0, 0, 0, 0.2);
+                --stat-box-bg: rgba(0,0,0,0.15);
+                --btn-icon-bg: rgba(255, 255, 255, 0.05);
+            }
+        }
+
+        body.dark-theme {
+            --bg-main: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-purple: #a78bfa;
+            --blue-glow: rgba(59, 130, 246, 0.25);
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --stat-box-bg: rgba(0,0,0,0.15);
+            --btn-icon-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 50px; transition: var(--transition); }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 14px 18px; background: var(--card-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border); border-radius: 20px; box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .header-title h2 { font-size: 16px; font-weight: 800; color: var(--text-main); }
+        .header-title p { font-size: 11px; color: var(--text-muted); }
+
+        .btn-icon { background: var(--btn-icon-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+        .btn-icon:active { transform: scale(0.95); }
+
+        /* PAINEL ACUMULADO EXPANSÍVEL */
+        .overall-card, .installments-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px;
+            box-shadow: var(--shadow); backdrop-filter: blur(12px); overflow: hidden; transition: var(--transition);
+        }
+        .overall-header, .installments-header {
+            padding: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(139, 92, 246, 0.08); border-bottom: 1px solid var(--card-border);
+        }
+        .installments-header { background: rgba(37, 99, 235, 0.08); }
+        .overall-header h3 { font-size: 14px; font-weight: 800; color: var(--accent-purple); display: flex; align-items: center; gap: 8px; }
+        .installments-header h3 { font-size: 14px; font-weight: 800; color: var(--accent-blue); display: flex; align-items: center; gap: 8px; }
+        
+        .overall-body, .installments-body { padding: 16px; display: none; flex-direction: column; gap: 12px; }
+        .overall-body.open, .installments-body.open { display: flex; }
+
+        .account-detail-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: var(--stat-box-bg); border-radius: 12px; border: 1px solid var(--card-border); font-size: 12px;
+        }
+
+        /* GRID DE PARCELAS EXPANSÍVEL */
+        .installments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .installment-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px; background: var(--stat-box-bg);
+            border-radius: 12px; border: 1px solid var(--card-border);
+            font-size: 12px; cursor: pointer; transition: var(--transition);
+        }
+        .installment-item.paga {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        .installment-item input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--accent-green); cursor: pointer;
+        }
+
+        /* NAVEGAÇÃO DE ABAS */
+        .tabs-wrapper { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        .tabs-wrapper::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 10px 16px; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border);
+            color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: var(--transition);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); box-shadow: 0 4px 12px var(--blue-glow); }
+        .tab-btn-add { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border-color: rgba(16, 185, 129, 0.3); }
+
+        .summary-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px;
+            box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px; backdrop-filter: blur(12px);
+            transition: var(--transition);
+        }
+        .summary-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .vehicle-info h3 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .vehicle-info p { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+
+        .edit-btn-inline { background: none; border: none; color: var(--accent-blue); cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
+
+        .progress-bar-bg { width: 100%; height: 10px; background: var(--stat-box-bg); border-radius: 10px; overflow: hidden; border: 1px solid var(--card-border); }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-green)); width: 0%; transition: width 0.5s ease; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { background: var(--stat-box-bg); padding: 12px; border-radius: 14px; border: 1px solid var(--card-border); transition: var(--transition); }
+        .stat-box span { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .stat-box div { font-size: 16px; font-weight: 800; margin-top: 2px; }
+
+        .form-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); transition: var(--transition); }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text-main); font-size: 14px; outline: none; transition: var(--transition); width: 100%; }
+        .input-field:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-blue), #2563eb); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--blue-glow); transition: var(--transition); }
+
+        .payment-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; transition: var(--transition); }
+        .payment-header { display: flex; justify-content: space-between; align-items: center; }
+        .payment-month { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .badge { font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
+        .badge-parcela { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .badge-abatimento { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .badge-despesa { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
+
+        .payment-body { display: flex; justify-content: space-between; align-items: flex-end; }
+        .payment-date { font-size: 12px; color: var(--text-muted); }
+        .payment-val { font-size: 16px; font-weight: 800; color: var(--accent-green); }
+        .payment-val.despesa { color: var(--accent-orange); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+        .modal-body { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); backdrop-filter: blur(20px); max-height: 90vh; overflow-y: auto; color: var(--text-main); }
+        .preview-box { width: 100%; height: 380px; border: 1px solid var(--card-border); border-radius: 12px; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .btn-secondary { background: var(--btn-icon-bg); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+        #reportCaptureArea { position: fixed; top: 0; left: 0; width: 600px; background: #ffffff; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; padding: 32px; z-index: -9999; visibility: hidden; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-title">
+            <h2><i class="fas fa-wallet" style="color:var(--accent-purple);"></i> Gestão Multicontas</h2>
+            <p>Controle Unificado de Finanças</p>
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <button class="btn-icon" onclick="abrirConfigModal()"><i class="fas fa-pen"></i> Editar Aba</button>
+            <button class="btn-icon" onclick="gerarImagemRelatorio()"><i class="fas fa-camera"></i> Foto</button>
+        </div>
+    </header>
+
+    <!-- RESUMO EXPANSÍVEL ACUMULADO DE TODAS AS CONTAS -->
+    <div class="overall-card">
+        <div class="overall-header" onclick="toggleOverallSummary()">
+            <h3><i class="fas fa-layer-group"></i> Total de Todas as Contas Ativas</h3>
+            <i class="fas fa-chevron-down" id="overallChevron" style="color:var(--accent-purple); transition: transform 0.3s;"></i>
+        </div>
+        <div class="overall-body" id="overallBody">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span>Geral Já Pago</span>
+                    <div id="overallTotalPago" style="color:var(--accent-green);">R$ 0,00</div>
+                </div>
+                <div class="stat-box">
+                    <span>Saldo Devedor Total</span>
+                    <div id="overallSaldoDevedor" style="color:var(--accent-blue);">R$ 0,00</div>
+                </div>
+            </div>
+            
+            <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-top:6px;">Detalhamento por Aba:</div>
+            <div id="overallAccountList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+    </div>
+
+    <!-- NAVEGAÇÃO DE ABAS DINÂMICAS -->
+    <div class="tabs-wrapper" id="tabsWrapper"></div>
+
+    <!-- CARD DA ABA SELECIONADA -->
+    <div class="summary-card">
+        <div class="summary-top">
+            <div class="vehicle-info">
+                <h3 id="displayNomeVeiculo">Uno <button class="edit-btn-inline" onclick="abrirConfigModal()"><i class="fas fa-pen"></i></button></h3>
+                <p>
+                    <span id="labelValorTotal">Valor Total: R$ 0,00</span>
+                    <button class="edit-btn-inline" onclick="abrirConfigModal()"><i class="fas fa-pen"></i></button>
+                </p>
+            </div>
+            <span id="percentualPago" style="font-size: 14px; font-weight: 800; color: var(--accent-green);">0% Quitado</span>
+        </div>
+
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressoFill"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span>Amortizado (Aba)</span>
+                <div id="totalPagoVal" style="color:var(--accent-green);">R$ 0,00</div>
+            </div>
+            <div class="stat-box">
+                <span>Saldo Devedor</span>
+                <div id="saldoDevedorVal" style="color:var(--accent-blue);">R$ 0,00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKLIST DE PARCELAS EXPANSÍVEL (SE PARCELADO) -->
+    <div class="installments-card" id="installmentsCardContainer" style="display: none;">
+        <div class="installments-header" onclick="toggleInstallments()">
+            <h3><i class="fas fa-list-check"></i> Checklist de Parcelas Fixas</h3>
+            <i class="fas fa-chevron-down" id="installmentsChevron" style="color:var(--accent-blue); transition: transform 0.3s;"></i>
+        </div>
+        <div class="installments-body open" id="installmentsBody">
+            <div style="font-size:12px; color:var(--text-muted);" id="installmentSummaryText">
+                Valor da parcela: R$ 0,00
+            </div>
+            <div class="installments-grid" id="installmentsGrid"></div>
+        </div>
+    </div>
+
+    <!-- FORMULÁRIO DE REGISTRO MANUAL/AVULSO -->
+    <div class="form-card">
+        <h4 style="font-size:14px; font-weight:800; margin-bottom:12px;"><i class="fas fa-plus-circle" style="color:var(--accent-blue);"></i> Registrar Pagamento Avulso / Extra</h4>
+        <form id="formPagamento" onsubmit="salvarPagamento(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>Referência</label>
+                    <input type="text" id="mesRefInput" class="input-field" placeholder="Ex: Mês 05 ou IPVA" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="tipoInput" class="input-field">
+                        <option value="Parcela">Parcela / Extra</option>
+                        <option value="Abatimento">Abatimento Especial</option>
+                        <option value="Despesa">Despesa Extra</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="text" id="valorInput" class="input-field" placeholder="R$ 0,00" inputmode="numeric" oninput="mascaraMaquininha(this)" required>
+                </div>
+                <div class="form-group">
+                    <label>Data Pix</label>
+                    <input type="date" id="dataInput" class="input-field" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fab fa-google-drive" style="color:var(--accent-green);"></i> Link do Comprovante (Drive)</label>
+                <input type="url" id="driveLinkInput" class="input-field" placeholder="https://drive.google.com/file/d/...">
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnSalvar"><i class="fas fa-save"></i> Salvar Lançamento</button>
+        </form>
+    </div>
+
+    <!-- LISTA DE HISTÓRICO DA ABA -->
+    <h4 style="font-size:14px; font-weight:800; margin-top:4px;"><i class="fas fa-history"></i> Histórico desta Conta</h4>
+    <div id="historicoContainer"></div>
+</div>
+
+<!-- MODAL COMPROVANTE -->
+<div class="modal-overlay" id="modalView">
+    <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="modal-title"><i class="fas fa-file-invoice" style="color:var(--accent-green);"></i> Comprovante</h3>
+            <button class="btn-secondary" onclick="fecharModalView()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="preview-box" id="previewContainer"></div>
+        <div style="display:flex; gap:10px; justify-content:space-between;">
+            <a id="btnExternal" href="#" target="_blank" class="btn-secondary" style="text-decoration:none; text-align:center; flex:1;">
+                <i class="fas fa-external-link-alt"></i> Abrir Arquivo
+            </a>
+            <button class="btn-secondary" onclick="fecharModalView()">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR CONFIGURAÇÕES DA ABA -->
+<div class="modal-overlay" id="modalConfig">
+    <div class="modal-body">
+        <h3 class="modal-title"><i class="fas fa-cog" style="color:var(--accent-blue);"></i> Editar Aba Atual</h3>
+        
+        <div class="form-group">
+            <label>Nome da Aba / Conta</label>
+            <input type="text" id="configNomeVeiculo" class="input-field" placeholder="Ex: Fiat Uno ou Financiamento">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Pagamento</label>
+            <select id="configTipoPagamento" class="input-field" onchange="toggleCamposParcela('config')">
+                <option value="livre">Pagamento Livre (Sem parcelas fixas)</option>
+                <option value="parcelado">Parcelado (Quantidade fixa de parcelas)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Valor Total do Bem / Financiamento (R$)</label>
+            <input type="text" id="configValorCarro" class="input-field" placeholder="R$ 0,00" inputmode="numeric" oninput="mascaraMaquininha(this)">
+        </div>
+
+        <!-- Campos de Parcelado (Editar) -->
+        <div id="configCamposParcelado" style="display:none; flex-direction:column; gap:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Qtd. Parcelas</label>
+                    <input type="number" id="configQtdParcelas" class="input-field" placeholder="Ex: 48" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Mês Início</label>
+                    <input type="month" id="configMesInicio" class="input-field">
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:space-between; margin-top:8px;">
+            <button class="btn-secondary" style="color:#ef4444;" onclick="excluirAbaAtual()"><i class="fas fa-trash"></i> Apagar Aba</button>
+            <div style="display:flex; gap:6px;">
+                <button class="btn-secondary" onclick="fecharConfigModal()">Cancelar</button>
+                <button class="btn-submit" style="width:auto; margin-top:0;" onclick="salvarConfigGeral()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CRIAR NOVA ABA -->
+<div class="modal-overlay" id="modalNovaAba">
+    <div class="modal-body">
+        <h3 class="modal-title"><i class="fas fa-plus-circle" style="color:var(--accent-green);"></i> Criar Nova Aba</h3>
+        
+        <div class="form-group">
+            <label>Nome da Conta / Bem</label>
+            <input type="text" id="novaAbaNome" class="input-field" placeholder="Ex: Moto, Empréstimo, Cartão">
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de Pagamento</label>
+            <select id="novaAbaTipoPagamento" class="input-field" onchange="toggleCamposParcela('nova')">
+                <option value="livre">Pagamento Livre (Sem parcelas fixas)</option>
+                <option value="parcelado">Parcelado (Quantidade fixa de parcelas)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Valor Total do Bem / Financiamento (R$)</label>
+            <input type="text" id="novaAbaValor" class="input-field" placeholder="R$ 0,00" inputmode="numeric" oninput="mascaraMaquininha(this)">
+        </div>
+
+        <!-- Campos de Parcelado (Criar) -->
+        <div id="novaCamposParcelado" style="display:none; flex-direction:column; gap:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Qtd. Parcelas</label>
+                    <input type="number" id="novaAbaQtdParcelas" class="input-field" placeholder="Ex: 12" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Mês Início</label>
+                    <input type="month" id="novaAbaMesInicio" class="input-field">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Já iniciou pagando quantas?</label>
+                <input type="number" id="novaAbaParcelasJaPagas" class="input-field" placeholder="Ex: 0" min="0" value="0">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button class="btn-secondary" onclick="fecharNovaAbaModal()">Cancelar</button>
+            <button class="btn-submit" style="width:auto; margin-top:0;" onclick="criarNovaAba()">Criar Aba</button>
+        </div>
+    </div>
+</div>
+
+<div id="reportCaptureArea"></div>
+
+<script>
+    let contas = [];
+    let pagamentos = [];
+    let abaAtivaId = 'uno_pai';
+
+    window.addEventListener('DOMContentLoaded', () => {
+        verificarHorarioParaTemaNoturno();
+        escutarContas();
+        document.getElementById('dataInput').valueAsDate = new Date();
+    });
+
+    function verificarHorarioParaTemaNoturno() {
+        const horaAtual = new Date().getHours();
+        if (horaAtual >= 18 || horaAtual < 6) document.body.classList.add('dark-theme');
+    }
+
+    function toggleOverallSummary() {
+        const body = document.getElementById('overallBody');
+        const chev = document.getElementById('overallChevron');
+        body.classList.toggle('open');
+        chev.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    function toggleInstallments() {
+        const body = document.getElementById('installmentsBody');
+        const chev = document.getElementById('installmentsChevron');
+        body.classList.toggle('open');
+        chev.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    function toggleCamposParcela(prefix) {
+        const tipo = document.getElementById(prefix === 'config' ? 'configTipoPagamento' : 'novaAbaTipoPagamento').value;
+        const box = document.getElementById(prefix === 'config' ? 'configCamposParcelado' : 'novaCamposParcelado');
+        box.style.display = tipo === 'parcelado' ? 'flex' : 'none';
+    }
+
+    function mascaraMaquininha(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (!value) { input.value = ''; return; }
+        let numericValue = (parseInt(value, 10) / 100).toFixed(2);
+        input.value = 'R$ ' + parseFloat(numericValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function converterStringParaValor(str) {
+        if (!str) return 0;
+        let limpo = str.replace(/[^\d]/g, '');
+        return parseFloat(limpo) / 100 || 0;
+    }
+
+    function formatarValorParaInput(num) {
+        return 'R$ ' + parseFloat(num || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // --- ESCUTAR CONTAS DO FIREBASE ---
+    function escutarContas() {
+        window.fs.onSnapshot(window.fs.collection(window.db, "contas_geral"), async (snapshot) => {
+            contas = [];
+            snapshot.forEach(doc => contas.push({ id: doc.id, ...doc.data() }));
+
+            if (contas.length === 0) {
+                const defaultConta = { 
+                    nome: 'Uno (Pai)', 
+                    valorTotal: 22000, 
+                    tipoPagamento: 'livre',
+                    parcelasPagasCheck: []
+                };
+                await window.fs.setDoc(window.fs.doc(window.db, "contas_geral", "uno_pai"), defaultConta);
+                return;
+            }
+
+            if (!contas.find(c => c.id === abaAtivaId)) {
+                abaAtivaId = contas[0].id;
+            }
+
+            renderizarAbas();
+            escutarPagamentos();
+        });
+    }
+
+    // --- ESCUTAR LANÇAMENTOS DA ABA ATIVA ---
+    let unsubscribePagamentos = null;
+    function escutarPagamentos() {
+        if (unsubscribePagamentos) unsubscribePagamentos();
+
+        unsubscribePagamentos = window.fs.onSnapshot(window.fs.collection(window.db, `pagamentos_${abaAtivaId}`), (snapshot) => {
+            pagamentos = [];
+            snapshot.forEach(doc => pagamentos.push({ id: doc.id, ...doc.data() }));
+            pagamentos.sort((a, b) => new Date(b.dataPix) - new Date(a.dataPix));
+            renderizarApp();
+            carregarTotalGeralAcumulado();
+        });
+    }
+
+    function renderizarAbas() {
+        const container = document.getElementById('tabsWrapper');
+        container.innerHTML = '';
+
+        contas.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${c.id === abaAtivaId ? 'active' : ''}`;
+            btn.innerHTML = `<i class="fas ${c.tipoPagamento === 'parcelado' ? 'fa-file-invoice-dollar' : 'fa-car'}"></i> ${c.nome}`;
+            btn.onclick = () => mudarAba(c.id);
+            container.appendChild(btn);
+        });
+
+        const btnAdd = document.createElement('button');
+        btnAdd.className = 'tab-btn tab-btn-add';
+        btnAdd.innerHTML = `<i class="fas fa-plus"></i> Nova Conta`;
+        btnAdd.onclick = abrirNovaAbaModal;
+        container.appendChild(btnAdd);
+    }
+
+    function mudarAba(id) {
+        abaAtivaId = id;
+        renderizarAbas();
+        escutarPagamentos();
+    }
+
+    // --- RENDERIZAR TELA DA ABA ATIVA ---
+    function renderizarApp() {
+        const contaAtual = contas.find(c => c.id === abaAtivaId) || { nome: 'Conta', valorTotal: 0, tipoPagamento: 'livre' };
+        
+        document.getElementById('displayNomeVeiculo').innerHTML = `${contaAtual.nome} <button class="edit-btn-inline" onclick="abrirConfigModal()"><i class="fas fa-pen"></i></button>`;
+
+        let totalAmortizadoAvulso = 0;
+        pagamentos.forEach(p => {
+            if (p.tipo === 'Parcela' || p.tipo === 'Abatimento') totalAmortizadoAvulso += p.valor;
+        });
+
+        // Cálculo de valor pago por Parcelas fixas
+        let totalAmortizadoParcelas = 0;
+        const parcelasCheck = contaAtual.parcelasPagasCheck || [];
+        
+        if (contaAtual.tipoPagamento === 'parcelado' && contaAtual.qtdParcelas > 0) {
+            const valParcela = contaAtual.valorTotal / contaAtual.qtdParcelas;
+            totalAmortizadoParcelas = parcelasCheck.length * valParcela;
+        }
+
+        const totalAmortizadoGeral = totalAmortizadoAvulso + totalAmortizadoParcelas;
+        const saldoDevedor = Math.max(0, contaAtual.valorTotal - totalAmortizadoGeral);
+        const porc = contaAtual.valorTotal > 0 ? Math.min(100, ((totalAmortizadoGeral / contaAtual.valorTotal) * 100)).toFixed(1) : "0.0";
+
+        document.getElementById('labelValorTotal').innerText = `Valor Total: R$ ${contaAtual.valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('totalPagoVal').innerText = `R$ ${totalAmortizadoGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('saldoDevedorVal').innerText = `R$ ${saldoDevedor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('percentualPago').innerText = `${porc}% Quitado`;
+        document.getElementById('progressoFill').style.width = `${porc}%`;
+
+        // Renderizar/Ocultar checklist de parcelas
+        renderizarChecklistParcelas(contaAtual);
+
+        // Renderizar Lançamentos Avulsos
+        const container = document.getElementById('historicoContainer');
+        container.innerHTML = '';
+
+        if (pagamentos.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:20px;">Nenhum lançamento avulso nesta conta.</p>';
+            return;
+        }
+
+        pagamentos.forEach(p => {
+            const isDespesa = p.tipo === 'Despesa';
+            const badgeClass = p.tipo === 'Parcela' ? 'badge-parcela' : (p.tipo === 'Abatimento' ? 'badge-abatimento' : 'badge-despesa');
+            const [ano, mes, dia] = p.dataPix.split('-');
+
+            const card = document.createElement('div');
+            card.className = 'payment-card';
+
+            card.innerHTML = `
+                <div class="payment-header">
+                    <div class="payment-month"><i class="fas fa-calendar-check" style="color:var(--accent-blue);"></i> ${p.mesRef}</div>
+                    <span class="badge ${badgeClass}">${p.tipo}</span>
+                </div>
+                <div class="payment-body">
+                    <div class="payment-date"><i class="fas fa-clock"></i> Pix em ${dia}/${mes}/${ano}</div>
+                    <div class="payment-val ${isDespesa ? 'despesa' : ''}">${isDespesa ? '+' : '-'} R$ ${p.valor.toFixed(2)}</div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:4px;">
+                    ${p.comprovanteUrl ? `
+                        <button class="btn-icon" style="color:var(--accent-green);" onclick="abrirViewModal('${p.comprovanteUrl}')">
+                            <i class="fab fa-google-drive"></i> Comprovante
+                        </button>
+                    ` : ''}
+                    <button class="btn-icon" style="margin-left:auto; color:#ef4444;" onclick="excluirRegistro('${p.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- RENDERIZAR O CHECKLIST EXPANSÍVEL DE PARCELAS ---
+    function renderizarChecklistParcelas(conta) {
+        const box = document.getElementById('installmentsCardContainer');
+        if (conta.tipoPagamento !== 'parcelado' || !conta.qtdParcelas || conta.qtdParcelas <= 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        box.style.display = 'block';
+        const valParc = conta.valorTotal / conta.qtdParcelas;
+        document.getElementById('installmentSummaryText').innerText = 
+            `${conta.qtdParcelas} parcelas de R$ ${valParc.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+        const grid = document.getElementById('installmentsGrid');
+        grid.innerHTML = '';
+
+        const marcadas = conta.parcelasPagasCheck || [];
+
+        // Montar referência de meses
+        let dataInicio = conta.mesInicio ? new Date(conta.mesInicio + '-02') : new Date();
+
+        for (let i = 1; i <= conta.qtdParcelas; i++) {
+            const numParc = i;
+            const isPaga = marcadas.includes(numParc);
+
+            // Calcular mes/ano correspondente
+            const mesCorrente = new Date(dataInicio);
+            mesCorrente.setMonth(dataInicio.getMonth() + (i - 1));
+            const mesStr = (mesCorrente.getMonth() + 1).toString().padStart(2, '0') + '/' + mesCorrente.getFullYear();
+
+            const item = document.createElement('label');
+            item.className = `installment-item ${isPaga ? 'paga' : ''}`;
+            item.innerHTML = `
+                <input type="checkbox" ${isPaga ? 'checked' : ''} onchange="toggleParcelaPaga(${numParc}, this.checked)">
+                <div>
+                    <div><strong>${i}ª Parcela</strong></div>
+                    <div style="font-size:10px; opacity:0.8;">${mesStr}</div>
+                </div>
+            `;
+            grid.appendChild(item);
+        }
+    }
+
+    // --- ALTERAR STATUS DE UMA PARCELA (CHECKBOX) ---
+    async function toggleParcelaPaga(numParcela, check) {
+        const contaAtual = contas.find(c => c.id === abaAtivaId);
+        if (!contaAtual) return;
+
+        let marcadas = contaAtual.parcelasPagasCheck || [];
+        if (check) {
+            if (!marcadas.includes(numParcela)) marcadas.push(numParcela);
+        } else {
+            marcadas = marcadas.filter(p => p !== numParcela);
+        }
+
+        await window.fs.setDoc(window.fs.doc(window.db, "contas_geral", abaAtivaId), {
+            parcelasPagasCheck: marcadas
+        }, { merge: true });
+    }
+
+    // --- CARREGAR RESUMO EXPANSÍVEL DE TODAS AS CONTAS ---
+    async function carregarTotalGeralAcumulado() {
+        let geralPago = 0;
+        let geralSaldo = 0;
+        const accountListEl = document.getElementById('overallAccountList');
+        accountListEl.innerHTML = '';
+
+        for (const c of contas) {
+            // Pagamentos avulsos
+            let cPagoAvulso = 0;
+            const docsSnap = window.fs.collection(window.db, `pagamentos_${c.id}`);
+            
+            cPagoAvulso = await new Promise((resolve) => {
+                window.fs.onSnapshot(docsSnap, (s) => {
+                    let total = 0;
+                    s.forEach(d => {
+                        const data = d.data();
+                        if (data.tipo === 'Parcela' || data.tipo === 'Abatimento') total += data.valor;
+                    });
+                    resolve(total);
+                });
+            });
+
+            // Pagamentos parcelados
+            let cPagoParcelado = 0;
+            if (c.tipoPagamento === 'parcelado' && c.qtdParcelas > 0) {
+                const valParc = c.valorTotal / c.qtdParcelas;
+                cPagoParcelado = (c.parcelasPagasCheck || []).length * valParc;
+            }
+
+            const cPagoTotal = cPagoAvulso + cPagoParcelado;
+            let cSaldo = Math.max(0, c.valorTotal - cPagoTotal);
+
+            geralPago += cPagoTotal;
+            geralSaldo += cSaldo;
+
+            const item = document.createElement('div');
+            item.className = 'account-detail-item';
+            item.innerHTML = `
+                <div><strong>${c.nome}</strong> ${c.tipoPagamento === 'parcelado' ? '<small>(Parcelado)</small>' : ''}</div>
+                <div style="text-align:right;">
+                    <span style="color:var(--accent-green);">R$ ${cPagoTotal.toFixed(2)}</span> / 
+                    <span style="color:var(--accent-blue);">Devo: R$ ${cSaldo.toFixed(2)}</span>
+                </div>
+            `;
+            accountListEl.appendChild(item);
+        }
+
+        document.getElementById('overallTotalPago').innerText = `R$ ${geralPago.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('overallSaldoDevedor').innerText = `R$ ${geralSaldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
+
+    // --- SALVAR PAGAMENTO NA ABA ATIVA ---
+    async function salvarPagamento(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSalvar');
+        btn.disabled = true;
+
+        try {
+            const mesRef = document.getElementById('mesRefInput').value.trim();
+            const tipo = document.getElementById('tipoInput').value;
+            const valor = converterStringParaValor(document.getElementById('valorInput').value);
+            const dataPix = document.getElementById('dataInput').value;
+            const comprovanteUrl = document.getElementById('driveLinkInput').value.trim();
+
+            if (valor <= 0) return alert('Informe um valor válido!');
+
+            await window.fs.addDoc(window.fs.collection(window.db, `pagamentos_${abaAtivaId}`), {
+                mesRef, tipo, valor, dataPix, comprovanteUrl, criadoEm: new Date().toISOString()
+            });
+
+            document.getElementById('mesRefInput').value = '';
+            document.getElementById('valorInput').value = '';
+            document.getElementById('driveLinkInput').value = '';
+        } catch (err) {
+            alert('Erro: ' + err.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // --- CRIAR NOVA ABA ---
+    function abrirNovaAbaModal() { 
+        document.getElementById('modalNovaAba').style.display = 'flex'; 
+        toggleCamposParcela('nova');
+    }
+    function fecharNovaAbaModal() { document.getElementById('modalNovaAba').style.display = 'none'; }
+
+    async function criarNovaAba() {
+        const nome = document.getElementById('novaAbaNome').value.trim();
+        const tipoPagamento = document.getElementById('novaAbaTipoPagamento').value;
+        const valor = converterStringParaValor(document.getElementById('novaAbaValor').value);
+
+        if (!nome) return alert('Digite um nome para a conta/aba!');
+
+        let parcelasPagasCheck = [];
+        let qtdParcelas = 0;
+        let mesInicio = '';
+
+        if (tipoPagamento === 'parcelado') {
+            qtdParcelas = parseInt(document.getElementById('novaAbaQtdParcelas').value, 10) || 0;
+            mesInicio = document.getElementById('novaAbaMesInicio').value;
+            const jaPagas = parseInt(document.getElementById('novaAbaParcelasJaPagas').value, 10) || 0;
+
+            for (let i = 1; i <= Math.min(jaPagas, qtdParcelas); i++) {
+                parcelasPagasCheck.push(i);
+            }
+        }
+
+        const newId = 'aba_' + Date.now();
+        await window.fs.setDoc(window.fs.doc(window.db, "contas_geral", newId), {
+            nome, 
+            tipoPagamento, 
+            valorTotal: valor,
+            qtdParcelas,
+            mesInicio,
+            parcelasPagasCheck
+        });
+
+        document.getElementById('novaAbaNome').value = '';
+        document.getElementById('novaAbaValor').value = '';
+        fecharNovaAbaModal();
+        mudarAba(newId);
+    }
+
+    // --- EDITAR / EXCLUIR ABA ATIVA ---
+    function abrirConfigModal() {
+        const contaAtual = contas.find(c => c.id === abaAtivaId);
+        if (contaAtual) {
+            document.getElementById('configNomeVeiculo').value = contaAtual.nome;
+            document.getElementById('configTipoPagamento').value = contaAtual.tipoPagamento || 'livre';
+            document.getElementById('configValorCarro').value = formatarValorParaInput(contaAtual.valorTotal);
+            document.getElementById('configQtdParcelas').value = contaAtual.qtdParcelas || '';
+            document.getElementById('configMesInicio').value = contaAtual.mesInicio || '';
+            
+            toggleCamposParcela('config');
+            document.getElementById('modalConfig').style.display = 'flex';
+        }
+    }
+    function fecharConfigModal() { document.getElementById('modalConfig').style.display = 'none'; }
+
+    async function salvarConfigGeral() {
+        const nome = document.getElementById('configNomeVeiculo').value.trim();
+        const tipoPagamento = document.getElementById('configTipoPagamento').value;
+        const valorTotal = converterStringParaValor(document.getElementById('configValorCarro').value);
+        
+        let qtdParcelas = parseInt(document.getElementById('configQtdParcelas').value, 10) || 0;
+        let mesInicio = document.getElementById('configMesInicio').value;
+
+        if (!nome) return alert('Preencha o nome da aba!');
+
+        await window.fs.setDoc(window.fs.doc(window.db, "contas_geral", abaAtivaId), { 
+            nome, 
+            tipoPagamento, 
+            valorTotal,
+            qtdParcelas,
+            mesInicio 
+        }, { merge: true });
+
+        fecharConfigModal();
+    }
+
+    async function excluirAbaAtual() {
+        if (contas.length <= 1) return alert('Você precisa ter pelo menos uma aba ativa!');
+        if (confirm("Tem certeza que deseja apagar esta aba e todo o histórico dela?")) {
+            await window.fs.deleteDoc(window.fs.doc(window.db, "contas_geral", abaAtivaId));
+            fecharConfigModal();
+        }
+    }
+
+    async function excluirRegistro(id) {
+        if (confirm("Deseja apagar este lançamento?")) {
+            await window.fs.deleteDoc(window.fs.doc(window.db, `pagamentos_${abaAtivaId}`, id));
+        }
+    }
+
+    function abrirViewModal(url) {
+        const container = document.getElementById('previewContainer');
+        let embedUrl = url.includes('/view') ? url.replace('/view', '/preview') : url;
+        container.innerHTML = `<iframe src="${embedUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
+        document.getElementById('btnExternal').href = url;
+        document.getElementById('modalView').style.display = 'flex';
+    }
+    function fecharModalView() { document.getElementById('modalView').style.display = 'none'; }
+
+    // --- GERAR FOTO RELATÓRIO ---
+    function gerarImagemRelatorio() {
+        const contaAtual = contas.find(c => c.id === abaAtivaId);
+        let totalAmortizado = 0;
+        let linhas = '';
+
+        // Calcula total avulso
+        pagamentos.forEach(p => {
+            if (p.tipo === 'Parcela' || p.tipo === 'Abatimento') totalAmortizado += p.valor;
+            const [ano, mes, dia] = p.dataPix.split('-');
+            linhas += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px; font-weight: 700;">${p.mesRef}</td>
+                    <td style="padding: 10px; font-size: 11px; color: #64748b;">${p.tipo}</td>
+                    <td style="padding: 10px; font-size: 11px; color: #64748b;">${dia}/${mes}/${ano}</td>
+                    <td style="padding: 10px; font-weight: 800; text-align: right; color: ${p.tipo === 'Despesa' ? '#f59e0b' : '#10b981'};">
+                        R$ ${p.valor.toFixed(2)}
+                    </td>
+                </tr>
+            `;
+        });
+
+        // Somar parcelados
+        if (contaAtual.tipoPagamento === 'parcelado' && contaAtual.qtdParcelas > 0) {
+            const valParc = contaAtual.valorTotal / contaAtual.qtdParcelas;
+            const qtdCheck = (contaAtual.parcelasPagasCheck || []).length;
+            totalAmortizado += (qtdCheck * valParc);
+
+            linhas += `
+                <tr style="border-bottom: 1px solid #f1f5f9; background: #f0fdf4;">
+                    <td style="padding: 10px; font-weight: 700;">Parcelas Check</td>
+                    <td style="padding: 10px; font-size: 11px; color: #64748b;">Fixas (${qtdCheck}/${contaAtual.qtdParcelas})</td>
+                    <td style="padding: 10px; font-size: 11px; color: #64748b;">Acumulado</td>
+                    <td style="padding: 10px; font-weight: 800; text-align: right; color: #10b981;">
+                        R$ ${(qtdCheck * valParc).toFixed(2)}
+                    </td>
+                </tr>
+            `;
+        }
+
+        const saldoDevedor = Math.max(0, contaAtual.valorTotal - totalAmortizado);
+        const container = document.getElementById('reportCaptureArea');
+        container.style.visibility = 'visible';
+
+        container.innerHTML = `
+            <div style="background: #3b82f6; padding: 24px; border-radius: 16px; color: #ffffff; margin-bottom: 20px; text-align: center;">
+                <h1 style="font-size: 22px; font-weight: 800;">Extrato da Conta</h1>
+                <p style="font-size: 14px; opacity: 0.95; font-weight: 600; margin-top: 4px;">Aba: ${contaAtual.nome}</p>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1; background: #f0fdf4; border: 1px solid #dcfce7; padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="font-size: 10px; color: #15803d; font-weight: 800;">TOTAL PAGO</span>
+                    <div style="font-size: 18px; font-weight: 800; color: #16a34a;">R$ ${totalAmortizado.toFixed(2)}</div>
+                </div>
+                <div style="flex: 1; background: #eff6ff; border: 1px solid #dbeafe; padding: 12px; border-radius: 12px; text-align: center;">
+                    <span style="font-size: 10px; color: #1e40af; font-weight: 800;">SALDO DEVEDOR</span>
+                    <div style="font-size: 18px; font-weight: 800; color: #2563eb;">R$ ${saldoDevedor.toFixed(2)}</div>
+                </div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                <thead>
+                    <tr style="background: #f8fafc; text-align: left; font-size: 11px; text-transform: uppercase;">
+                        <th style="padding: 10px;">Ref.</th>
+                        <th style="padding: 10px;">Tipo</th>
+                        <th style="padding: 10px;">Data</th>
+                        <th style="padding: 10px; text-align: right;">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>${linhas}</tbody>
+            </table>
+        `;
+
+        html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Extrato_${contaAtual.nome.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            container.style.visibility = 'hidden';
+            container.innerHTML = '';
+        });
+    }
+</script>
+
+</body>
+</html>
