@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lista de Compras Inteligente</title>
+
+    <!-- Fontes e Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Biblioteca de Imagem em Alta Definicao -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, writeBatch 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+          authDomain: "bancoia.firebaseapp.com",
+          projectId: "bancoia",
+          storageBucket: "bancoia.firebasestorage.app",
+          messagingSenderId: "32042568752",
+          appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.fs = { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, writeBatch };
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --purple-glow: rgba(139, 92, 246, 0.25);
+            --green-glow: rgba(16, 185, 129, 0.25);
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --input-bg: rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-theme {
+            --bg-main: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --purple-glow: rgba(139, 92, 246, 0.12);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --input-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 90px; overflow-x: hidden; transition: var(--transition); }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px 16px; background: var(--card-bg); backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border); border-radius: 20px; box-shadow: var(--shadow);
+        }
+        .header-title h2 { font-size: 16px; font-weight: 800; color: var(--text-main); }
+        .header-title p { font-size: 11px; color: var(--text-muted); }
+
+        .btn-icon { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-main); padding: 8px 12px; border-radius: 12px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+        .btn-icon:active { transform: scale(0.95); }
+
+        .summary-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px;
+            box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(12px);
+        }
+        .balance-header { display: flex; justify-content: space-between; align-items: center; }
+        .balance-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .balance-value { font-size: 32px; font-weight: 800; color: var(--accent-green); margin-top: 2px; }
+
+        .stats-row { display: flex; justify-content: space-between; background: rgba(0,0,0,0.1); padding: 10px 14px; border-radius: 12px; border: 1px solid var(--card-border); font-size: 12px; }
+
+        .form-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+        
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text-main); font-size: 14px; outline: none; transition: var(--transition); width: 100%; }
+        .input-field:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 3px var(--purple-glow); }
+
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-purple), #6366f1); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--purple-glow); transition: var(--transition); margin-top: 4px; }
+        .btn-submit:active { transform: scale(0.98); }
+
+        .markets-container { display: flex; flex-direction: column; gap: 12px; }
+        .market-card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border); border-radius: 18px; overflow: hidden; }
+        .market-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255, 255, 255, 0.02); font-weight: 800; font-size: 15px; }
+        .market-content { display: flex; padding: 12px; flex-direction: column; gap: 8px; border-top: 1px solid var(--card-border); }
+
+        .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; transition: var(--transition); }
+        .item-card.purchased { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
+        
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .custom-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--card-border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); background: var(--input-bg); }
+        .item-card.purchased .custom-checkbox { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+        
+        .item-title { font-size: 14px; font-weight: 600; cursor: pointer; }
+        .item-card.purchased .item-title { text-decoration: line-through; color: var(--text-muted); opacity: 0.8; }
+
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .item-price { font-size: 13px; font-weight: 700; color: var(--text-main); }
+        .item-card.purchased .item-price { color: var(--accent-green); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+        .modal-body { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); backdrop-filter: blur(20px); }
+        .modal-title { font-size: 16px; font-weight: 800; }
+
+        .btn-secondary { background: var(--card-border); color: var(--text-main); border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-danger { background: #ef4444; color: #fff; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+        /* AREA DE IMPRESSAO/FOTO ESCONDIDA */
+        #reportCaptureArea {
+            position: fixed; top: 0; left: 0; width: 600px; background: #ffffff; color: #0f172a;
+            font-family: 'Plus Jakarta Sans', sans-serif; padding: 32px; z-index: -9999; visibility: hidden; box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-title">
+            <h2><i class="fas fa-shopping-cart" style="color:var(--accent-purple);"></i> Lista do Dia</h2>
+            <p>Mercado & Compras</p>
+        </div>
+        <button class="btn-icon" onclick="gerarImagemRelatorio()">
+            <i class="fas fa-camera"></i> Salvar Foto
+        </button>
+    </header>
+
+    <!-- Resumo dos Totais -->
+    <div class="summary-card">
+        <div class="balance-header">
+            <div>
+                <span class="balance-label">Total Marcado no Caixa</span>
+                <div class="balance-value" id="totalCarrinho">R$ 0,00</div>
+            </div>
+            <button class="btn-icon" style="color:#ef4444;" onclick="limparTudo()" title="Limpar Tudo">
+                <i class="fas fa-trash-alt"></i> Limpar
+            </button>
+        </div>
+        <div class="stats-row">
+            <span><b>Itens no Carrinho:</b> <span id="countMarcados">0</span></span>
+            <span><b>Total Previsto:</b> R$ <span id="totalGeralPrevisto">0,00</span></span>
+        </div>
+    </div>
+
+    <!-- Form de Adicionar Item -->
+    <div class="form-card">
+        <form id="formItem" onsubmit="adicionarItem(event)">
+            <div class="form-group">
+                <label>Estabelecimento / Mercado</label>
+                <input type="text" id="mercadoInput" class="input-field" placeholder="Ex: Mercado Betone, Clovis..." required list="listaMercados">
+                <datalist id="listaMercados"></datalist>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label>Item</label>
+                    <input type="text" id="nomeItemInput" class="input-field" placeholder="Ex: Arroz 5kg, Leite..." required>
+                </div>
+                <div class="form-group">
+                    <label>Preço (R$)</label>
+                    <input type="number" step="0.01" id="precoInput" class="input-field" placeholder="Opcional">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> Adicionar na Lista</button>
+        </form>
+    </div>
+
+    <div class="markets-container" id="marketsContainer"></div>
+</div>
+
+<!-- Modal Edição do Item -->
+<div class="modal-overlay" id="modalEdit">
+    <div class="modal-body">
+        <h3 class="modal-title">Editar Produto</h3>
+        <input type="hidden" id="editId">
+        <div class="form-group">
+            <label>Mercado</label>
+            <input type="text" id="editMercado" class="input-field">
+        </div>
+        <div class="form-group">
+            <label>Produto</label>
+            <input type="text" id="editNome" class="input-field">
+        </div>
+        <div class="form-group">
+            <label>Preço Unitário / Total (R$)</label>
+            <input type="number" step="0.01" id="editPreco" class="input-field" placeholder="0,00">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+            <button class="btn-secondary" onclick="fecharModalEdit()">Cancelar</button>
+            <button class="btn-danger" onclick="excluirItemModal()"><i class="fas fa-trash"></i></button>
+            <button class="btn-submit" style="margin-top:0; width:auto;" onclick="salvarItemEditado()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- CONTAINER DE CAPTURA DO RELATÓRIO -->
+<div id="reportCaptureArea"></div>
+
+<script>
+    let itensLista = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+        aplicarTemaAutomatico();
+        escutarCompras();
+    });
+
+    function aplicarTemaAutomatico() {
+        const horaAtual = new Date().getHours();
+        const eNoite = horaAtual < 6 || horaAtual >= 18;
+        const prefereModoEscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (!prefereModoEscuro && !eNoite) document.body.classList.add('light-theme');
+    }
+
+    function escutarCompras() {
+        const { collection, onSnapshot } = window.fs;
+        onSnapshot(collection(window.db, "lista_compras"), (snapshot) => {
+            itensLista = [];
+            snapshot.forEach(doc => itensLista.push({ id: doc.id, ...doc.data() }));
+            renderizarPainel();
+        });
+    }
+
+    async function adicionarItem(e) {
+        e.preventDefault();
+        const mercado = document.getElementById('mercadoInput').value.trim();
+        const nome = document.getElementById('nomeItemInput').value.trim();
+        const preco = parseFloat(document.getElementById('precoInput').value) || 0;
+
+        if (!mercado || !nome) return alert('Preencha o mercado e o nome do item.');
+
+        const item = {
+            mercado: mercado,
+            nome: nome,
+            preco: preco,
+            marcado: false,
+            criadoEm: new Date().toISOString()
+        };
+
+        const { collection, addDoc } = window.fs;
+        await addDoc(collection(window.db, "lista_compras"), item);
+
+        // Mantém o campo Mercado preenchido para facilitar novos itens no mesmo local!
+        document.getElementById('nomeItemInput').value = '';
+        document.getElementById('precoInput').value = '';
+        document.getElementById('nomeItemInput').focus();
+    }
+
+    async function alternarMarcado(id, estadoAtual) {
+        const { doc, updateDoc } = window.fs;
+        await updateDoc(doc(window.db, "lista_compras", id), { marcado: !estadoAtual });
+    }
+
+    function renderizarPainel() {
+        const porMercado = {};
+        let totalGeralCarrinho = 0;
+        let totalGeralPrevisto = 0;
+        let marcadosCount = 0;
+
+        // Atualizar Datalist de sugestões de Mercados
+        const mercadosUnicos = [...new Set(itensLista.map(i => i.mercado))];
+        const datalist = document.getElementById('listaMercados');
+        datalist.innerHTML = mercadosUnicos.map(m => `<option value="${m}">`).join('');
+
+        itensLista.forEach(item => {
+            if (!porMercado[item.mercado]) porMercado[item.mercado] = [];
+            porMercado[item.mercado].push(item);
+
+            totalGeralPrevisto += item.preco;
+
+            if (item.marcado) {
+                totalGeralCarrinho += item.preco;
+                marcadosCount++;
+            }
+        });
+
+        document.getElementById('totalCarrinho').innerText = `R$ ${totalGeralCarrinho.toFixed(2)}`;
+        document.getElementById('totalGeralPrevisto').innerText = totalGeralPrevisto.toFixed(2);
+        document.getElementById('countMarcados').innerText = `${marcadosCount} / ${itensLista.length}`;
+
+        const container = document.getElementById('marketsContainer');
+        container.innerHTML = '';
+
+        Object.keys(porMercado).sort().forEach(mercado => {
+            const itens = porMercado[mercado];
+            let subtotalMercado = 0;
+            itens.forEach(i => { if (i.marcado) subtotalMercado += i.preco; });
+
+            const card = document.createElement('div');
+            card.className = 'market-card';
+
+            const header = document.createElement('div');
+            header.className = 'market-header';
+            header.innerHTML = `
+                <span><i class="fas fa-store" style="color:var(--accent-purple); margin-right:8px;"></i>${mercado}</span>
+                <span style="color:var(--accent-green); font-size:14px;">R$ ${subtotalMercado.toFixed(2)}</span>
+            `;
+
+            const content = document.createElement('div');
+            content.className = 'market-content';
+
+            itens.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `item-card ${item.marcado ? 'purchased' : ''}`;
+                
+                itemDiv.innerHTML = `
+                    <div class="item-left" onclick="alternarMarcado('${item.id}', ${item.marcado})">
+                        <div class="custom-checkbox">
+                            ${item.marcado ? '<i class="fas fa-check" style="font-size:12px;"></i>' : ''}
+                        </div>
+                        <span class="item-title">${item.nome}</span>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-price">${item.preco > 0 ? 'R$ ' + item.preco.toFixed(2) : 'S/ Preço'}</span>
+                        <button class="btn-icon" style="padding:4px 8px;" onclick="abrirEditModal('${item.id}')"><i class="fas fa-pen"></i></button>
+                    </div>
+                `;
+                content.appendChild(itemDiv);
+            });
+
+            card.appendChild(header);
+            card.appendChild(content);
+            container.appendChild(card);
+        });
+    }
+
+    function abrirEditModal(id) {
+        const item = itensLista.find(i => i.id === id);
+        if (!item) return;
+
+        document.getElementById('editId').value = item.id;
+        document.getElementById('editMercado').value = item.mercado;
+        document.getElementById('editNome').value = item.nome;
+        document.getElementById('editPreco').value = item.preco > 0 ? item.preco : '';
+
+        document.getElementById('modalEdit').style.display = 'flex';
+    }
+
+    function fecharModalEdit() {
+        document.getElementById('modalEdit').style.display = 'none';
+    }
+
+    async function salvarItemEditado() {
+        const id = document.getElementById('editId').value;
+        const mercado = document.getElementById('editMercado').value.trim();
+        const nome = document.getElementById('editNome').value.trim();
+        const preco = parseFloat(document.getElementById('editPreco').value) || 0;
+
+        if (!mercado || !nome) return alert('Campos inválidos.');
+
+        const { doc, updateDoc } = window.fs;
+        await updateDoc(doc(window.db, "lista_compras", id), { mercado, nome, preco });
+        fecharModalEdit();
+    }
+
+    async function excluirItemModal() {
+        const id = document.getElementById('editId').value;
+        if (confirm("Deseja remover este item da lista?")) {
+            const { doc, deleteDoc } = window.fs;
+            await deleteDoc(doc(window.db, "lista_compras", id));
+            fecharModalEdit();
+        }
+    }
+
+    async function limparTudo() {
+        if (confirm("ATENÇÃO: Deseja apagar toda a lista de compras atual?")) {
+            const { doc, writeBatch } = window.fs;
+            const batch = writeBatch(window.db);
+            itensLista.forEach(item => {
+                batch.delete(doc(window.db, "lista_compras", item.id));
+            });
+            await batch.commit();
+        }
+    }
+
+    // --- GERADOR DE FOTO DE COMPROVANTE DE COMPRAS ---
+    function gerarImagemRelatorio() {
+        if (itensLista.length === 0) return alert('A lista está vazia!');
+
+        const porMercado = {};
+        let totalGeral = 0;
+
+        itensLista.filter(i => i.marcado).forEach(i => {
+            if (!porMercado[i.mercado]) porMercado[i.mercado] = [];
+            porMercado[i.mercado].push(i);
+            totalGeral += i.preco;
+        });
+
+        let blocosHTML = '';
+
+        Object.keys(porMercado).forEach(mercado => {
+            const itens = porMercado[mercado];
+            let subtotal = 0;
+            let linhas = '';
+
+            itens.forEach(i => {
+                subtotal += i.preco;
+                linhas += `
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 8px 12px; font-size: 12px; font-weight: 600;">${i.nome}</td>
+                        <td style="padding: 8px 12px; font-size: 12px; font-weight: 700; text-align: right; color: #10b981;">R$ ${i.preco.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            blocosHTML += `
+                <div style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="background: #f8fafc; padding: 10px 12px; font-size: 13px; font-weight: 800; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-store"></i> ${mercado}</span>
+                        <span style="color: #10b981;">Subtotal: R$ ${subtotal.toFixed(2)}</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse;">${linhas}</table>
+                </div>
+            `;
+        });
+
+        const container = document.getElementById('reportCaptureArea');
+        container.style.visibility = 'visible';
+
+        container.innerHTML = `
+            <div style="background: #8b5cf6; padding: 20px; border-radius: 16px; color: #ffffff; margin-bottom: 20px; text-align: center;">
+                <h1 style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">Comprovante de Compras</h1>
+                <p style="font-size: 12px; opacity: 0.9;">${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</p>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #dcfce7; padding: 16px; border-radius: 14px; text-align: center; margin-bottom: 20px;">
+                <span style="font-size: 10px; color: #15803d; font-weight: 800; text-transform: uppercase;">Total Comprado no Dia</span>
+                <div style="font-size: 28px; font-weight: 800; color: #16a34a; margin-top: 2px;">R$ ${totalGeral.toFixed(2)}</div>
+            </div>
+
+            ${blocosHTML || '<p style="text-align:center; color:#94a3b8; padding:20px;">Nenhum item marcado na lista.</p>'}
+
+            <div style="text-align: center; font-size: 10px; color: #94a3b8; margin-top: 20px;">
+                Resumo gerado para controle de gastos pessoais.
+            </div>
+        `;
+
+        html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Compras_${new Date().toISOString().split('T')[0]}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            container.style.visibility = 'hidden';
+            container.innerHTML = '';
+        });
+    }
+</script>
+
+</body>
+</html>
