@@ -102,7 +102,7 @@
             background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
             padding: 14px 18px; text-decoration: none; color: var(--text-main); font-weight: 700; font-size: 14px;
             box-shadow: var(--shadow); backdrop-filter: blur(12px); transition: transform 0.2s, border-color 0.2s;
-            position: relative; overflow: hidden; width: 100%;
+            position: relative; overflow: hidden; width: 100%; cursor: pointer;
         }
         .card-style-pill { border-radius: 50px; padding-left: 20px; padding-right: 20px; }
         .card-style-sharp { border-radius: 8px; border-left: 4px solid var(--accent); }
@@ -111,7 +111,7 @@
         .card-style-banner { border-radius: 16px; background: linear-gradient(135deg, var(--card-bg), rgba(255,255,255,0.05)); border: 1px solid var(--accent); }
 
         .bio-link-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 8px 25px var(--accent-glow); background: var(--btn-hover); }
-        .bio-link-content { display: flex; align-items: center; gap: 14px; z-index: 1; flex: 1; cursor: pointer; }
+        .bio-link-content { display: flex; align-items: center; gap: 14px; z-index: 1; flex: 1; }
         .bio-link-icon { font-size: 18px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--accent); border-radius: 8px; object-fit: cover; }
         
         .bio-link-actions { display: none; gap: 4px; z-index: 2; align-items: center; }
@@ -173,10 +173,11 @@
 
         <!-- CONTROLES EXCLUSIVOS DO ADMIN -->
         <div class="admin-controls admin-only" id="adminControlsPanel">
-            <button class="action-chip" onclick="abrirModalTemas()"><i class="fas fa-palette" style="color:var(--accent);"></i> Tema desta Aba</button>
+            <button class="action-chip" onclick="abrirModalTemas()"><i class="fas fa-palette" style="color:var(--accent);"></i> Tema</button>
             <button class="action-chip" onclick="gerarTemaAleatorio()"><i class="fas fa-dice" style="color:#10b981;"></i> Aleatório</button>
             <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Perfil & Senha</button>
             <button class="action-chip" onclick="abrirModalLink()"><i class="fas fa-plus"></i> Novo Link</button>
+            <button class="action-chip" onclick="marcarComoPrincipalAtual()"><i class="fas fa-star" style="color:#f59e0b;"></i> Tornar Principal</button>
             <button class="action-chip" onclick="abrirModalSenhaMaster()"><i class="fas fa-key" style="color:#f59e0b;"></i> Senha Master</button>
         </div>
     </div>
@@ -191,7 +192,10 @@
     <div id="htmlContentContainer" style="display:none; width: 100%;">
         <div class="admin-only" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
             <span style="font-size:12px; font-weight:700; color:var(--text-muted);"><i class="fas fa-code"></i> HTML Embutido</span>
-            <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Editar Código</button>
+            <div style="display:flex; gap:6px;">
+                <button class="action-chip" onclick="marcarComoPrincipalAtual()"><i class="fas fa-star" style="color:#f59e0b;"></i> Tornar Principal</button>
+                <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Editar Código</button>
+            </div>
         </div>
         <div class="embedded-html-frame" id="embeddedHtmlRenderArea"></div>
     </div>
@@ -229,6 +233,19 @@
     </div>
 </div>
 
+<!-- MODAL SENHA DE LINK INDIVIDUAL -->
+<div class="modal-overlay" id="modalSenhaLink">
+    <div class="modal-body" style="max-width: 320px; text-align: center;">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-lock" style="color:#f59e0b;"></i> Link Protegido por Senha</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Digite a senha para acessar este link:</p>
+        <input type="password" id="senhaLinkInput" class="input-field" placeholder="Senha do link">
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
+            <button class="btn-secondary" onclick="document.getElementById('modalSenhaLink').style.display='none'">Cancelar</button>
+            <button class="btn-submit" onclick="tentarAcessarLinkProtegido()">Acessar</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL ALTERAR SENHA MASTER -->
 <div class="modal-overlay" id="modalSenhaMaster">
     <div class="modal-body" style="max-width: 320px;">
@@ -257,6 +274,10 @@
         <div class="form-group">
             <label>URL de Destino</label>
             <input type="url" id="linkUrl" class="input-field" placeholder="https://seu-site.com">
+        </div>
+        <div class="form-group">
+            <label>Senha de Acesso (Opcional - Deixe em branco se livre)</label>
+            <input type="text" id="linkPassword" class="input-field" placeholder="Ex: meuPin123">
         </div>
         <div class="form-group">
             <label>Grupo / Categoria</label>
@@ -293,7 +314,7 @@
             <input type="text" id="configAbaNome" class="input-field">
         </div>
         <div class="form-group">
-            <label>Senha de Proteção desta Aba (Opcional - Deixe em branco para livre acesso)</label>
+            <label>Senha de Proteção desta Aba (Opcional)</label>
             <input type="text" id="configAbaSenha" class="input-field" placeholder="Ex: segredo123">
         </div>
         <div class="form-group">
@@ -408,11 +429,12 @@
 <script>
     let abas = [];
     let links = [];
-    let abaAtivaId = 'bio_principal';
+    let abaAtivaId = '';
     let isAdminLogado = false;
     let senhaAdminAtual = localStorage.getItem('hub_admin_pass') || 'vinao123';
     let abasDesbloqueadas = {}; 
-    let isReordering = false; // Trava contra conflitos de concorrência
+    let isReordering = false; 
+    let linkPendenteUrl = ''; // Para redirecionamento de link com senha
 
     const listaDeTemas = [
         { id: 'luxe_nude_gold', nome: '1. Luxe Nude & Gold', bg: '#1c1714', card: 'rgba(56, 46, 41, 0.75)', text: '#fbf7f4', muted: '#d4af37', accent: '#d4af37', glow: 'rgba(212, 175, 55, 0.3)', align: 'center', cardStyle: 'pill' },
@@ -566,13 +588,34 @@
                 return;
             }
 
-            if (!abas.find(a => a.id === abaAtivaId)) {
+            // Define aba ativa inicial respeitando a escolhida como principal pelo admin, caso exista
+            if (!abaAtivaId) {
+                const abaPrincipalDefinida = abas.find(a => a.principal === true);
+                abaAtivaId = abaPrincipalDefinida ? abaPrincipalDefinida.id : abas[0].id;
+            } else if (!abas.find(a => a.id === abaAtivaId)) {
                 abaAtivaId = abas[0].id;
             }
 
             renderizarAbasTop();
             carregarConteudoAbaAtiva();
         });
+    }
+
+    async function marcarComoPrincipalAtual() {
+        if (!isAdminLogado) return;
+        try {
+            const batch = window.fs.writeBatch(window.db);
+            abas.forEach(a => {
+                const docRef = window.fs.doc(window.db, "bio_abas", a.id);
+                batch.update(docRef, { principal: a.id === abaAtivaId });
+            });
+            await batch.commit();
+            alert('Esta aba agora é a principal (padrão de abertura)!');
+            renderizarAbasTop();
+        } catch (error) {
+            console.error("Erro ao definir aba principal:", error);
+            alert("Erro ao definir aba principal.");
+        }
     }
 
     function renderizarAbasTop() {
@@ -583,9 +626,10 @@
             const btn = document.createElement('button');
             const temSenha = a.senhaAba && a.senhaAba.trim() !== '';
             let iconeLock = temSenha && !isAdminLogado && !abasDesbloqueadas[a.id] ? '<i class="fas fa-lock" style="color:#f59e0b; margin-left:4px;"></i>' : '';
+            let iconePrincipal = a.principal ? '<i class="fas fa-star" style="color:#f59e0b; margin-left:2px;" title="Aba Principal"></i>' : '';
             
             btn.className = `tab-btn ${a.id === abaAtivaId ? 'active' : ''}`;
-            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome} ${iconeLock}`;
+            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome} ${iconePrincipal} ${iconeLock}`;
             btn.onclick = () => tentarMudarAba(a.id);
             container.appendChild(btn);
         });
@@ -676,7 +720,6 @@
 
             if (unsubscribeLinks) unsubscribeLinks();
             unsubscribeLinks = window.fs.onSnapshot(window.fs.collection(window.db, `links_${abaAtivaId}`), (snapshot) => {
-                // Se estivermos reordenando ativamente, evitamos puxar o snapshot para não causar conflito visual local
                 if (isReordering) return;
 
                 links = [];
@@ -708,6 +751,28 @@
         });
     }
 
+    function acionarLink(url, senhaLink) {
+        if (!isAdminLogado && senhaLink && senhaLink.trim() !== '') {
+            linkPendenteUrl = url;
+            // Armazena temporalmente a senha correta associada
+            window._senhaAlvoLinkAtual = senhaLink.trim();
+            document.getElementById('senhaLinkInput').value = '';
+            document.getElementById('modalSenhaLink').style.display = 'flex';
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+
+    function tentarAcessarLinkProtegido() {
+        const digitada = document.getElementById('senhaLinkInput').value;
+        if (digitada === window._senhaAlvoLinkAtual) {
+            document.getElementById('modalSenhaLink').style.display = 'none';
+            window.open(linkPendenteUrl, '_blank');
+        } else {
+            alert('Senha do link incorreta!');
+        }
+    }
+
     function renderizarLinks() {
         const container = document.getElementById('linksContainer');
         container.innerHTML = '';
@@ -732,6 +797,8 @@
                 iconeHtml = `<i class="${l.icon || 'fas fa-link'} bio-link-icon"></i>`;
             }
 
+            let iconeSenhaBadge = !isAdminLogado && l.senhaLink && l.senhaLink.trim() !== '' ? '<i class="fas fa-lock" style="font-size:11px; color:#f59e0b; margin-left:6px;" title="Link protegido por senha"></i>' : '';
+
             let botoesSetas = '';
             if (isAdminLogado) {
                 const desabilitado = isReordering ? 'disabled' : '';
@@ -740,17 +807,19 @@
                 botoesSetas = `${btnSubir}${btnDescer}`;
             }
 
+            a.onclick = () => acionarLink(l.url, l.senhaLink);
+
             a.innerHTML = `
-                <div class="bio-link-content" onclick="window.open('${l.url}', '_blank')">
+                <div class="bio-link-content">
                     ${iconeHtml}
                     <div>
-                        <div style="font-size:14px; font-weight:700;">${l.title}</div>
+                        <div style="font-size:14px; font-weight:700; display:flex; align-items:center;">${l.title} ${iconeSenhaBadge}</div>
                         ${l.grupo && l.grupo.trim() !== '' ? `<div style="font-size:10px; color:var(--accent); font-weight:600; text-transform:uppercase; margin-top:2px;">${l.grupo}</div>` : ''}
                     </div>
                 </div>
                 <div class="bio-link-actions">
                     ${botoesSetas}
-                    <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}')" title="Editar"><i class="fas fa-pen"></i></button>
+                    <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}', '${(l.senhaLink || '').replace(/'/g, "\\'")}')" title="Editar"><i class="fas fa-pen"></i></button>
                     <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); excluirLink('${l.id}')" title="Excluir" style="color:#ef4444;"><i class="fas fa-trash"></i></button>
                 </div>
             `;
@@ -758,40 +827,32 @@
         });
     }
 
-    // Função de reordenação refinada com Batch Write do Firebase e travas de concorrência
     async function moverLink(index, direcao) {
         if (!isAdminLogado || isReordering) return;
         
         const novoIndice = index + direcao;
         if (novoIndice < 0 || novoIndice >= links.length) return;
 
-        isReordering = true; // Ativa a trava de bloqueio de concorrência
-        
+        isReordering = true; 
         const toast = document.getElementById('syncStatusToast');
         toast.style.display = 'block';
 
-        // Atualização instantânea na interface local
         const itemMovido = links.splice(index, 1)[0];
         links.splice(novoIndice, 0, itemMovido);
-        renderizarLinks(); // Atualiza botões desabilitados instantaneamente
+        renderizarLinks();
 
         try {
-            // Criação de um lote atômico (WriteBatch) para enviar todas as novas ordens de uma vez só
             const batch = window.fs.writeBatch(window.db);
-            
             links.forEach((linkItem, idx) => {
                 const docRef = window.fs.doc(window.db, `links_${abaAtivaId}`, linkItem.id);
                 batch.update(docRef, { ordem: idx });
             });
-
-            await batch.commit(); // Executa o lote de forma síncrona e segura no Firestore
+            await batch.commit();
         } catch (error) {
             console.error("Erro crítico ao sincronizar ordem:", error);
             alert("Erro ao salvar ordem no banco. Tente novamente.");
-            // Recarrega os dados caso ocorra falha de rede
             carregarConteudoAbaAtiva();
         } finally {
-            // Aguarda um pequeno respiro de segurança (300ms) para liberar as travas e evitar loops do snapshot
             setTimeout(() => {
                 isReordering = false;
                 toast.style.display = 'none';
@@ -870,6 +931,7 @@
         document.getElementById('editLinkId').value = '';
         document.getElementById('linkTitle').value = '';
         document.getElementById('linkUrl').value = '';
+        document.getElementById('linkPassword').value = '';
         document.getElementById('linkGroup').value = '';
         document.getElementById('linkGroupSelect').value = '';
         document.getElementById('linkIcon').value = 'fas fa-globe';
@@ -878,10 +940,11 @@
         document.getElementById('modalLink').style.display = 'flex';
     }
 
-    function abrirModalLinkEditar(id, title, url, icon, grupo) {
+    function abrirModalLinkEditar(id, title, url, icon, grupo, senhaLink) {
         document.getElementById('editLinkId').value = id;
         document.getElementById('linkTitle').value = title;
         document.getElementById('linkUrl').value = url;
+        document.getElementById('linkPassword').value = senhaLink || '';
         document.getElementById('linkGroup').value = grupo || '';
         atualizarSelectGrupos();
         document.getElementById('linkGroupSelect').value = grupo || '';
@@ -895,6 +958,7 @@
         const id = document.getElementById('editLinkId').value;
         const title = document.getElementById('linkTitle').value.trim();
         const url = document.getElementById('linkUrl').value.trim();
+        const senhaLink = document.getElementById('linkPassword').value.trim();
         const grupo = document.getElementById('linkGroup').value.trim();
         const icon = document.getElementById('linkIcon').value.trim() || 'fas fa-globe';
 
@@ -903,10 +967,10 @@
         try {
             const colRef = window.fs.collection(window.db, `links_${abaAtivaId}`);
             if (id) {
-                await window.fs.setDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id), { title, url, icon, grupo }, { merge: true });
+                await window.fs.setDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id), { title, url, icon, grupo, senhaLink }, { merge: true });
             } else {
                 const novaOrdem = links.length;
-                await window.fs.addDoc(colRef, { title, url, icon, grupo, ordem: novaOrdem, criadoEm: new Date().toISOString() });
+                await window.fs.addDoc(colRef, { title, url, icon, grupo, senhaLink, ordem: novaOrdem, criadoEm: new Date().toISOString() });
             }
             fecharModalLink();
         } catch (error) {
@@ -1014,7 +1078,8 @@
             bgImage: '',
             footerText: 'Criado com Hub Pro & Firebase',
             temaId: 'luxe_nude_gold',
-            htmlCode: ''
+            htmlCode: '',
+            principal: false
         });
 
         fecharModalNovaAba();
