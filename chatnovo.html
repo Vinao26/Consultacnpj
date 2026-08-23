@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure Direct Chat Pro - Fixed Connection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #6366f1, #4f46e5);
+            --bg-body: #0f172a;
+            --bg-chat: #ffffff;
+            --msg-out: #4f46e5;
+            --msg-out-text: #ffffff;
+            --msg-in: #f1f5f9;
+            --msg-in-text: #1e293b;
+            --text-main: #0f172a;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --badge-color: #25d366;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body { 
+            background-color: var(--bg-body); 
+            height: 100vh; 
+            height: 100dvh;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; 
+        }
+
+        .chat-container { 
+            width: 100%; 
+            max-width: 480px; 
+            height: 100%; 
+            background: var(--bg-chat); 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); 
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .chat-container { height: 90vh; border-radius: 24px; }
+        }
+
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-chat);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 5;
+        }
+        .screen.hidden-screen {
+            transform: translateX(-100%);
+            pointer-events: none;
+        }
+
+        .chat-header { 
+            padding: 16px 20px; 
+            background: #ffffff; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            z-index: 10;
+        }
+
+        .header-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .avatar {
+            width: 42px; height: 42px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700; font-size: 16px;
+        }
+        .header-info h2 { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        .header-info span { font-size: 12px; color: var(--text-light); font-weight: 500; }
+
+        .contacts-actions {
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .add-contact-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f8fafc;
+        }
+        .contact-item {
+            background: white;
+            padding: 14px 16px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .contact-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+        }
+        .contact-info { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .contact-name { font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .contact-sub { font-size: 12px; color: var(--text-light); }
+
+        .contact-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .time-text {
+            font-size: 11px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .unread-badge {
+            background: var(--badge-color);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .chat-messages { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+            background: #f8fafc;
+        }
+
+        .message { 
+            padding: 12px 16px; 
+            border-radius: 16px; 
+            max-width: 80%; 
+            font-size: 14px; 
+            line-height: 1.5; 
+            word-break: break-word; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .msg-out { align-self: flex-end; background: var(--primary-gradient); color: var(--msg-out-text); border-bottom-right-radius: 4px; }
+        .msg-in { align-self: flex-start; background: var(--msg-in); color: var(--msg-in-text); border-bottom-left-radius: 4px; border: 1px solid var(--border-color); }
+        .msg-author { font-size: 11px; font-weight: 700; margin-bottom: 4px; opacity: 0.85; display: block; }
+
+        .chat-footer { 
+            padding: 14px 16px; 
+            background: #ffffff; 
+            border-top: 1px solid var(--border-color); 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+
+        .input-wrapper { 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            background: #f1f5f9; 
+            border-radius: 24px; 
+            padding: 6px 16px; 
+            border: 1px solid var(--border-color); 
+        }
+        .input-wrapper input { 
+            width: 100%; border: none; background: transparent; outline: none; font-size: 14px; color: var(--text-main); padding: 6px 0; 
+        }
+
+        .action-btn { 
+            background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 18px; width: 40px; height: 40px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+        }
+        .action-btn:hover { background: #f1f5f9; color: var(--primary); }
+
+        .send-btn {
+            background: var(--primary-gradient); color: white; border: none;
+            width: 42px; height: 42px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: flex-end;
+            z-index: 100;
+        }
+        .action-sheet {
+            background: white; width: 100%; border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 20px; display: flex; flex-direction: column; gap: 10px;
+            animation: slideUp 0.2s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .sheet-btn {
+            padding: 14px; border-radius: 12px; border: none; background: #f8fafc;
+            font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-main);
+        }
+        .sheet-btn:hover { background: #f1f5f9; }
+        .sheet-btn.danger { color: #ef4444; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+
+    <!-- TELA 1: LISTA DE CONTATOS -->
+    <div class="screen" id="screenContacts">
+        <div class="chat-header">
+            <div class="header-profile" onclick="mostrarMeuCodigo()" title="Ver seu código de 6 dígitos">
+                <div class="avatar" id="userAvatar">EU</div>
+                <div class="header-info">
+                    <h2 id="headerNickname">Carregando...</h2>
+                    <span id="headerMyCode" style="color: var(--primary); font-weight: 700;">PIN: ...</span>
+                </div>
+            </div>
+            <button class="action-btn" onclick="solicitarPermissaoNotificacao()" title="Ativar Notificações">
+                <i class="fas fa-bell" style="color: var(--primary);"></i>
+            </button>
+        </div>
+
+        <div class="contacts-actions">
+            <h3 style="font-size: 12px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">Conversas Disponíveis</h3>
+            <button class="add-contact-btn" onclick="adicionarConversaPorCodigo()">
+                <i class="fas fa-user-plus"></i> Adicionar por PIN
+            </button>
+        </div>
+
+        <div class="contacts-list" id="contactsList"></div>
+    </div>
+
+    <!-- TELA 2: SALA DE CHAT DIRETO -->
+    <div class="screen hidden-screen" id="screenChat">
+        <div class="chat-header">
+            <div class="header-profile" onclick="voltarParaContatos()">
+                <button class="action-btn" style="width: 32px; height: 32px;"><i class="fas fa-arrow-left"></i></button>
+                <div class="header-info">
+                    <h2 id="chatRoomTitle">Conversa</h2>
+                    <span id="chatRoomSub">Chat privado</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 4px;">
+                <button class="action-btn" onclick="gerenciarSenhaChat()" title="Definir Senha da Conversa">
+                    <i class="fas fa-key" style="color: var(--primary);"></i>
+                </button>
+                <button class="action-btn" onclick="limparChatAtual()" title="Limpar Conversa">
+                    <i class="fas fa-trash-can" style="color: #ef4444;"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="messages"></div>
+
+        <div class="chat-footer">
+            <input type="file" id="fileInput" class="hidden">
+            <button class="action-btn" onclick="document.getElementById('fileInput').click()" title="Anexar Arquivo ou Documento">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <div class="input-wrapper">
+                <input type="text" id="msgInput" placeholder="Mensagem...">
+            </div>
+            <button class="send-btn" onclick="enviarTexto()" title="Enviar">
+                <i class="fas fa-paper-plane" style="font-size: 15px;"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE AÇÕES NA MENSAGEM -->
+    <div class="modal-overlay" id="actionModal" onclick="fecharModal(event)">
+        <div class="action-sheet" id="actionSheetContent"></div>
+    </div>
+
+    <!-- MODAL DE ESCOLHA DO CONTATO -->
+    <div class="modal-overlay" id="contactModal" onclick="fecharModalContato(event)">
+        <div class="action-sheet">
+            <h3 id="modalContactName" style="font-size: 16px; margin-bottom: 4px; color: var(--text-main);">Opções da Conversa</h3>
+            <p style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">Escolha uma opção:</p>
+            <button class="sheet-btn" onclick="entrarNaConversaSelecionada()"><i class="fas fa-comments" style="color: var(--primary);"></i> Entrar na Conversa</button>
+            <button class="sheet-btn" onclick="definirSenhaPeloModal()"><i class="fas fa-lock" style="color: #f59e0b;"></i> Criar / Alterar Senha</button>
+            <button class="sheet-btn danger" onclick="excluirContatoDaLista()"><i class="fas fa-user-slash"></i> Excluir Conversa/Usuário da Lista</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Firebase Atualizado via CDN Oficial Estável (v12.11.0) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, deleteDoc, updateDoc, doc, setDoc, getDoc, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+      authDomain: "bancoia.firebaseapp.com",
+      projectId: "bancoia",
+      storageBucket: "bancoia.firebasestorage.app",
+      messagingSenderId: "32042568752",
+      appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+    };
+
+    let db;
+    try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+    } catch (err) {
+        console.error("Erro ao inicializar Firebase:", err);
+        alert("Erro ao conectar ao Firebase. Verifique sua conexão com a internet.");
+    }
+
+    let myUserId = localStorage.getItem('chat_device_id');
+    if(!myUserId) {
+        myUserId = 'user_' + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem('chat_device_id', myUserId);
+    }
+
+    let myShortCode = localStorage.getItem('chat_short_code');
+    if(!myShortCode) {
+        myShortCode = Math.floor(100000 + Math.random() * 900000).toString();
+        localStorage.setItem('chat_short_code', myShortCode);
+    }
+
+    let meuApelido = localStorage.getItem('chat_nickname');
+    if(!meuApelido) {
+        meuApelido = 'Usuário_' + Math.random().toString(36).substring(2, 5);
+        localStorage.setItem('chat_nickname', meuApelido);
+    }
+
+    function atualizarPerfilUI() {
+        document.getElementById('headerNickname').innerText = meuApelido;
+        document.getElementById('headerMyCode').innerText = `PIN: ${myShortCode}`;
+        document.getElementById('userAvatar').innerText = meuApelido.substring(0, 2).toUpperCase();
+    }
+    atualizarPerfilUI();
+
+    async function registrarUsuarioNaNuvem() {
+        if (!db) return;
+        try {
+            await setDoc(doc(db, "usuarios", myUserId), {
+                id: myUserId,
+                code: myShortCode,
+                nickname: meuApelido,
+                lastSeen: serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.error("Erro ao registrar usuário na nuvem:", e);
+        }
+    }
+    registrarUsuarioNaNuvem();
+
+    let activeRoomId = null;
+    let selectedContactId = null;
+    let selectedContactName = null;
+    let mensagemSelecionadaId = null;
+    let mensagemSelecionadaTexto = null;
+    let mensagemSelecionadaFile = null;
+    let unsubMessages = null;
+    let unsubGlobalMonitor = null;
+    
+    let contatosExcluidos = JSON.parse(localStorage.getItem('chat_excluidos') || '[]');
+
+    window.solicitarPermissaoNotificacao = async () => {
+        if (!("Notification" in window)) return;
+        await Notification.requestPermission();
+    };
+
+    window.mostrarMeuCodigo = () => {
+        alert(`O seu código PIN de 6 dígitos para os outros adicionarem é: ${myShortCode}`);
+    };
+
+    function getRoomId(id1, id2) {
+        return [id1, id2].sort().join('_');
+    }
+
+    window.adicionarConversaPorCodigo = async () => {
+        if(!db) return;
+        const codigoDigitado = prompt('Digite o código de 6 dígitos da outra pessoa:');
+        if(!codigoDigitado || !codigoDigitado.trim()) return;
+
+        try {
+            const qCode = query(collection(db, "usuarios"), where("code", "==", codigoDigitado.trim()));
+            const querySnapshot = await getDocs(qCode);
+
+            if(querySnapshot.empty) {
+                alert('Nenhum usuário encontrado com este código de 6 dígitos.');
+                return;
+            }
+
+            let targetUser = null;
+            querySnapshot.forEach((docSnap) => { targetUser = docSnap.data(); });
+
+            if(targetUser.id === myUserId) {
+                alert('Você não pode adicionar a si mesmo.');
+                return;
+            }
+
+            contatosExcluidos = contatosExcluidos.filter(id => id !== targetUser.id);
+            localStorage.setItem('chat_excluidos', JSON.stringify(contatosExcluidos));
+
+            alert(`Contato "${targetUser.nickname}" adicionado com sucesso!`);
+            carregarListaContatos();
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao buscar usuário.");
+        }
+    };
+
+    function iniciarMonitoramentoGlobal() {
+        if(!db) return;
+        if(unsubGlobalMonitor) unsubGlobalMonitor();
+
+        const qGlobal = query(collection(db, "mensagens"), orderBy("timestamp", "asc"));
+        let primeiraCarga = true;
+
+        unsubGlobalMonitor = onSnapshot(qGlobal, async (snapshot) => {
+            try {
+                const leiturasRef = doc(db, "leituras_usuario", myUserId);
+                const leiturasSnap = await getDoc(leiturasRef);
+                const ultimasLeituras = leiturasSnap.exists() ? leiturasSnap.data() : {};
+
+                const contadores = {};
+                const ultimosHorarios = {};
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data.roomId && data.roomId.includes(myUserId)) {
+                        const ids = data.roomId.split('_');
+                        const outroId = ids[0] === myUserId ? ids[1] : ids[0];
+                        
+                        const msgTempo = data.timestamp && data.timestamp.toMillis ? data.timestamp.toMillis() : Date.now();
+
+                        if (!ultimosHorarios[outroId] || msgTempo > ultimosHorarios[outroId].rawTime) {
+                            const dateObj = new Date(msgTempo);
+                            const horaFormatada = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            ultimosHorarios[outroId] = { timeStr: horaFormatada, rawTime: msgTempo };
+                        }
+
+                        if (data.senderId && data.senderId !== myUserId) {
+                            if (activeRoomId !== data.roomId) {
+                                const ultimaLeituraTimestamp = ultimasLeituras[data.roomId] || 0;
+                                if (msgTempo > ultimaLeituraTimestamp) {
+                                    contadores[outroId] = (contadores[outroId] || 0) + 1;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (!primeiraCarga) {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === "added") {
+                            const data = change.doc.data();
+                            if (data.roomId && data.roomId.includes(myUserId) && data.senderId !== myUserId && activeRoomId !== data.roomId) {
+                                if (Notification.permission === "granted") {
+                                    new Notification(`Nova mensagem de ${data.autor || 'Contato'}`, {
+                                        body: data.texto,
+                                        icon: "https://cdn-icons-png.flaticon.com/512/733/733585.png"
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+                primeiraCarga = false;
+
+                atualizarListaContatosUI(contadores, ultimosHorarios);
+            } catch (e) {
+                console.error("Erro no monitor global:", e);
+            }
+        }, (error) => {
+            console.error("Erro na escuta global do Firestore:", error);
+        });
+    }
+
+    let ultimosUsuariosSnapshot = null;
+    
+    async function carregarListaContatos() {
+        if(!db) return;
+        try {
+            const usersQuery = query(collection(db, "usuarios"));
+            const snapshot = await getDocs(usersQuery);
+            ultimosUsuariosSnapshot = snapshot;
+            iniciarMonitoramentoGlobal();
+        } catch (e) {
+            console.error("Erro ao carregar contatos:", e);
+        }
+    }
+    carregarListaContatos();
+
+    function atualizarListaContatosUI(contadoresNaoLidos = {}, ultimosHorarios = {}) {
+        if(!ultimosUsuariosSnapshot) return;
+        const listContainer = document.getElementById('contactsList');
+        listContainer.innerHTML = '';
+        
+        ultimosUsuariosSnapshot.forEach(docSnap => {
+            const userData = docSnap.data();
+            if(userData.id === myUserId) return;
+            if(contatosExcluidos.includes(userData.id)) return;
+
+            const qtdNaoLidas = contadoresNaoLidos[userData.id] || 0;
+            const infoHorario = ultimosHorarios[userData.id];
+            const horarioTexto = infoHorario ? infoHorario.timeStr : '';
+
+            const item = document.createElement('div');
+            item.className = 'contact-item';
+            item.innerHTML = `
+                <div class="contact-info" onclick="abrirOpcoesContato('${userData.id}', '${userData.nickname}')">
+                    <div class="avatar" style="width: 38px; height: 38px; font-size: 14px;">${(userData.nickname || 'U').substring(0, 2).toUpperCase()}</div>
+                    <div>
+                        <div class="contact-name">${userData.nickname}</div>
+                        <div class="contact-sub">PIN: ${userData.code || '------'}</div>
+                    </div>
+                </div>
+                <div class="contact-meta">
+                    <span class="time-text">${horarioTexto}</span>
+                    ${qtdNaoLidas > 0 ? `<div class="unread-badge">${qtdNaoLidas}</div>` : ''}
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    window.abrirOpcoesContato = (contactId, contactName) => {
+        selectedContactId = contactId;
+        selectedContactName = contactName;
+        document.getElementById('modalContactName').innerText = `Conversa com ${contactName}`;
+        document.getElementById('contactModal').style.display = 'flex';
+    };
+
+    window.fecharModalContato = (e) => {
+        if(e.target.id === 'contactModal') {
+            document.getElementById('contactModal').style.display = 'none';
+        }
+    };
+
+    window.entrarNaConversaSelecionada = async () => {
+        if(!db) return;
+        document.getElementById('contactModal').style.display = 'none';
+        activeRoomId = getRoomId(myUserId, selectedContactId);
+
+        try {
+            const leiturasRef = doc(db, "leituras_usuario", myUserId);
+            await setDoc(leiturasRef, {
+                [activeRoomId]: Date.now()
+            }, { merge: true });
+
+            const roomMetaRef = doc(db, "salas_meta", activeRoomId);
+            const roomSnap = await getDoc(roomMetaRef);
+
+            if(roomSnap.exists() && roomSnap.data().senha) {
+                const senhaDigitada = prompt('Conversa protegida por senha. Digite a senha:');
+                if(senhaDigitada !== roomSnap.data().senha) {
+                    alert('Senha incorreta!');
+                    activeRoomId = null;
+                    return;
+                }
+            }
+
+            document.getElementById('chatRoomTitle').innerText = selectedContactName;
+            document.getElementById('screenContacts').classList.add('hidden-screen');
+            document.getElementById('screenChat').classList.remove('hidden-screen');
+
+            carregarMensagensDaSala(activeRoomId);
+            iniciarMonitoramentoGlobal();
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao entrar na sala.");
+        }
+    };
+
+    window.excluirContatoDaLista = () => {
+        document.getElementById('contactModal').style.display = 'none';
+        if(confirm(`Deseja remover ${selectedContactName} da sua lista de conversas disponíveis?`)) {
+            if(!contatosExcluidos.includes(selectedContactId)) {
+                contatosExcluidos.push(selectedContactId);
+                localStorage.setItem('chat_excluidos', JSON.stringify(contatosExcluidos));
+            }
+            carregarListaContatos();
+            alert('Contato removido da lista!');
+        }
+    };
+
+    window.definirSenhaPeloModal = async () => {
+        if(!db) return;
+        document.getElementById('contactModal').style.display = 'none';
+        const roomId = getRoomId(myUserId, selectedContactId);
+        const novaSenha = prompt('Nova senha para esta conversa (deixe em branco para remover):');
+        
+        await setDoc(doc(db, "salas_meta", roomId), { senha: novaSenha ? novaSenha.trim() : '' }, { merge: true });
+        alert(novaSenha ? 'Senha configurada!' : 'Senha removida.');
+    };
+
+    window.gerenciarSenhaChat = async () => {
+        if(!db || !activeRoomId) return;
+        const roomMetaRef = doc(db, "salas_meta", activeRoomId);
+        const roomSnap = await getDoc(roomMetaRef);
+        const senhaAtual = roomSnap.exists() ? roomSnap.data().senha : '';
+
+        const novaSenha = prompt('Defina ou altere a senha (deixe em branco para remover):', senhaAtual || '');
+        if(novaSenha !== null) {
+            await setDoc(roomMetaRef, { senha: novaSenha.trim() }, { merge: true });
+            alert('Senha atualizada!');
+        }
+    };
+
+    window.voltarParaContatos = () => {
+        if(unsubMessages) unsubMessages();
+        activeRoomId = null;
+        document.getElementById('screenChat').classList.add('hidden-screen');
+        document.getElementById('screenContacts').classList.remove('hidden-screen');
+        carregarListaContatos();
+    };
+
+    window.enviarTexto = async () => {
+        const input = document.getElementById('msgInput');
+        if(!input.value.trim() || !activeRoomId || !db) return;
+        
+        try {
+            await addDoc(collection(db, "mensagens"), {
+                roomId: activeRoomId,
+                texto: input.value,
+                autor: meuApelido,
+                senderId: myUserId,
+                timestamp: serverTimestamp()
+            });
+            input.value = '';
+        } catch (e) {
+            console.error("Erro ao enviar:", e);
+        }
+    };
+
+    document.getElementById('msgInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') enviarTexto();
+    });
+
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if(!file || !activeRoomId || !db) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                let tipoLabel = "Documento";
+                if(file.type.includes("image")) tipoLabel = "Foto";
+                else if(file.name.endsWith(".html") || file.name.endsWith(".htm")) tipoLabel = "Arquivo HTML";
+
+                await addDoc(collection(db, "mensagens"), {
+                    roomId: activeRoomId,
+                    texto: `📎 [${tipoLabel}] ${file.name}`,
+                    fileData: event.target.result,
+                    fileName: file.name,
+                    autor: meuApelido,
+                    senderId: myUserId,
+                    timestamp: serverTimestamp()
+                });
+                e.target.value = '';
+            } catch (err) {
+                console.error("Erro ao enviar arquivo:", err);
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    window.limparChatAtual = async () => {
+        if(!db || !confirm('Deseja apagar todas as mensagens desta conversa?')) return;
+        const snapshot = await getDocs(query(collection(db, "mensagens")));
+        snapshot.forEach(docSnap => {
+            if(docSnap.data().roomId === activeRoomId) {
+                deleteDoc(doc(db, "mensagens", docSnap.id));
+            }
+        });
+    };
+
+    function carregarMensagensDaSala(roomId) {
+        if(!db) return;
+        if(unsubMessages) unsubMessages();
+        
+        const qMsgs = query(collection(db, "mensagens"), orderBy("timestamp", "asc"));
+        unsubMessages = onSnapshot(qMsgs, (snapshot) => {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if(data.roomId === roomId) {
+                    const div = document.createElement('div');
+                    div.className = 'message ' + (data.senderId === myUserId ? 'msg-out' : 'msg-in');
+                    div.innerHTML = `<span class="msg-author">${data.autor || 'Anônimo'}</span>${data.texto}`;
+                    
+                    div.onclick = () => abrirModalMensagem(docSnap.id, data.texto, data.fileData, data.fileName);
+                    container.appendChild(div);
+                }
+            });
+            container.scrollTop = container.scrollHeight;
+        }, (err) => {
+            console.error("Erro ao carregar mensagens:", err);
+        });
+    }
+
+    window.abrirModalMensagem = (id, texto, fileData, fileName) => {
+        mensagemSelecionadaId = id;
+        mensagemSelecionadaTexto = texto;
+        mensagemSelecionadaFile = fileData;
+
+        const sheet = document.getElementById('actionSheetContent');
+        let htmlBotoes = `
+            <button class="sheet-btn" onclick="copiarMensagem()"><i class="fas fa-copy"></i> Copiar Texto</button>
+        `;
+
+        if(fileData) {
+            htmlBotoes += `
+                <button class="sheet-btn" style="color: var(--primary);" onclick="baixarArquivoMensagem('${fileName || 'documento'}')">
+                    <i class="fas fa-download"></i> Baixar Arquivo (${fileName || 'Anexo'})
+                </button>
+            `;
+        }
+
+        htmlBotoes += `
+            <button class="sheet-btn" onclick="ativarEdicao()"><i class="fas fa-pen"></i> Editar Mensagem</button>
+            <button class="sheet-btn danger" onclick="apagarMensagem()"><i class="fas fa-trash"></i> Apagar Mensagem</button>
+        `;
+
+        sheet.innerHTML = htmlBotoes;
+        document.getElementById('actionModal').style.display = 'flex';
+    };
+
+    window.fecharModal = (e) => {
+        if(e.target.id === 'actionModal') {
+            document.getElementById('actionModal').style.display = 'none';
+        }
+    };
+
+    window.copiarMensagem = () => {
+        navigator.clipboard.writeText(mensagemSelecionadaTexto);
+        alert('Texto copiado!');
+        document.getElementById('actionModal').style.display = 'none';
+    };
+
+    window.baixarArquivoMensagem = (nomeArquivo) => {
+        if(!mensagemSelecionadaFile) return;
+        const a = document.createElement('a');
+        a.href = mensagemSelecionadaFile;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        document.getElementById('actionModal').style.display = 'none';
+    };
+
+    window.apagarMensagem = async () => {
+        if(!db) return;
+        if(confirm('Deseja apagar esta mensagem?')) {
+            await deleteDoc(doc(db, "mensagens", mensagemSelecionadaId));
+        }
+        document.getElementById('actionModal').style.display = 'none';
+    };
+
+    window.ativarEdicao = async () => {
+        if(!db) return;
+        const novoTexto = prompt('Edite sua mensagem:', mensagemSelecionadaTexto);
+        if(novoTexto !== null && novoTexto.trim() !== '') {
+            await updateDoc(doc(db, "mensagens", mensagemSelecionadaId), {
+                texto: novoTexto.trim()
+            });
+        }
+        document.getElementById('actionModal').style.display = 'none';
+    };
+</script>
+</body>
+</html>

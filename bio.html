@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="pageTitleHead">Bio Profissional & Hub de Links Pro</title>
+
+    <!-- Fontes e Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+          authDomain: "bancoia.firebaseapp.com",
+          projectId: "bancoia",
+          storageBucket: "bancoia.firebasestorage.app",
+          messagingSenderId: "32042568752",
+          appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.fs = { collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc };
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --btn-bg: rgba(255, 255, 255, 0.04);
+            --btn-hover: rgba(255, 255, 255, 0.1);
+            --shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.6);
+            --radius: 24px;
+            --font-family: 'Plus Jakarta Sans', sans-serif;
+            --layout-align: center;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-main); color: var(--text-main); min-height: 100vh; padding-bottom: 60px; transition: all 0.4s ease; display: flex; flex-direction: column; align-items: center; background-size: cover; background-position: center; }
+
+        .container { width: 100%; max-width: 480px; padding: 16px; display: flex; flex-direction: column; gap: 16px; z-index: 2; align-items: var(--layout-align); }
+
+        /* NAVEGAÇÃO DE ABAS */
+        .tabs-wrapper { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; width: 100%; }
+        .tabs-wrapper::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            padding: 8px 14px; border-radius: 12px; background: var(--card-bg); border: 1px solid var(--card-border);
+            color: var(--text-muted); font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.3s;
+            display: flex; align-items: center; gap: 6px; backdrop-filter: blur(12px);
+        }
+        .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); }
+        .tab-btn-add { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.3); display: none; }
+        .admin-mode .tab-btn-add { display: flex; }
+
+        /* HEADER / PERFIL */
+        .profile-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius);
+            padding: 28px 20px; text-align: var(--layout-align); box-shadow: var(--shadow); backdrop-filter: blur(16px);
+            display: flex; flex-direction: column; align-items: var(--layout-align); gap: 12px; width: 100%; position: relative;
+        }
+        .avatar-container { position: relative; width: 92px; height: 92px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, var(--accent), #ec4899); }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #1e293b; }
+        .profile-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .profile-bio { font-size: 13px; color: var(--text-muted); max-width: 320px; line-height: 1.4; }
+
+        /* PAINEL DE CONTROLE ADMIN */
+        .admin-controls { display: none; gap: 6px; justify-content: center; width: 100%; margin-top: 4px; flex-wrap: wrap; }
+        .action-chip {
+            background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--text-main);
+            padding: 6px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 5px; transition: all 0.2s; backdrop-filter: blur(10px);
+        }
+        .action-chip:hover { background: var(--btn-hover); transform: translateY(-1px); }
+
+        /* GRUPOS E LINKS */
+        .links-container { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .link-group-wrapper { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        
+        .link-group-title {
+            font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--accent); margin-top: 6px; padding-left: 4px; display: flex; align-items: center; gap: 8px;
+        }
+        .link-group-title::after { content: ""; flex: 1; height: 1px; background: var(--card-border); }
+
+        .bio-link-card {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+            padding: 14px 18px; text-decoration: none; color: var(--text-main); font-weight: 700; font-size: 14px;
+            box-shadow: var(--shadow); backdrop-filter: blur(12px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden; width: 100%;
+        }
+        .card-style-pill { border-radius: 50px; padding-left: 20px; padding-right: 20px; }
+        .card-style-sharp { border-radius: 8px; border-left: 4px solid var(--accent); }
+        .card-style-neon { border: 2px solid var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+        .card-style-glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); }
+        .card-style-banner { border-radius: 16px; background: linear-gradient(135deg, var(--card-bg), rgba(255,255,255,0.05)); border: 1px solid var(--accent); }
+
+        .bio-link-card:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 8px 25px var(--accent-glow); background: var(--btn-hover); }
+        .bio-link-content { display: flex; align-items: center; gap: 14px; z-index: 1; }
+        .bio-link-icon { font-size: 18px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--accent); border-radius: 8px; object-fit: cover; }
+        
+        .bio-link-actions { display: none; gap: 6px; z-index: 2; }
+        .admin-mode .bio-link-actions { display: flex; }
+        
+        .icon-btn-mini { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 4px; }
+        .icon-btn-mini:hover { color: var(--text-main); }
+
+        .embedded-html-frame {
+            width: 100%; min-height: 400px; border: 1px solid var(--card-border); border-radius: var(--radius);
+            background: var(--card-bg); backdrop-filter: blur(16px); overflow: hidden; box-shadow: var(--shadow);
+        }
+
+        /* BARRA DE PROGRESSO DO UPLOAD */
+        .progress-bar-container { width: 100%; background: var(--btn-bg); border-radius: 8px; height: 8px; overflow: hidden; display: none; margin-top: 6px; border: 1px solid var(--card-border); }
+        .progress-bar-fill { height: 100%; width: 0%; background: #10b981; transition: width 0.1s ease; }
+
+        /* MODAIS */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+        .modal-body { background: var(--bg-main); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; color: var(--text-main); }
+        
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-field { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--btn-bg); color: var(--text-main); font-size: 14px; outline: none; transition: all 0.3s; width: 100%; }
+        .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--accent-glow); transition: all 0.3s; }
+        .btn-secondary { background: var(--btn-bg); color: var(--text-main); border: 1px solid var(--card-border); padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 13px; }
+
+        .themes-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+        .theme-option {
+            padding: 12px; border-radius: 14px; border: 1px solid var(--card-border); cursor: pointer;
+            font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+        }
+        .theme-option:hover { transform: scale(1.02); border-color: var(--accent); }
+
+        footer { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        
+        .admin-only { display: none; }
+        .admin-mode .admin-only { display: flex; }
+    </style>
+</head>
+<body id="mainBodyTag">
+
+<div class="container" id="mainContainerBox">
+    <!-- NAVEGAÇÃO DE ABAS -->
+    <div class="tabs-wrapper" id="tabsWrapper"></div>
+
+    <!-- HEADER / PERFIL -->
+    <div class="profile-card" id="profileCardSection">
+        <div class="avatar-container">
+            <img src="" alt="Avatar" class="avatar" id="displayAvatar">
+        </div>
+        <div>
+            <h1 class="profile-name" id="displayName">Seu Nome</h1>
+            <p class="profile-bio" id="displayBio">Sua bio profissional elegante e moderna.</p>
+        </div>
+
+        <!-- CONTROLES EXCLUSIVOS DO ADMIN -->
+        <div class="admin-controls admin-only" id="adminControlsPanel">
+            <button class="action-chip" onclick="abrirModalTemas()"><i class="fas fa-palette" style="color:var(--accent);"></i> Temas & Layouts</button>
+            <button class="action-chip" onclick="gerarTemaAleatorio()"><i class="fas fa-dice" style="color:#10b981;"></i> Aleatório</button>
+            <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Perfil & Fundo</button>
+            <button class="action-chip" onclick="abrirModalLink()"><i class="fas fa-plus"></i> Novo Link</button>
+            <button class="action-chip" onclick="abrirModalSenha()"><i class="fas fa-key" style="color:#f59e0b;"></i> Senha</button>
+        </div>
+    </div>
+
+    <!-- CONTAINER DE LINKS COM GRUPOS -->
+    <div class="links-container" id="linksContainer"></div>
+
+    <!-- CONTAINER HTML -->
+    <div id="htmlContentContainer" style="display:none; width: 100%;">
+        <div class="admin-only" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:12px; font-weight:700; color:var(--text-muted);"><i class="fas fa-code"></i> HTML Embutido</span>
+            <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Editar Código</button>
+        </div>
+        <div class="embedded-html-frame" id="embeddedHtmlRenderArea"></div>
+    </div>
+
+    <footer>
+        <span id="footerTextDisplay">Criado com Hub Pro & Firebase</span>
+        <button class="action-chip admin-only" style="padding: 2px 6px; font-size:9px;" onclick="abrirModalRodape()"><i class="fas fa-pen"></i></button>
+        <button class="action-chip" id="loginLogoutBtn" onclick="toggleAdminLogin()" style="margin-left:auto; font-size:9px; padding:3px 8px;"><i class="fas fa-lock"></i> Admin</button>
+    </footer>
+</div>
+
+<!-- MODAL LOGIN ADMIN -->
+<div class="modal-overlay" id="modalLogin">
+    <div class="modal-body" style="max-width: 320px; text-align: center;">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-shield-alt" style="color:var(--accent);"></i> Acesso Restrito</h3>
+        <p style="font-size:12px; color:var(--text-muted);">Insira a senha de administrador:</p>
+        <input type="password" id="adminPasswordInput" class="input-field" placeholder="Senha">
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
+            <button class="btn-secondary" onclick="fecharModalLogin()">Cancelar</button>
+            <button class="btn-submit" onclick="verificarSenhaAdmin()">Entrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ALTERAR SENHA ADMIN -->
+<div class="modal-overlay" id="modalSenha">
+    <div class="modal-body" style="max-width: 320px;">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-key" style="color:var(--accent);"></i> Mudar Senha Admin</h3>
+        <div class="form-group">
+            <label>Nova Senha</label>
+            <input type="password" id="novaSenhaInput" class="input-field" placeholder="Digite a nova senha">
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+            <button class="btn-secondary" onclick="document.getElementById('modalSenha').style.display='none'">Cancelar</button>
+            <button class="btn-submit" onclick="salvarNovaSenha()">Atualizar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR / CRIAR LINK -->
+<div class="modal-overlay" id="modalLink">
+    <div class="modal-body">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-link" style="color:var(--accent);"></i> Gerenciar Link</h3>
+        <input type="hidden" id="editLinkId">
+        
+        <div class="form-group">
+            <label>Título do Link</label>
+            <input type="text" id="linkTitle" class="input-field" placeholder="Ex: Meu Portfólio">
+        </div>
+        <div class="form-group">
+            <label>URL de Destino</label>
+            <input type="url" id="linkUrl" class="input-field" placeholder="https://seu-site.com">
+        </div>
+        <div class="form-group">
+            <label>Grupo / Categoria</label>
+            <input type="text" id="linkGroup" class="input-field" placeholder="Ex: Redes Sociais, Projetos">
+        </div>
+        <div class="form-group">
+            <label>Ícone ou Upload de Imagem (Compactado Automaticamente)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="linkIcon" class="input-field" placeholder="Ex: fab fa-instagram ou imagem">
+                <input type="file" id="linkImageFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 300, 300, 'linkIcon', 'linkProgressBar', 'linkProgressFill', 'linkUploadStatus')">
+                <button class="btn-secondary" onclick="document.getElementById('linkImageFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
+            </div>
+            <div class="progress-bar-container" id="linkProgressBar"><div class="progress-bar-fill" id="linkProgressFill"></div></div>
+            <span id="linkUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Imagem compactada e pronta!</span>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+            <button class="btn-secondary" onclick="fecharModalLink()">Cancelar</button>
+            <button class="btn-submit" onclick="salvarLink()">Salvar Link</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PERFIL E FUNDO -->
+<div class="modal-overlay" id="modalPerfil">
+    <div class="modal-body">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-user-cog" style="color:var(--accent);"></i> Configurações da Aba & Visual</h3>
+        
+        <div class="form-group">
+            <label>Nome da Aba no Topo</label>
+            <input type="text" id="configAbaNome" class="input-field">
+        </div>
+        <div class="form-group">
+            <label>Tipo de Página</label>
+            <select id="configTipoAba" class="input-field" onchange="toggleTipoAbaCampos()">
+                <option value="bio">Bio de Links Profissional</option>
+                <option value="html">Página HTML Embutida / Código</option>
+            </select>
+        </div>
+
+        <div id="bioConfigFields">
+            <div class="form-group" style="margin-top:10px;">
+                <label>Nome de Exibição (Perfil)</label>
+                <input type="text" id="configNome" class="input-field">
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label>Bio / Descrição</label>
+                <textarea id="configBio" class="input-field" rows="2" style="resize:none;"></textarea>
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label>Foto de Avatar (Compactado Automaticamente)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="url" id="configAvatar" class="input-field" placeholder="URL ou clique em Upload">
+                    <input type="file" id="avatarFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 400, 400, 'configAvatar', 'avatarProgressBar', 'avatarProgressFill', 'avatarUploadStatus')">
+                    <button class="btn-secondary" onclick="document.getElementById('avatarFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
+                </div>
+                <div class="progress-bar-container" id="avatarProgressBar"><div class="progress-bar-fill" id="avatarProgressFill"></div></div>
+                <span id="avatarUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Avatar compactado!</span>
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label>Background Geral (Compactado Automaticamente)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="url" id="configBgImage" class="input-field" placeholder="URL ou clique em Upload">
+                    <input type="file" id="bgFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 1200, 1200, 'configBgImage', 'bgProgressBar', 'bgProgressFill', 'bgUploadStatus')">
+                    <button class="btn-secondary" onclick="document.getElementById('bgFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
+                </div>
+                <div class="progress-bar-container" id="bgProgressBar"><div class="progress-bar-fill" id="bgProgressFill"></div></div>
+                <span id="bgUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Fundo compactado!</span>
+            </div>
+        </div>
+
+        <div id="htmlConfigFields" style="display:none;">
+            <div class="form-group" style="margin-top:10px;">
+                <label>Código HTML Customizado</label>
+                <textarea id="configHtmlCode" class="input-field" rows="6" placeholder="Cole seu código HTML completo aqui..."></textarea>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:space-between; margin-top:8px;">
+            <button class="btn-secondary" style="color:#ef4444;" onclick="excluirAbaAtual()"><i class="fas fa-trash"></i> Apagar Aba</button>
+            <div style="display:flex; gap:6px;">
+                <button class="btn-secondary" onclick="fecharModalPerfil()">Cancelar</button>
+                <button class="btn-submit" style="width:auto;" onclick="salvarConfigPerfil()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CRIAR ABA (APENAS ADMIN) -->
+<div class="modal-overlay" id="modalNovaAba">
+    <div class="modal-body">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-plus-circle" style="color:#10b981;"></i> Criar Nova Aba</h3>
+        <div class="form-group">
+            <label>Nome da Aba</label>
+            <input type="text" id="novaAbaNomeInput" class="input-field" placeholder="Ex: Projetos">
+        </div>
+        <div class="form-group">
+            <label>Tipo</label>
+            <select id="novaAbaTipoInput" class="input-field">
+                <option value="bio">Bio com Links</option>
+                <option value="html">Página HTML</option>
+            </select>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+            <button class="btn-secondary" onclick="fecharModalNovaAba()">Cancelar</button>
+            <button class="btn-submit" onclick="criarNovaAba()">Criar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR RODAPÉ -->
+<div class="modal-overlay" id="modalRodape">
+    <div class="modal-body" style="max-width: 360px;">
+        <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-pen" style="color:var(--accent);"></i> Editar Texto do Rodapé</h3>
+        <div class="form-group">
+            <label>Texto do Rodapé</label>
+            <input type="text" id="footerTextInput" class="input-field">
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+            <button class="btn-secondary" onclick="document.getElementById('modalRodape').style.display='none'">Cancelar</button>
+            <button class="btn-submit" onclick="salvarRodapeText()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TEMAS -->
+<div class="modal-overlay" id="modalTemas">
+    <div class="modal-body" style="max-width: 520px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-palette" style="color:var(--accent);"></i> Temas & Layouts Inspirados</h3>
+            <button class="btn-secondary" onclick="fecharModalTemas()"><i class="fas fa-times"></i></button>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted);">10 estilos baseados em design profissional de bio de links (Nude, Dourado, Minimalista e Dark Luxury):</p>
+        <div class="themes-grid" id="themesGridContainer" style="margin-top:4px;"></div>
+    </div>
+</div>
+
+<script>
+    let abas = [];
+    let links = [];
+    let abaAtivaId = 'bio_principal';
+    let temaAtualId = 'luxe_nude_gold';
+    let isAdminLogado = false;
+    let senhaAdminAtual = localStorage.getItem('hub_admin_pass') || 'vinao123';
+
+    // 10 TEMAS INSPIRADOS NOS MODELOS ENVIADOS (FOTOS)
+    const listaDeTemas = [
+        { id: 'luxe_nude_gold', nome: '1. Luxe Nude & Gold (Estilo Tatiele/Marina)', bg: '#1c1714', card: 'rgba(56, 46, 41, 0.75)', text: '#fbf7f4', muted: '#d4af37', accent: '#d4af37', glow: 'rgba(212, 175, 55, 0.3)', align: 'center', cardStyle: 'pill' },
+        { id: 'studio_barbara_teal', nome: '2. Studio Barbara Teal & Sand', bg: '#062829', card: 'rgba(23, 70, 71, 0.7)', text: '#f3efe6', muted: '#93c5fd', accent: '#e2b86d', glow: 'rgba(226, 184, 109, 0.35)', align: 'center', cardStyle: 'banner' },
+        { id: 'editorial_quinn_dark', nome: '3. Editorial Quinn Black & Serif', bg: '#0b0b0b', card: 'rgba(24, 24, 24, 0.85)', text: '#ffffff', muted: '#a3a3a3', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.25)', align: 'center', cardStyle: 'sharp' },
+        { id: 'larissa_almeida_chic', nome: '4. Larissa Beauty Minimal', bg: '#141211', card: 'rgba(42, 36, 33, 0.8)', text: '#fdf8f6', muted: '#c5a880', accent: '#c5a880', glow: 'rgba(197, 168, 128, 0.3)', align: 'center', cardStyle: 'pill' },
+        { id: 'soft_beige_clean', nome: '5. Soft Beige Professional', bg: '#f2ece4', card: 'rgba(255, 255, 255, 0.9)', text: '#2c2421', muted: '#786d65', accent: '#9a7b5c', glow: 'rgba(154, 123, 92, 0.25)', align: 'center', cardStyle: 'standard' },
+        { id: 'midnight_obsidian', nome: '6. Midnight Obsidian Pro', bg: '#0b0f19', card: 'rgba(17, 24, 39, 0.75)', text: '#f9fafb', muted: '#9ca3af', accent: '#6366f1', glow: 'rgba(99, 102, 241, 0.35)', align: 'center', cardStyle: 'standard' },
+        { id: 'cyber_neon_grid', nome: '7. Cyberpunk Neon Grid', bg: '#030305', card: 'rgba(15, 15, 20, 0.9)', text: '#00ffcc', muted: '#d946ef', accent: '#ff007f', glow: 'rgba(255, 0, 127, 0.5)', align: 'center', cardStyle: 'neon' },
+        { id: 'emerald_lux_pill', nome: '8. Emerald Luxury Pills', bg: '#022c22', card: 'rgba(6, 78, 59, 0.6)', text: '#ecfdf5', muted: '#6ee7b7', accent: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', align: 'center', cardStyle: 'pill' },
+        { id: 'royal_glass', nome: '9. Royal Amethyst Glass', bg: '#1e1b4b', card: 'rgba(49, 46, 129, 0.4)', text: '#e0e7ff', muted: '#a5b4fc', accent: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.4)', align: 'center', cardStyle: 'glass' },
+        { id: 'minimal_light', nome: '10. Minimal Clean Light', bg: '#f8fafc', card: 'rgba(255, 255, 255, 0.95)', text: '#0f172a', muted: '#64748b', accent: '#2563eb', glow: 'rgba(37, 99, 235, 0.2)', align: 'center', cardStyle: 'standard' }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+        escutarDadosGerais();
+        popularGridTemas();
+    });
+
+    function toggleAdminLogin() {
+        if (isAdminLogado) {
+            isAdminLogado = false;
+            document.body.classList.remove('admin-mode');
+            document.getElementById('loginLogoutBtn').innerHTML = '<i class="fas fa-lock"></i> Admin';
+            renderizarAbasTop(); // Remove botão de criar aba para visitantes
+            alert('Você saiu do modo administrador.');
+        } else {
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('modalLogin').style.display = 'flex';
+        }
+    }
+    function fecharModalLogin() { document.getElementById('modalLogin').style.display = 'none'; }
+    
+    function verificarSenhaAdmin() {
+        const senha = document.getElementById('adminPasswordInput').value;
+        if (senha === senhaAdminAtual) {
+            isAdminLogado = true;
+            document.body.classList.add('admin-mode');
+            document.getElementById('loginLogoutBtn').innerHTML = '<i class="fas fa-lock-open"></i> Sair Admin';
+            renderizarAbasTop(); // Mostra o botão de nova aba apenas para admin
+            fecharModalLogin();
+            alert('Acesso Administrador concedido!');
+        } else {
+            alert('Senha incorreta!');
+        }
+    }
+
+    function abrirModalSenha() {
+        document.getElementById('novaSenhaInput').value = '';
+        document.getElementById('modalSenha').style.display = 'flex';
+    }
+
+    function salvarNovaSenha() {
+        const novaSenha = document.getElementById('novaSenhaInput').value.trim();
+        if (!novaSenha) return alert('Digite uma senha válida!');
+        senhaAdminAtual = novaSenha;
+        localStorage.setItem('hub_admin_pass', novaSenha);
+        document.getElementById('modalSenha').style.display = 'none';
+        alert('Senha de administrador alterada com sucesso!');
+    }
+
+    function comprimirEConverterImagem(inputElement, maxWidth, maxHeight, targetInputId, barContainerId, barFillId, statusId) {
+        const file = inputElement.files[0];
+        if (!file) return;
+
+        const barContainer = document.getElementById(barContainerId);
+        const barFill = document.getElementById(barFillId);
+        const statusEl = document.getElementById(statusId);
+
+        barContainer.style.display = 'block';
+        barFill.style.width = '20%';
+        if(statusEl) statusEl.style.display = 'none';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            barFill.style.width = '50%';
+            const img = new Image();
+            img.src = e.target.result;
+            
+            img.onload = function() {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                barFill.style.width = '80%';
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                document.getElementById(targetInputId).value = dataUrl;
+                barFill.style.width = '100%';
+
+                setTimeout(() => {
+                    barContainer.style.display = 'none';
+                    if(statusEl) {
+                        statusEl.style.display = 'block';
+                        setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+                    }
+                }, 300);
+            };
+        };
+        reader.onerror = function() {
+            barContainer.style.display = 'none';
+            alert('Erro ao processar a imagem.');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function escutarDadosGerais() {
+        window.fs.onSnapshot(window.fs.collection(window.db, "bio_abas"), async (snapshot) => {
+            abas = [];
+            snapshot.forEach(doc => abas.push({ id: doc.id, ...doc.data() }));
+
+            if (abas.length === 0) {
+                const defaultAba = {
+                    nome: 'Principal',
+                    tipo: 'bio',
+                    perfilNome: 'Alexandre Developer',
+                    perfilBio: 'Criador de soluções web e sistemas inteligentes.',
+                    perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
+                    bgImage: '',
+                    footerText: 'Criado com Hub Pro & Firebase',
+                    temaId: 'luxe_nude_gold',
+                    htmlCode: ''
+                };
+                await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", "bio_principal"), defaultAba);
+                return;
+            }
+
+            if (!abas.find(a => a.id === abaAtivaId)) {
+                abaAtivaId = abas[0].id;
+            }
+
+            renderizarAbasTop();
+            carregarConteudoAbaAtiva();
+        });
+    }
+
+    function renderizarAbasTop() {
+        const container = document.getElementById('tabsWrapper');
+        container.innerHTML = '';
+
+        abas.forEach(a => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${a.id === abaAtivaId ? 'active' : ''}`;
+            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome}`;
+            btn.onclick = () => mudarAba(a.id);
+            container.appendChild(btn);
+        });
+
+        if (isAdminLogado) {
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'tab-btn tab-btn-add';
+            btnAdd.innerHTML = `<i class="fas fa-plus"></i> Nova Aba`;
+            btnAdd.onclick = abrirModalNovaAba;
+            container.appendChild(btnAdd);
+        }
+    }
+
+    function mudarAba(id) {
+        abaAtivaId = id;
+        renderizarAbasTop();
+        carregarConteudoAbaAtiva();
+    }
+
+    let unsubscribeLinks = null;
+    function carregarConteudoAbaAtiva() {
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        if (!abaAtual) return;
+
+        aplicarTemaVisual(abaAtual.temaId || 'luxe_nude_gold', abaAtual.bgImage || '');
+        document.getElementById('footerTextDisplay').innerText = abaAtual.footerText || 'Criado com Hub Pro & Firebase';
+
+        const profileSec = document.getElementById('profileCardSection');
+        const linksCont = document.getElementById('linksContainer');
+        const htmlCont = document.getElementById('htmlContentContainer');
+
+        if (abaAtual.tipo === 'html') {
+            profileSec.style.display = 'none';
+            linksCont.style.display = 'none';
+            htmlCont.style.display = 'block';
+
+            const renderArea = document.getElementById('embeddedHtmlRenderArea');
+            const code = abaAtual.htmlCode || '<div style="padding:40px; text-align:center; color:var(--text-muted);">Nenhum código HTML inserido.</div>';
+            renderArea.innerHTML = `<iframe srcdoc="${code.replace(/"/g, '&quot;')}" style="width:100%; height:500px; border:none;"></iframe>`;
+        } else {
+            profileSec.style.display = 'flex';
+            linksCont.style.display = 'flex';
+            htmlCont.style.display = 'none';
+
+            document.getElementById('displayName').innerText = abaAtual.perfilNome || 'Seu Nome';
+            document.getElementById('displayBio').innerText = abaAtual.perfilBio || '';
+            document.getElementById('displayAvatar').src = abaAtual.perfilAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+
+            if (unsubscribeLinks) unsubscribeLinks();
+            unsubscribeLinks = window.fs.onSnapshot(window.fs.collection(window.db, `links_${abaAtivaId}`), (snapshot) => {
+                links = [];
+                snapshot.forEach(doc => links.push({ id: doc.id, ...doc.data() }));
+                renderizarLinks();
+            });
+        }
+    }
+
+    function renderizarLinks() {
+        const container = document.getElementById('linksContainer');
+        container.innerHTML = '';
+
+        if (links.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:15px;">Nenhum link cadastrado nesta bio.</p>';
+            return;
+        }
+
+        const grupos = {};
+        links.forEach(l => {
+            const grupoNome = l.grupo && l.grupo.trim() !== '' ? l.grupo.trim() : 'Geral';
+            if (!grupos[grupoNome]) grupos[grupoNome] = [];
+            grupos[grupoNome].push(l);
+        });
+
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        const t = listaDeTemas.find(item => item.id === (abaAtual?.temaId || 'luxe_nude_gold')) || listaDeTemas[0];
+        const estiloCardClass = `card-style-${t.cardStyle || 'standard'}`;
+
+        for (const [nomeGrupo, listaDoGrupo] of Object.entries(grupos)) {
+            const grupoWrapper = document.createElement('div');
+            grupoWrapper.className = 'link-group-wrapper';
+
+            if (nomeGrupo !== 'Geral' || Object.keys(grupos).length > 1) {
+                const titleEl = document.createElement('div');
+                titleEl.className = 'link-group-title';
+                titleEl.innerHTML = `<i class="fas fa-layer-group"></i> ${nomeGrupo}`;
+                grupoWrapper.appendChild(titleEl);
+            }
+
+            listaDoGrupo.forEach(l => {
+                const a = document.createElement('a');
+                a.className = `bio-link-card ${estiloCardClass}`;
+                a.href = l.url;
+                a.target = '_blank';
+
+                let iconeHtml = '';
+                if (l.icon && (l.icon.startsWith('http') || l.icon.startsWith('data:image'))) {
+                    iconeHtml = `<img src="${l.icon}" class="bio-link-icon" alt="ícone">`;
+                } else {
+                    iconeHtml = `<i class="${l.icon || 'fas fa-link'} bio-link-icon"></i>`;
+                }
+
+                a.innerHTML = `
+                    <div class="bio-link-content">
+                        ${iconeHtml}
+                        <span>${l.title}</span>
+                    </div>
+                    <div class="bio-link-actions" onclick="event.preventDefault();">
+                        <button class="icon-btn-mini" onclick="abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}')"><i class="fas fa-pen"></i></button>
+                        <button class="icon-btn-mini" onclick="excluirLink('${l.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                grupoWrapper.appendChild(a);
+            });
+
+            container.appendChild(grupoWrapper);
+        }
+    }
+
+    function aplicarTemaVisual(temaId, bgImageUrl) {
+        temaAtualId = temaId;
+        const t = listaDeTemas.find(item => item.id === temaId) || listaDeTemas[0];
+        const root = document.documentElement;
+        
+        root.style.setProperty('--bg-main', t.bg);
+        root.style.setProperty('--card-bg', t.card);
+        root.style.setProperty('--text-main', t.text);
+        root.style.setProperty('--text-muted', t.muted);
+        root.style.setProperty('--accent', t.accent);
+        root.style.setProperty('--accent-glow', t.glow);
+        root.style.setProperty('--layout-align', t.align || 'center');
+
+        if (bgImageUrl) {
+            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${bgImageUrl}')`;
+        } else {
+            document.body.style.backgroundImage = 'none';
+        }
+    }
+
+    async function gerarTemaAleatorio() {
+        const coresAccent = ['#d4af37', '#e2b86d', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+        const randomAccent = coresAccent[Math.floor(Math.random() * coresAccent.length)];
+        const temaCustomId = 'custom_random_' + Date.now();
+        
+        const novoTemaAleatorio = {
+            id: temaCustomId,
+            nome: '✨ Aleatório Personalizado',
+            bg: '#141218',
+            card: 'rgba(255, 255, 255, 0.07)',
+            text: '#ffffff',
+            muted: '#c5a880',
+            accent: randomAccent,
+            glow: randomAccent + '55',
+            align: 'center',
+            cardStyle: 'pill'
+        };
+
+        listaDeTemas.unshift(novoTemaAleatorio);
+        popularGridTemas();
+        
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        aplicarTemaVisual(temaCustomId, abaAtual?.bgImage || '');
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { temaId: temaCustomId }, { merge: true });
+    }
+
+    function popularGridTemas() {
+        const grid = document.getElementById('themesGridContainer');
+        grid.innerHTML = '';
+        listaDeTemas.forEach(t => {
+            const div = document.createElement('div');
+            div.className = 'theme-option';
+            div.style.background = t.bg;
+            div.style.color = t.text;
+            div.style.borderColor = t.accent;
+            div.innerHTML = `<div style="width:14px; height:14px; border-radius:50%; background:${t.accent};"></div><span style="flex:1;">${t.nome}</span>`;
+            div.onclick = async () => {
+                const abaAtual = abas.find(a => a.id === abaAtivaId);
+                aplicarTemaVisual(t.id, abaAtual?.bgImage || '');
+                await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { temaId: t.id }, { merge: true });
+                fecharModalTemas();
+            };
+            grid.appendChild(div);
+        });
+    }
+
+    function abrirModalLink() {
+        document.getElementById('editLinkId').value = '';
+        document.getElementById('linkTitle').value = '';
+        document.getElementById('linkUrl').value = '';
+        document.getElementById('linkGroup').value = '';
+        document.getElementById('linkIcon').value = 'fas fa-globe';
+        document.getElementById('linkProgressBar').style.display = 'none';
+        document.getElementById('modalLink').style.display = 'flex';
+    }
+    function abrirModalLinkEditar(id, title, url, icon, grupo) {
+        document.getElementById('editLinkId').value = id;
+        document.getElementById('linkTitle').value = title;
+        document.getElementById('linkUrl').value = url;
+        document.getElementById('linkGroup').value = grupo || '';
+        document.getElementById('linkIcon').value = icon || 'fas fa-globe';
+        document.getElementById('linkProgressBar').style.display = 'none';
+        document.getElementById('modalLink').style.display = 'flex';
+    }
+    function fecharModalLink() { document.getElementById('modalLink').style.display = 'none'; }
+
+    async function salvarLink() {
+        const id = document.getElementById('editLinkId').value;
+        const title = document.getElementById('linkTitle').value.trim();
+        const url = document.getElementById('linkUrl').value.trim();
+        const grupo = document.getElementById('linkGroup').value.trim();
+        const icon = document.getElementById('linkIcon').value.trim() || 'fas fa-globe';
+
+        if (!title || !url) return alert('Preencha o título e a URL!');
+
+        try {
+            const colRef = window.fs.collection(window.db, `links_${abaAtivaId}`);
+            if (id) {
+                await window.fs.setDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id), { title, url, icon, grupo }, { merge: true });
+            } else {
+                await window.fs.addDoc(colRef, { title, url, icon, grupo, criadoEm: new Date().toISOString() });
+            }
+            fecharModalLink();
+        } catch (error) {
+            alert('Erro ao salvar no banco de dados.');
+        }
+    }
+
+    async function excluirLink(id) {
+        if (confirm("Deseja remover este link?")) {
+            await window.fs.deleteDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id));
+        }
+    }
+
+    function abrirModalPerfil() {
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        if (!abaAtual) return;
+
+        document.getElementById('configAbaNome').value = abaAtual.nome;
+        document.getElementById('configTipoAba').value = abaAtual.tipo || 'bio';
+        document.getElementById('configNome').value = abaAtual.perfilNome || '';
+        document.getElementById('configBio').value = abaAtual.perfilBio || '';
+        document.getElementById('configAvatar').value = abaAtual.perfilAvatar || '';
+        document.getElementById('configBgImage').value = abaAtual.bgImage || '';
+        document.getElementById('configHtmlCode').value = abaAtual.htmlCode || '';
+
+        document.getElementById('avatarProgressBar').style.display = 'none';
+        document.getElementById('bgProgressBar').style.display = 'none';
+
+        toggleTipoAbaCampos();
+        document.getElementById('modalPerfil').style.display = 'flex';
+    }
+    function fecharModalPerfil() { document.getElementById('modalPerfil').style.display = 'none'; }
+
+    function toggleTipoAbaCampos() {
+        const tipo = document.getElementById('configTipoAba').value;
+        document.getElementById('bioConfigFields').style.display = tipo === 'html' ? 'none' : 'block';
+        document.getElementById('htmlConfigFields').style.display = tipo === 'html' ? 'block' : 'none';
+    }
+
+    async function salvarConfigPerfil() {
+        const nome = document.getElementById('configAbaNome').value.trim();
+        const tipo = document.getElementById('configTipoAba').value;
+        const perfilNome = document.getElementById('configNome').value.trim();
+        const perfilBio = document.getElementById('configBio').value.trim();
+        const perfilAvatar = document.getElementById('configAvatar').value.trim();
+        const bgImage = document.getElementById('configBgImage').value.trim();
+        const htmlCode = document.getElementById('configHtmlCode').value.trim();
+
+        if (!nome) return alert('O nome da aba é obrigatório!');
+
+        try {
+            await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), {
+                nome, tipo, perfilNome, perfilBio, perfilAvatar, bgImage, htmlCode
+            }, { merge: true });
+
+            fecharModalPerfil();
+        } catch (error) {
+            alert('Erro ao salvar as configurações.');
+        }
+    }
+
+    function abrirModalRodape() {
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        document.getElementById('footerTextInput').value = abaAtual?.footerText || 'Criado com Hub Pro & Firebase';
+        document.getElementById('modalRodape').style.display = 'flex';
+    }
+
+    async function salvarRodapeText() {
+        const footerText = document.getElementById('footerTextInput').value.trim();
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { footerText }, { merge: true });
+        document.getElementById('modalRodape').style.display = 'none';
+    }
+
+    function abrirModalNovaAba() { 
+        if (!isAdminLogado) return alert('Acesso negado!');
+        document.getElementById('modalNovaAba').style.display = 'flex'; 
+    }
+    function fecharModalNovaAba() { document.getElementById('modalNovaAba').style.display = 'none'; }
+
+    async function criarNovaAba() {
+        if (!isAdminLogado) return;
+        const nome = document.getElementById('novaAbaNomeInput').value.trim();
+        const tipo = document.getElementById('novaAbaTipoInput').value;
+
+        if (!nome) return alert('Digite um nome para a aba!');
+
+        const newId = 'aba_' + Date.now();
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", newId), {
+            nome,
+            tipo,
+            perfilNome: nome,
+            perfilBio: 'Nova página criada.',
+            perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
+            bgImage: '',
+            footerText: 'Criado com Hub Pro & Firebase',
+            temaId: temaAtualId,
+            htmlCode: ''
+        });
+
+        document.getElementById('novaAbaNomeInput').value = '';
+        fecharModalNovaAba();
+        mudarAba(newId);
+    }
+
+    async function excluirAbaAtual() {
+        if (!isAdminLogado) return;
+        if (abas.length <= 1) return alert('Você precisa manter pelo menos uma aba ativa!');
+        if (confirm("Deseja apagar esta aba inteira?")) {
+            await window.fs.deleteDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId));
+            fecharModalPerfil();
+        }
+    }
+
+    function abrirModalTemas() { document.getElementById('modalTemas').style.display = 'flex'; }
+    function fecharModalTemas() { document.getElementById('modalTemas').style.display = 'none'; }
+</script>
+
+</body>
+</html>
