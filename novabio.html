@@ -107,6 +107,7 @@
             color: var(--accent); display: flex; align-items: center; gap: 8px; padding-bottom: 4px;
             border-bottom: 1px solid var(--card-border); margin-bottom: 2px;
         }
+        .group-logo-img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
 
         /* ESTILOS DE CARDS / BOTÕES DE LINKS */
         .bio-link-card {
@@ -117,7 +118,7 @@
             position: relative; overflow: hidden; width: 100%; cursor: pointer;
         }
         
-        /* VARIAÇÕES EXATAS DOS LAYOUTS BASEADOS NAS FOTOS */
+        /* VARIAÇÕES EXATAS DOS LAYOUTS */
         .card-style-pill { border-radius: 50px; padding-left: 22px; padding-right: 22px; }
         .card-style-sharp { border-radius: 8px; border-left: 4px solid var(--accent); }
         .card-style-neon { border: 2px solid var(--accent); box-shadow: 0 0 18px var(--accent-glow); }
@@ -125,7 +126,6 @@
         .card-style-banner { border-radius: 18px; background: linear-gradient(135deg, var(--card-bg), rgba(255,255,255,0.06)); border: 1px solid var(--accent); padding: 18px 22px; }
         .card-style-immersive { border-radius: 22px; flex-direction: column; text-align: center; gap: 10px; padding: 20px; background: linear-gradient(to bottom, var(--card-bg), rgba(0,0,0,0.4)); }
         
-        /* Layouts específicos dos novos temas das fotos */
         .card-style-quinn { border-radius: 14px; border-bottom: 1px solid var(--card-border); background: transparent; box-shadow: none; justify-content: space-between; padding: 16px 8px; }
         .card-style-barbara { border-radius: 16px; background: var(--card-bg); border: 1px solid var(--accent); }
         .card-style-larissa { border-radius: 40px; background: linear-gradient(90deg, var(--card-bg), rgba(212,175,55,0.1)); border: 1px solid rgba(212,175,55,0.3); padding: 16px 24px; }
@@ -201,6 +201,7 @@
             <button class="action-chip" onclick="abrirModalApis()"><i class="fas fa-network-wired" style="color:#38bdf8;"></i> Gerenciar APIs</button>
             <button class="action-chip" onclick="abrirModalPerfil()"><i class="fas fa-pen"></i> Perfil & Senha</button>
             <button class="action-chip" onclick="abrirModalLink()"><i class="fas fa-plus"></i> Novo Link</button>
+            <button class="action-chip" onclick="abrirModalGrupoLote()"><i class="fas fa-layer-group" style="color:#10b981;"></i> Grupo em Lote</button>
             <button class="action-chip" onclick="marcarComoPrincipalAtual()"><i class="fas fa-star" style="color:#f59e0b;"></i> Principal</button>
             <button class="action-chip" onclick="limparArquivosInuteisFirebase()"><i class="fas fa-broom" style="color:#ef4444;"></i> Limpar Lixo</button>
             <button class="action-chip" onclick="abrirModalSenhaMaster()"><i class="fas fa-key" style="color:#f59e0b;"></i> Senha Master</button>
@@ -271,19 +272,16 @@
     </div>
 </div>
 
-<!-- MODAL GERENCIADOR DE APIS (ILIMITADAS COM FAILOVER) -->
+<!-- MODAL GERENCIADOR DE APIS -->
 <div class="modal-overlay" id="modalApis">
     <div class="modal-body" style="max-width: 500px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-network-wired" style="color:#38bdf8;"></i> Gerenciar APIs com Failover Automático</h3>
             <button class="btn-secondary" onclick="fecharModalApis()"><i class="fas fa-times"></i></button>
         </div>
-        <p style="font-size:11px; color:var(--text-muted);">Adicione quantas chaves de API grátis quiser. Se uma falhar, o sistema alternará automaticamente para a próxima ativa na ordem!</p>
-        
+        <p style="font-size:11px; color:var(--text-muted);">Adicione quantas chaves de API quiser.</p>
         <div id="listaApisContainer" style="display:flex; flex-direction:column; gap:10px; max-height:260px; overflow-y:auto; padding-right:4px;"></div>
-
         <button class="btn-secondary" style="border: 1px dashed var(--accent); color: var(--accent); text-align:center;" onclick="adicionarCampoNovaApi()"><i class="fas fa-plus"></i> Adicionar Outra API</button>
-        
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
             <button class="btn-secondary" onclick="fecharModalApis()">Cancelar</button>
             <button class="btn-submit" onclick="salvarTodasApis()">Salvar Chaves de API</button>
@@ -306,7 +304,7 @@
     </div>
 </div>
 
-<!-- MODAL EDITAR / CRIAR LINK -->
+<!-- MODAL EDITAR / CRIAR LINK INDIVIDUAL -->
 <div class="modal-overlay" id="modalLink">
     <div class="modal-body">
         <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-link" style="color:var(--accent);"></i> Gerenciar Link</h3>
@@ -345,6 +343,48 @@
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
             <button class="btn-secondary" onclick="fecharModalLink()">Cancelar</button>
             <button class="btn-submit" onclick="salvarLink()">Salvar Link</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ADICIONAR GRUPO DE LINKS EM LOTE -->
+<div class="modal-overlay" id="modalGrupoLote">
+    <div class="modal-body" style="max-width: 560px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-layer-group" style="color:#10b981;"></i> Adicionar Grupo em Lote</h3>
+            <button class="btn-secondary" onclick="fecharModalGrupoLote()"><i class="fas fa-times"></i></button>
+        </div>
+        <p style="font-size:11px; color:var(--text-muted);">Defina o nome/ícone do grupo e configure cada link com seu título, URL e imagem/ícone próprio.</p>
+
+        <div class="form-group">
+            <label>Nome do Grupo / Categoria</label>
+            <input type="text" id="loteGroupName" class="input-field" placeholder="Ex: Redes Sociais / Documentos">
+        </div>
+
+        <div class="form-group">
+            <label>Ícone/Logo do Cabeçalho do Grupo (Opcional)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="loteGroupLogo" class="input-field" placeholder="URL da Logo ou FontAwesome (Ex: fas fa-folder)">
+                <input type="file" id="loteGroupImageFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 300, 300, 'loteGroupLogo', 'loteProgressBar', 'loteProgressFill', 'loteUploadStatus')">
+                <button class="btn-secondary" onclick="document.getElementById('loteGroupImageFile').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
+            </div>
+            <div class="progress-bar-container" id="loteProgressBar"><div class="progress-bar-fill" id="loteProgressFill"></div></div>
+            <span id="loteUploadStatus" style="font-size:10px; color:#10b981; margin-top:2px; display:none;">✔ Logo pronta!</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Links do Lote (Título, URL e Imagem/Ícone)</label>
+            <button class="action-chip" style="background:var(--accent); color:#fff; border:none;" onclick="adicionarLinhaItemLote()"><i class="fas fa-plus"></i> Adicionar Link</button>
+        </div>
+
+        <!-- Container dinâmico das linhas de links em lote -->
+        <div id="loteItemsContainer" style="display:flex; flex-direction:column; gap:8px; max-height:250px; overflow-y:auto; padding-right:4px;">
+            <!-- Linhas inseridas por JS -->
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+            <button class="btn-secondary" onclick="fecharModalGrupoLote()">Cancelar</button>
+            <button class="btn-submit" onclick="salvarGrupoLote()">Salvar Grupo Inteiro</button>
         </div>
     </div>
 </div>
@@ -470,24 +510,12 @@
             <h3 style="font-size:16px; font-weight:800;"><i class="fas fa-palette" style="color:var(--accent);"></i> Temas & Inteligência Artificial</h3>
             <button class="btn-secondary" onclick="fecharModalTemas()"><i class="fas fa-times"></i></button>
         </div>
-        <p style="font-size:11px; color:var(--text-muted);">Descreva detalhadamente o tema desejado e/ou envie uma imagem de referência. A IA criará um layout totalmente customizado:</p>
+        <p style="font-size:11px; color:var(--text-muted);">Descreva detalhadamente o tema desejado:</p>
         
-        <!-- SEÇÃO DE CRIAÇÃO INTELIGENTE VIA IA -->
         <div style="background:var(--btn-bg); border:1px solid var(--card-border); padding:12px; border-radius:14px; display:flex; flex-direction:column; gap:8px;">
-            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;"><i class="fas fa-magic" style="color:var(--accent);"></i> Gerar Tema Pro via IA (Texto + Imagem)</label>
-            
-            <input type="text" id="customThemeNameInput" class="input-field" placeholder="Nome do Tema (Ex: Dark Cyber Neon)">
-            <textarea id="aiThemeDescriptionPrompt" class="input-field" rows="2" placeholder="Descreva como você quer o tema (ex: Quero botões grandes imersivos com bordas neon rosa, fundo escuro e fontes modernas...)" style="resize:none;"></textarea>
-
-            <div style="display:flex; gap:8px; align-items:center;">
-                <input type="file" id="aiThemeImageFile" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 600, 600, 'aiImageHolderBase64', 'aiProgressBar', 'aiProgressFill', 'aiUploadStatus')">
-                <input type="hidden" id="aiImageHolderBase64">
-                <button class="btn-secondary" onclick="document.getElementById('aiThemeImageFile').click()" style="white-space:nowrap; width:100%;"><i class="fas fa-upload"></i> Enviar Imagem Modelo (Opcional)</button>
-            </div>
-
-            <div class="progress-bar-container" id="aiProgressBar"><div class="progress-bar-fill" id="aiProgressFill"></div></div>
-            <span id="aiUploadStatus" style="font-size:10px; color:#10b981; display:none;">✔ Imagem pronta para a IA processar!</span>
-            
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;"><i class="fas fa-magic" style="color:var(--accent);"></i> Gerar Tema Pro via IA</label>
+            <input type="text" id="customThemeNameInput" class="input-field" placeholder="Nome do Tema">
+            <textarea id="aiThemeDescriptionPrompt" class="input-field" rows="2" placeholder="Descreva como você quer o tema..." style="resize:none;"></textarea>
             <button class="btn-submit" style="padding:12px; font-size:12px; margin-top:2px;" onclick="gerarTemaCustomIA()"><i class="fas fa-brain"></i> Criar & Aplicar Tema Customizado</button>
         </div>
 
@@ -508,7 +536,6 @@
         { nome: 'API Grátis Principal', chave: 'AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA' }
     ];
 
-    // --- 6 NOVOS TEMAS IDÊNTICOS ÀS SUAS FOTOS + TEMAS PADRÕES ---
     const listaDeTemasPadrao = [
         { id: 'quinn_minimal_luxury', nome: '⭐ 1. Quinn Minimal Luxury (Foto 1)', bg: '#0b0b0b', card: 'rgba(20, 20, 20, 0.7)', text: '#ffffff', muted: '#a3a3a3', accent: '#e2b86d', glow: 'rgba(226, 184, 109, 0.3)', align: 'center', cardStyle: 'quinn', padding: '16px 12px', fontSize: '15px' },
         { id: 'studio_barbara_banner', nome: '⭐ 2. Studio Bárbara Teal (Foto 2)', bg: '#062829', card: 'rgba(23, 70, 71, 0.8)', text: '#f3efe6', muted: '#93c5fd', accent: '#e2b86d', glow: 'rgba(226, 184, 109, 0.35)', align: 'center', cardStyle: 'barbara', padding: '18px 22px', fontSize: '15px' },
@@ -527,7 +554,115 @@
         popularGridTemas();
     });
 
-    // --- GERENCIADOR DE APIS COM FAILOVER AUTOMÁTICO INTELIGENTE ---
+    // --- FUNÇÕES DE ADICIONAR GRUPO DE LINKS EM LOTE ---
+    function abrirModalGrupoLote() {
+        if (!isAdminLogado) return;
+        document.getElementById('loteGroupName').value = '';
+        document.getElementById('loteGroupLogo').value = '';
+        document.getElementById('loteProgressBar').style.display = 'none';
+        
+        const container = document.getElementById('loteItemsContainer');
+        container.innerHTML = '';
+        adicionarLinhaItemLote('Instagram', 'https://instagram.com/', 'fab fa-instagram');
+        adicionarLinhaItemLote('WhatsApp', 'https://wa.me/', 'fab fa-whatsapp');
+        adicionarLinhaItemLote('Website', 'https://', 'fas fa-globe');
+
+        document.getElementById('modalGrupoLote').style.display = 'flex';
+    }
+
+    function fecharModalGrupoLote() {
+        document.getElementById('modalGrupoLote').style.display = 'none';
+    }
+
+    function adicionarLinhaItemLote(tituloPreenchido = '', urlPreenchida = '', iconePreenchido = '') {
+        const container = document.getElementById('loteItemsContainer');
+        const uniqueId = 'lote_' + Date.now() + Math.floor(Math.random() * 1000);
+        
+        const row = document.createElement('div');
+        row.style.cssText = "display:flex; flex-direction:column; gap:8px; background:var(--btn-bg); padding:10px; border-radius:12px; border:1px solid var(--card-border); margin-bottom: 4px;";
+        
+        row.innerHTML = `
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <input type="text" class="input-field lote-item-titulo" placeholder="Título" value="${tituloPreenchido}" style="flex:1; min-width:110px;">
+                <input type="url" class="input-field lote-item-url" placeholder="https://..." value="${urlPreenchida}" style="flex:1.2; min-width:130px;">
+                <button class="btn-secondary" style="color:#ef4444; padding:10px 12px;" onclick="this.parentElement.parentElement.remove()" title="Remover linha"><i class="fas fa-trash"></i></button>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="icon_${uniqueId}" class="input-field lote-item-icone" placeholder="Ícone (Ex: fab fa-instagram) ou Upload" value="${iconePreenchido}" style="flex:1; min-width:110px;">
+                <input type="file" id="file_${uniqueId}" accept="image/*" style="display:none;" onchange="comprimirEConverterImagem(this, 300, 300, 'icon_${uniqueId}', 'bar_${uniqueId}', 'fill_${uniqueId}', 'status_${uniqueId}')">
+                <button class="btn-secondary" onclick="document.getElementById('file_${uniqueId}').click()" style="white-space:nowrap;"><i class="fas fa-upload"></i> Upload</button>
+            </div>
+            <div class="progress-bar-container" id="bar_${uniqueId}"><div class="progress-bar-fill" id="fill_${uniqueId}"></div></div>
+            <span id="status_${uniqueId}" style="font-size:10px; color:#10b981; display:none;">✔ Imagem processada com sucesso!</span>
+        `;
+        
+        container.appendChild(row);
+    }
+
+    async function salvarGrupoLote() {
+        const nomeGrupo = document.getElementById('loteGroupName').value.trim();
+        const logoGrupo = document.getElementById('loteGroupLogo').value.trim() || 'fas fa-layer-group';
+
+        if (!nomeGrupo) {
+            return alert('Por favor, informe o nome do grupo.');
+        }
+
+        const titulos = document.querySelectorAll('.lote-item-titulo');
+        const urls = document.querySelectorAll('.lote-item-url');
+        const icones = document.querySelectorAll('.lote-item-icone');
+
+        let novosLinksParaSalvar = [];
+        for (let i = 0; i < titulos.length; i++) {
+            const t = titulos[i].value.trim();
+            const u = urls[i].value.trim();
+            const ic = icones[i] ? icones[i].value.trim() : '';
+            if (t && u) {
+                novosLinksParaSalvar.push({
+                    title: t,
+                    url: u,
+                    icon: ic || 'fas fa-link'
+                });
+            }
+        }
+
+        if (novosLinksParaSalvar.length === 0) {
+            return alert('Adicione pelo menos um link válido com título e URL preenchidos.');
+        }
+
+        const toast = document.getElementById('syncStatusToast');
+        toast.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando grupo em lote no Firebase...';
+        toast.style.display = 'block';
+
+        try {
+            const batch = window.fs.writeBatch(window.db);
+            const colRef = window.fs.collection(window.db, `links_${abaAtivaId}`);
+            
+            let ordemAtual = links.length;
+            novosLinksParaSalvar.forEach((item) => {
+                const novoDocRef = window.fs.doc(colRef);
+                batch.set(novoDocRef, {
+                    title: item.title,
+                    url: item.url,
+                    icon: item.icon, 
+                    grupo: nomeGrupo,
+                    grupoLogo: logoGrupo, 
+                    senhaLink: '',
+                    ordem: ordemAtual++,
+                    criadoEm: new Date().toISOString()
+                });
+            });
+
+            await batch.commit();
+            toast.style.display = 'none';
+            fecharModalGrupoLote();
+            alert(`Grupo "${nomeGrupo}" criado com sucesso com ${novosLinksParaSalvar.length} links adicionados!`);
+        } catch (error) {
+            toast.style.display = 'none';
+            alert('Ocorreu um erro ao salvar o grupo em lote.');
+        }
+    }
+
+    // --- GERENCIADOR DE APIS ---
     function abrirModalApis() {
         if (!isAdminLogado) return;
         renderizarCamposApisModal();
@@ -538,25 +673,20 @@
     function renderizarCamposApisModal() {
         const container = document.getElementById('listaApisContainer');
         container.innerHTML = '';
-
         apiKeysList.forEach((api, index) => {
             const row = document.createElement('div');
             row.style.cssText = "display:flex; gap:8px; align-items:center;";
             row.innerHTML = `
-                <input type="text" class="input-field api-nome-input" placeholder="Nome (Ex: API Gemini 1)" value="${api.nome || ''}" style="flex:1;">
-                <input type="text" class="input-field api-chave-input" placeholder="Chave de API (AIza...)" value="${api.chave || ''}" style="flex:2;">
-                <button class="btn-secondary" style="color:#ef4444; padding:10px 12px;" onclick="removerApiItem(${index})" title="Remover"><i class="fas fa-trash"></i></button>
+                <input type="text" class="input-field api-nome-input" placeholder="Nome" value="${api.nome || ''}" style="flex:1;">
+                <input type="text" class="input-field api-chave-input" placeholder="Chave de API" value="${api.chave || ''}" style="flex:2;">
+                <button class="btn-secondary" style="color:#ef4444; padding:10px 12px;" onclick="removerApiItem(${index})"><i class="fas fa-trash"></i></button>
             `;
             container.appendChild(row);
         });
-
-        if (apiKeysList.length === 0) {
-            container.innerHTML = '<p style="font-size:12px; color:var(--text-muted); text-align:center;">Nenhuma API cadastrada. Adicione pelo menos uma chave.</p>';
-        }
     }
 
     function adicionarCampoNovaApi() {
-        apiKeysList.push({ nome: `API Grátis ${apiKeysList.length + 1}`, chave: '' });
+        apiKeysList.push({ nome: `API ${apiKeysList.length + 1}`, chave: '' });
         renderizarCamposApisModal();
     }
 
@@ -568,40 +698,16 @@
     function salvarTodasApis() {
         const nomes = document.querySelectorAll('.api-nome-input');
         const chaves = document.querySelectorAll('.api-chave-input');
-        
         let novaLista = [];
         for (let i = 0; i < nomes.length; i++) {
-            const nome = nomes[i].value.trim();
-            const chave = chaves[i].value.trim();
-            if (chave) {
-                novaLista.push({ nome: nome || `API ${i+1}`, chave });
+            if (chaves[i].value.trim()) {
+                novaLista.push({ nome: nomes[i].value.trim(), chave: chaves[i].value.trim() });
             }
         }
-
         apiKeysList = novaLista;
         localStorage.setItem('hub_apis_list', JSON.stringify(apiKeysList));
         fecharModalApis();
-        alert('Chaves de API salvas com sucesso! Sistema pronto com failover automático.');
-    }
-
-    async function executarComFailoverApi(callbackRequisicao) {
-        if (!apiKeysList || apiKeysList.length === 0) {
-            throw new Error("Nenhuma API cadastrada no sistema. Configure no painel do Admin.");
-        }
-
-        let ultimoErro = null;
-        for (let i = 0; i < apiKeysList.length; i++) {
-            const apiAtual = apiKeysList[i];
-            try {
-                const resultado = await callbackRequisicao(apiAtual.chave);
-                return resultado; 
-            } catch (erro) {
-                console.warn(`API "${apiAtual.nome}" falhou. Tentando próxima API em failover...`, erro);
-                ultimoErro = erro;
-            }
-        }
-
-        throw new Error(`Todas as ${apiKeysList.length} APIs cadastradas falharam. Último erro: ${ultimoErro?.message || 'Desconhecido'}`);
+        alert('Chaves salvas com sucesso!');
     }
 
     function toggleAdminLogin() {
@@ -611,7 +717,6 @@
             document.getElementById('loginLogoutBtn').innerHTML = '<i class="fas fa-lock"></i> Admin';
             renderizarAbasTop();
             renderizarLinks();
-            alert('Você saiu do modo administrador.');
         } else {
             document.getElementById('adminPasswordInput').value = '';
             document.getElementById('modalLogin').style.display = 'flex';
@@ -628,7 +733,6 @@
             renderizarAbasTop();
             renderizarLinks();
             fecharModalLogin();
-            alert('Acesso Administrador concedido!');
         } else {
             alert('Senha incorreta!');
         }
@@ -650,91 +754,46 @@
 
     async function limparArquivosInuteisFirebase() {
         if (!isAdminLogado) return;
-        if (!confirm("Deseja fazer uma varredura para limpar lixos e links vazios deste Hub no Firebase?")) return;
-
-        const toast = document.getElementById('syncStatusToast');
-        toast.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Limpando lixos deste Hub...';
-        toast.style.display = 'block';
-
+        if (!confirm("Deseja limpar links vazios deste Hub no Firebase?")) return;
         try {
-            let itensRemovidos = 0;
             const abasSnapshot = await window.fs.getDocs(window.fs.collection(window.db, "bio_abas"));
-            const idsAbasValidas = new Set();
-            abasSnapshot.forEach(docSnap => idsAbasValidas.add(docSnap.id));
-
-            for (const abaId of idsAbasValidas) {
-                const linksRef = window.fs.collection(window.db, `links_${abaId}`);
-                const linksSnapshot = await window.fs.getDocs(linksRef);
-
+            for (const docSnap of abasSnapshot.docs) {
+                const linksSnapshot = await window.fs.getDocs(window.fs.collection(window.db, `links_${docSnap.id}`));
                 for (const linkDoc of linksSnapshot.docs) {
                     const data = linkDoc.data();
-                    if (!data.title || !data.url || data.title.trim() === '' || data.url.trim() === '') {
-                        await window.fs.deleteDoc(linkDoc.ref);
-                        itensRemovidos++;
-                    }
+                    if (!data.title || !data.url) await window.fs.deleteDoc(linkDoc.ref);
                 }
             }
-
-            toast.style.display = 'none';
-            alert(`Limpeza concluída! ${itensRemovidos} itens órfãos removidos.`);
-        } catch (error) {
-            toast.style.display = 'none';
-            alert("Ocorreu um erro ao tentar limpar os arquivos.");
-        }
+            alert('Limpeza concluída!');
+        } catch (e) { alert('Erro ao limpar.'); }
     }
 
     function comprimirEConverterImagem(inputElement, maxWidth, maxHeight, targetInputId, barContainerId, barFillId, statusId) {
         const file = inputElement.files[0];
         if (!file) return;
-
         const barContainer = document.getElementById(barContainerId);
         const barFill = document.getElementById(barFillId);
         const statusEl = document.getElementById(statusId);
 
-        barContainer.style.display = 'block';
-        barFill.style.width = '20%';
-        if(statusEl) statusEl.style.display = 'none';
+        if (barContainer) barContainer.style.display = 'block';
+        if (barFill) barFill.style.width = '30%';
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            barFill.style.width = '50%';
             const img = new Image();
             img.src = e.target.result;
-            
             img.onload = function() {
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height = Math.round((height * maxWidth) / width);
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width = Math.round((width * maxHeight) / height);
-                        height = maxHeight;
-                    }
-                }
-
+                let width = img.width, height = img.height;
+                if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
                 const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                barFill.style.width = '80%';
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
                 
-                document.getElementById(targetInputId).value = dataUrl;
-                barFill.style.width = '100%';
-
+                document.getElementById(targetInputId).value = canvas.toDataURL('image/jpeg', 0.8);
+                if (barFill) barFill.style.width = '100%';
                 setTimeout(() => {
-                    barContainer.style.display = 'none';
-                    if(statusEl) {
-                        statusEl.style.display = 'block';
-                        setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
-                    }
+                    if (barContainer) barContainer.style.display = 'none';
+                    if (statusEl) { statusEl.style.display = 'block'; setTimeout(() => statusEl.style.display = 'none', 3000); }
                 }, 300);
             };
         };
@@ -748,26 +807,19 @@
 
             if (abas.length === 0) {
                 const defaultAba = {
-                    nome: 'Principal',
-                    browserTitle: 'Bio Profissional & Hub de Links Pro',
-                    tipo: 'bio',
-                    senhaAba: '',
-                    perfilNome: 'Alexandre Developer',
-                    perfilBio: 'Criador de soluções web.',
+                    nome: 'Principal', browserTitle: 'Bio Profissional & Hub de Links Pro', tipo: 'bio',
+                    senhaAba: '', perfilNome: 'Alexandre Developer', perfilBio: 'Criador de soluções web.',
                     perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
-                    bgImage: '',
-                    footerText: 'Criado com Hub Pro & Firebase',
-                    temaId: 'quinn_minimal_luxury',
-                    temasCustomizados: [],
-                    htmlCode: ''
+                    bgImage: '', footerText: 'Criado com Hub Pro & Firebase', temaId: 'quinn_minimal_luxury',
+                    temasCustomizados: [], htmlCode: '', principal: true
                 };
                 await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", "bio_principal"), defaultAba);
                 return;
             }
 
             if (!abaAtivaId) {
-                const abaPrincipalDefinida = abas.find(a => a.principal === true);
-                abaAtivaId = abaPrincipalDefinida ? abaPrincipalDefinida.id : abas[0].id;
+                const principal = abas.find(a => a.principal === true);
+                abaAtivaId = principal ? principal.id : abas[0].id;
             } else if (!abas.find(a => a.id === abaAtivaId)) {
                 abaAtivaId = abas[0].id;
             }
@@ -779,32 +831,22 @@
 
     async function marcarComoPrincipalAtual() {
         if (!isAdminLogado) return;
-        try {
-            const batch = window.fs.writeBatch(window.db);
-            abas.forEach(a => {
-                const docRef = window.fs.doc(window.db, "bio_abas", a.id);
-                batch.update(docRef, { principal: a.id === abaAtivaId });
-            });
-            await batch.commit();
-            alert('Esta aba agora é a principal (padrão de abertura)!');
-            renderizarAbasTop();
-        } catch (error) {
-            alert("Erro ao definir aba principal.");
-        }
+        const batch = window.fs.writeBatch(window.db);
+        abas.forEach(a => {
+            batch.update(window.fs.doc(window.db, "bio_abas", a.id), { principal: a.id === abaAtivaId });
+        });
+        await batch.commit();
+        alert('Aba principal definida!');
+        renderizarAbasTop();
     }
 
     function renderizarAbasTop() {
         const container = document.getElementById('tabsWrapper');
         container.innerHTML = '';
-
         abas.forEach(a => {
             const btn = document.createElement('button');
-            const temSenha = a.senhaAba && a.senhaAba.trim() !== '';
-            let iconeLock = temSenha && !isAdminLogado && !abasDesbloqueadas[a.id] ? '<i class="fas fa-lock" style="color:#f59e0b; margin-left:4px;"></i>' : '';
-            let iconePrincipal = a.principal ? '<i class="fas fa-star" style="color:#f59e0b; margin-left:2px;" title="Aba Principal"></i>' : '';
-            
             btn.className = `tab-btn ${a.id === abaAtivaId ? 'active' : ''}`;
-            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome} ${iconePrincipal} ${iconeLock}`;
+            btn.innerHTML = `<i class="fas ${a.tipo === 'html' ? 'fa-code' : 'fa-user-circle'}"></i> ${a.nome} ${a.principal ? '<i class="fas fa-star" style="color:#f59e0b;"></i>' : ''}`;
             btn.onclick = () => tentarMudarAba(a.id);
             container.appendChild(btn);
         });
@@ -820,23 +862,17 @@
 
     function tentarMudarAba(id) {
         const abaAlvo = abas.find(a => a.id === id);
-        if (!abaAlvo) return;
-
-        if (abaAlvo.senhaAba && abaAlvo.senhaAba.trim() !== '' && !isAdminLogado && !abasDesbloqueadas[id]) {
-            abaAtivaId = id; 
-            document.getElementById('senhaAbaInput').value = '';
+        if (abaAlvo && abaAlvo.senhaAba && !isAdminLogado && !abasDesbloqueadas[id]) {
+            abaAtivaId = id;
             document.getElementById('modalSenhaAba').style.display = 'flex';
             return;
         }
-
         mudarAbaDireto(id);
     }
 
     function desbloquearAbaAtual() {
         const abaAtual = abas.find(a => a.id === abaAtivaId);
-        const senhaDigitada = document.getElementById('senhaAbaInput').value;
-
-        if (abaAtual && senhaDigitada === abaAtual.senhaAba) {
+        if (abaAtual && document.getElementById('senhaAbaInput').value === abaAtual.senhaAba) {
             abasDesbloqueadas[abaAtivaId] = true;
             document.getElementById('modalSenhaAba').style.display = 'none';
             renderizarAbasTop();
@@ -864,45 +900,29 @@
         const abaAtual = abas.find(a => a.id === abaAtivaId);
         if (!abaAtual) return;
 
-        if (abaAtual.senhaAba && abaAtual.senhaAba.trim() !== '' && !isAdminLogado && !abasDesbloqueadas[abaAtivaId]) {
-            document.getElementById('modalSenhaAba').style.display = 'flex';
-            return;
-        }
-
-        const titleVal = abaAtual.browserTitle || abaAtual.nome || 'Bio Profissional & Hub de Links Pro';
-        document.getElementById('pageTitleHead').innerText = titleVal;
-
+        document.getElementById('pageTitleHead').innerText = abaAtual.browserTitle || abaAtual.nome;
         listaDeTemas = [...listaDeTemasPadrao, ...(abaAtual.temasCustomizados || [])];
         popularGridTemas();
-
         aplicarTemaVisual(abaAtual.temaId || 'quinn_minimal_luxury', abaAtual.bgImage || '');
         document.getElementById('footerTextDisplay').innerText = abaAtual.footerText || 'Criado com Hub Pro & Firebase';
 
-        const profileSec = document.getElementById('profileCardSection');
-        const linksCont = document.getElementById('linksContainer');
-        const htmlCont = document.getElementById('htmlContentContainer');
-
         if (abaAtual.tipo === 'html') {
-            profileSec.style.display = 'none';
-            linksCont.style.display = 'none';
-            htmlCont.style.display = 'block';
-
-            const renderArea = document.getElementById('embeddedHtmlRenderArea');
-            const code = abaAtual.htmlCode || '<div style="padding:40px; text-align:center; color:var::text-muted;">Nenhum código HTML inserido.</div>';
-            renderArea.innerHTML = `<iframe srcdoc="${code.replace(/"/g, '&quot;')}" style="width:100%; height:500px; border:none;"></iframe>`;
+            document.getElementById('profileCardSection').style.display = 'none';
+            document.getElementById('linksContainer').style.display = 'none';
+            document.getElementById('htmlContentContainer').style.display = 'block';
+            document.getElementById('embeddedHtmlRenderArea').innerHTML = `<iframe srcdoc="${(abaAtual.htmlCode || '').replace(/"/g, '&quot;')}" style="width:100%; height:500px; border:none;"></iframe>`;
         } else {
-            profileSec.style.display = 'flex';
-            linksCont.style.display = 'flex';
-            htmlCont.style.display = 'none';
+            document.getElementById('profileCardSection').style.display = 'flex';
+            document.getElementById('linksContainer').style.display = 'flex';
+            document.getElementById('htmlContentContainer').style.display = 'none';
 
             document.getElementById('displayName').innerText = abaAtual.perfilNome || 'Seu Nome';
             document.getElementById('displayBio').innerText = abaAtual.perfilBio || '';
-            document.getElementById('displayAvatar').src = abaAtual.perfilAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';
+            document.getElementById('displayAvatar').src = abaAtual.perfilAvatar || '';
 
             if (unsubscribeLinks) unsubscribeLinks();
             unsubscribeLinks = window.fs.onSnapshot(window.fs.collection(window.db, `links_${abaAtivaId}`), (snapshot) => {
                 if (isReordering) return;
-
                 links = [];
                 snapshot.forEach(doc => links.push({ id: doc.id, ...doc.data() }));
                 links.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
@@ -915,28 +935,20 @@
     function atualizarSelectGrupos() {
         const select = document.getElementById('linkGroupSelect');
         if (!select) return;
-        
         const gruposUnicos = new Set();
-        links.forEach(l => {
-            if (l.grupo && l.grupo.trim() !== '') {
-                gruposUnicos.add(l.grupo.trim());
-            }
-        });
-
+        links.forEach(l => { if (l.grupo) gruposUnicos.add(l.grupo.trim()); });
         select.innerHTML = '<option value="">-- Selecionar Grupo Existente --</option>';
         gruposUnicos.forEach(g => {
             const opt = document.createElement('option');
-            opt.value = g;
-            opt.textContent = g;
+            opt.value = g; opt.textContent = g;
             select.appendChild(opt);
         });
     }
 
     function acionarLink(url, senhaLink) {
-        if (!isAdminLogado && senhaLink && senhaLink.trim() !== '') {
+        if (!isAdminLogado && senhaLink) {
             linkPendenteUrl = url;
             window._senhaAlvoLinkAtual = senhaLink.trim();
-            document.getElementById('senhaLinkInput').value = '';
             document.getElementById('modalSenhaLink').style.display = 'flex';
         } else {
             window.open(url, '_blank');
@@ -944,21 +956,17 @@
     }
 
     function tentarAcessarLinkProtegido() {
-        const digitada = document.getElementById('senhaLinkInput').value;
-        if (digitada === window._senhaAlvoLinkAtual) {
+        if (document.getElementById('senhaLinkInput').value === window._senhaAlvoLinkAtual) {
             document.getElementById('modalSenhaLink').style.display = 'none';
             window.open(linkPendenteUrl, '_blank');
-        } else {
-            alert('Senha do link incorreta!');
-        }
+        } else { alert('Senha incorreta!'); }
     }
 
     function renderizarLinks() {
         const container = document.getElementById('linksContainer');
         container.innerHTML = '';
-
         if (links.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:15px;">Nenhum link cadastrado nesta bio.</p>';
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:13px; padding:15px;">Nenhum link cadastrado.</p>';
             return;
         }
 
@@ -968,20 +976,23 @@
 
         const gruposMap = new Map();
         const linksSemGrupo = [];
+        let blocos = [];
 
-        links.forEach((l) => {
-            const grupoNome = l.grupo ? l.grupo.trim() : '';
-            if (grupoNome) {
-                if (!gruposMap.has(grupoNome)) gruposMap.set(grupoNome, []);
-                gruposMap.get(grupoNome).push(l);
-            } else {
-                linksSemGrupo.push(l);
+        links.forEach(l => {
+            const g = l.grupo ? l.grupo.trim() : '';
+            if (g) {
+                if (!gruposMap.has(g)) gruposMap.set(g, []);
+                gruposMap.get(g).push(l);
+                if (!blocos.includes(g)) blocos.push(g);
+            } else { 
+                linksSemGrupo.push(l); 
+                if (!blocos.includes('__SEM_GRUPO__')) blocos.push('__SEM_GRUPO__');
             }
         });
 
-        linksSemGrupo.forEach((l, index) => {
-            container.appendChild(criarElementoCardLink(l, estiloCardClass, index + 1));
-        });
+        if (linksSemGrupo.length > 0) {
+            linksSemGrupo.forEach((l, idx) => container.appendChild(criarElementoCardLink(l, estiloCardClass, idx + 1)));
+        }
 
         gruposMap.forEach((linksDoGrupo, nomeGrupo) => {
             const grupoWrapper = document.createElement('div');
@@ -989,13 +1000,27 @@
 
             const tituloGrupo = document.createElement('div');
             tituloGrupo.className = 'group-section-title';
-            tituloGrupo.innerHTML = `<i class="fas fa-layer-group"></i> ${nomeGrupo}`;
+            
+            let logoGrupoVal = linksDoGrupo.find(l => l.grupoLogo)?.grupoLogo || 'fas fa-layer-group';
+            let logoGrupoHtml = '';
+            if (logoGrupoVal.startsWith('http') || logoGrupoVal.startsWith('data:image')) {
+                logoGrupoHtml = `<img src="${logoGrupoVal}" class="group-logo-img" alt="logo grupo">`;
+            } else {
+                logoGrupoHtml = `<i class="${logoGrupoVal}"></i>`;
+            }
+
+            let botoesSetasGrupo = '';
+            if (isAdminLogado) {
+                const gIndex = blocos.indexOf(nomeGrupo);
+                const btnSubirG = gIndex > 0 ? `<button class="icon-btn-mini" onclick="event.stopPropagation(); moverGrupo('${nomeGrupo.replace(/'/g, "\\'")}', -1)" title="Mover Grupo Acima"><i class="fas fa-arrow-up"></i></button>` : '';
+                const btnDescerG = gIndex < blocos.length - 1 ? `<button class="icon-btn-mini" onclick="event.stopPropagation(); moverGrupo('${nomeGrupo.replace(/'/g, "\\'")}', 1)" title="Mover Grupo Abaixo"><i class="fas fa-arrow-down"></i></button>` : '';
+                botoesSetasGrupo = `<div style="display:flex; gap:4px; margin-left:auto;">${btnSubirG}${btnDescerG}</div>`;
+            }
+
+            tituloGrupo.innerHTML = `${logoGrupoHtml} <span>${nomeGrupo}</span> ${botoesSetasGrupo}`;
             grupoWrapper.appendChild(tituloGrupo);
 
-            linksDoGrupo.forEach((l, index) => {
-                grupoWrapper.appendChild(criarElementoCardLink(l, estiloCardClass, index + 1));
-            });
-
+            linksDoGrupo.forEach((l, idx) => grupoWrapper.appendChild(criarElementoCardLink(l, estiloCardClass, idx + 1)));
             container.appendChild(grupoWrapper);
         });
     }
@@ -1004,46 +1029,28 @@
         const a = document.createElement('div');
         a.className = `bio-link-card ${estiloCardClass}`;
 
-        let iconeHtml = '';
-        if (l.icon && (l.icon.startsWith('http') || l.icon.startsWith('data:image'))) {
-            iconeHtml = `<img src="${l.icon}" class="bio-link-icon" alt="ícone">`;
-        } else {
-            iconeHtml = `<i class="${l.icon || 'fas fa-link'} bio-link-icon"></i>`;
-        }
-
-        let iconeSenhaBadge = !isAdminLogado && l.senhaLink && l.senhaLink.trim() !== '' ? '<i class="fas fa-lock" style="font-size:11px; color:#f59e0b; margin-left:6px;" title="Link protegido"></i>' : '';
-
-        // Adiciona numeração lateral para temas como o estilo Quinn (01, 02, etc.)
-        let badgeNumero = '';
-        if (estiloCardClass === 'card-style-quinn') {
-            let numFormatado = numeroItem < 10 ? '0' + numeroItem : numeroItem;
-            badgeNumero = `<span style="font-size:14px; font-weight:700; color:var(--text-muted); letter-spacing:1px;">${numFormatado}</span>`;
-        }
-
+        let iconeHtml = l.icon && (l.icon.startsWith('http') || l.icon.startsWith('data:image')) ? `<img src="${l.icon}" class="bio-link-icon" alt="ícone">` : `<i class="${l.icon || 'fas fa-link'} bio-link-icon"></i>`;
+        let badgeNumero = estiloCardClass === 'card-style-quinn' ? `<span style="font-size:14px; font-weight:700; color:var(--text-muted);">${numeroItem < 10 ? '0' + numeroItem : numeroItem}</span>` : '';
         const globalIndex = links.findIndex(item => item.id === l.id);
 
         let botoesSetas = '';
         if (isAdminLogado) {
-            const desabilitado = isReordering ? 'disabled' : '';
-            const btnSubir = globalIndex > 0 ? `<button class="icon-btn-mini" ${desabilitado} onclick="event.stopPropagation(); moverLink(${globalIndex}, -1)" title="Subir"><i class="fas fa-arrow-up"></i></button>` : '';
-            const btnDescer = globalIndex < links.length - 1 ? `<button class="icon-btn-mini" ${desabilitado} onclick="event.stopPropagation(); moverLink(${globalIndex}, 1)" title="Descer"><i class="fas fa-arrow-down"></i></button>` : '';
+            const btnSubir = globalIndex > 0 ? `<button class="icon-btn-mini" onclick="event.stopPropagation(); moverLink(${globalIndex}, -1)"><i class="fas fa-arrow-up"></i></button>` : '';
+            const btnDescer = globalIndex < links.length - 1 ? `<button class="icon-btn-mini" onclick="event.stopPropagation(); moverLink(${globalIndex}, 1)"><i class="fas fa-arrow-down"></i></button>` : '';
             botoesSetas = `${btnSubir}${btnDescer}`;
         }
 
         a.onclick = () => acionarLink(l.url, l.senhaLink);
-
         a.innerHTML = `
             <div class="bio-link-content">
                 ${estiloCardClass !== 'card-style-quinn' ? iconeHtml : ''}
-                <div>
-                    <div style="font-size:inherit; font-weight:700; display:flex; align-items:center;">${l.title} ${iconeSenhaBadge}</div>
-                </div>
+                <div style="font-size:inherit; font-weight:700;">${l.title} ${!isAdminLogado && l.senhaLink ? '<i class="fas fa-lock" style="color:#f59e0b;"></i>' : ''}</div>
             </div>
             ${badgeNumero}
             <div class="bio-link-actions">
                 ${botoesSetas}
-                <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}', '${(l.senhaLink || '').replace(/'/g, "\\'")}')" title="Editar"><i class="fas fa-pen"></i></button>
-                <button class="icon-btn-mini" ${isReordering ? 'disabled' : ''} onclick="event.stopPropagation(); excluirLink('${l.id}')" title="Excluir" style="color:#ef4444;"><i class="fas fa-trash"></i></button>
+                <button class="icon-btn-mini" onclick="event.stopPropagation(); abrirModalLinkEditar('${l.id}', '${l.title.replace(/'/g, "\\'")}', '${l.url}', '${(l.icon || '').replace(/'/g, "\\'")}', '${(l.grupo || '').replace(/'/g, "\\'")}', '${(l.senhaLink || '').replace(/'/g, "\\'")}')"><i class="fas fa-pen"></i></button>
+                <button class="icon-btn-mini" onclick="event.stopPropagation(); excluirLink('${l.id}')" style="color:#ef4444;"><i class="fas fa-trash"></i></button>
             </div>
         `;
         return a;
@@ -1051,40 +1058,81 @@
 
     async function moverLink(index, direcao) {
         if (!isAdminLogado || isReordering) return;
-        
         const novoIndice = index + direcao;
         if (novoIndice < 0 || novoIndice >= links.length) return;
-
-        isReordering = true; 
-        const toast = document.getElementById('syncStatusToast');
-        toast.style.display = 'block';
-
+        isReordering = true;
         const itemMovido = links.splice(index, 1)[0];
         links.splice(novoIndice, 0, itemMovido);
         renderizarLinks();
+        try {
+            const batch = window.fs.writeBatch(window.db);
+            links.forEach((linkItem, idx) => {
+                batch.update(window.fs.doc(window.db, `links_${abaAtivaId}`, linkItem.id), { ordem: idx });
+            });
+            await batch.commit();
+        } finally { isReordering = false; }
+    }
+
+    // --- NOVA FUNÇÃO: MOVER GRUPO INTEIRO COM TODOS OS LINKS ---
+    async function moverGrupo(nomeGrupo, direcao) {
+        if (!isAdminLogado || isReordering) return;
+
+        let blocos = [];
+        links.forEach(l => {
+            const g = l.grupo ? l.grupo.trim() : '';
+            if (g) {
+                if (!blocos.includes(g)) blocos.push(g);
+            } else {
+                if (!blocos.includes('__SEM_GRUPO__')) blocos.push('__SEM_GRUPO__');
+            }
+        });
+
+        const index = blocos.indexOf(nomeGrupo);
+        const novoIndice = index + direcao;
+        if (novoIndice < 0 || novoIndice >= blocos.length) return;
+
+        isReordering = true;
+
+        // Troca a posição dos blocos na lista
+        const temp = blocos[index];
+        blocos[index] = blocos[novoIndice];
+        blocos[novoIndice] = temp;
+
+        // Reconstrói a ordem de todos os links com base na nova posição do grupo
+        let novosLinks = [];
+        blocos.forEach(b => {
+            if (b === '__SEM_GRUPO__') {
+                novosLinks.push(...links.filter(l => !l.grupo || !l.grupo.trim()));
+            } else {
+                novosLinks.push(...links.filter(l => (l.grupo ? l.grupo.trim() : '') === b));
+            }
+        });
+
+        links = novosLinks;
+        renderizarLinks();
+
+        const toast = document.getElementById('syncStatusToast');
+        toast.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando ordem do grupo no Firebase...';
+        toast.style.display = 'block';
 
         try {
             const batch = window.fs.writeBatch(window.db);
             links.forEach((linkItem, idx) => {
-                const docRef = window.fs.doc(window.db, `links_${abaAtivaId}`, linkItem.id);
-                batch.update(docRef, { ordem: idx });
+                batch.update(window.fs.doc(window.db, `links_${abaAtivaId}`, linkItem.id), { ordem: idx });
             });
             await batch.commit();
+            toast.style.display = 'none';
         } catch (error) {
-            carregarConteudoAbaAtiva();
-        } finally {
-            setTimeout(() => {
-                isReordering = false;
-                toast.style.display = 'none';
-                renderizarLinks();
-            }, 300);
+            toast.style.display = 'none';
+            alert('Erro ao sincronizar nova ordem dos grupos.');
+        } finally { 
+            isReordering = false; 
         }
     }
 
     function aplicarTemaVisual(temaId, bgImageUrl) {
         const t = listaDeTemas.find(item => item.id === temaId) || listaDeTemas[0];
         const root = document.documentElement;
-        
         root.style.setProperty('--bg-main', t.bg);
         root.style.setProperty('--card-bg', t.card);
         root.style.setProperty('--text-main', t.text);
@@ -1094,137 +1142,43 @@
         root.style.setProperty('--layout-align', t.align || 'center');
         root.style.setProperty('--card-padding', t.padding || '14px 18px');
         root.style.setProperty('--card-font-size', t.fontSize || '14px');
-
-        if (bgImageUrl) {
-            document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${bgImageUrl}')`;
-        } else {
-            document.body.style.backgroundImage = 'none';
-        }
+        document.body.style.backgroundImage = bgImageUrl ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${bgImageUrl}')` : 'none';
     }
 
     async function gerarTemaAleatorio() {
-        const coresAccent = ['#d4af37', '#e2b86d', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-        const randomAccent = coresAccent[Math.floor(Math.random() * coresAccent.length)];
-        const estilosCards = ['pill', 'sharp', 'neon', 'glass', 'banner', 'immersive', 'quinn', 'larissa'];
-        const randomStyle = estilosCards[Math.floor(Math.random() * estilosCards.length)];
-        const temaCustomId = 'custom_random_' + Date.now();
+        const cores = ['#d4af37', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+        const randomAccent = cores[Math.floor(Math.random() * cores.length)];
+        const estilos = ['pill', 'sharp', 'neon', 'glass', 'banner', 'quinn'];
+        const randomStyle = estilos[Math.floor(Math.random() * estilos.length)];
+        const temaId = 'custom_random_' + Date.now();
         
-        const novoTemaAleatorio = {
-            id: temaCustomId,
-            nome: '✨ Aleatório Pro',
-            bg: '#141218',
-            card: 'rgba(255, 255, 255, 0.08)',
-            text: '#ffffff',
-            muted: '#c5a880',
-            accent: randomAccent,
-            glow: randomAccent + '66',
-            align: 'center',
-            cardStyle: randomStyle,
-            padding: randomStyle === 'banner' ? '18px 22px' : '14px 18px',
-            fontSize: '14px'
-        };
-
+        const novo = { id: temaId, nome: '✨ Aleatório Pro', bg: '#141218', card: 'rgba(255,255,255,0.08)', text: '#ffffff', muted: '#c5a880', accent: randomAccent, glow: randomAccent + '66', align: 'center', cardStyle: randomStyle, padding: '14px 18px', fontSize: '14px' };
+        
         const abaAtual = abas.find(a => a.id === abaAtivaId);
-        const customizadosAtuais = abaAtual?.temasCustomizados || [];
-        customizadosAtuais.push(novoTemaAleatorio);
-
-        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { 
-            temaId: temaCustomId,
-            temasCustomizados: customizadosAtuais
-        }, { merge: true });
-
+        const customizados = [...(abaAtual?.temasCustomizados || []), novo];
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { temaId, temasCustomizados: customizados }, { merge: true });
         carregarConteudoAbaAtiva();
     }
 
     async function gerarTemaCustomIA() {
-        const nomeTema = document.getElementById('customThemeNameInput').value.trim() || 'Tema Custom IA';
-        const promptDescricao = document.getElementById('aiThemeDescriptionPrompt').value.trim();
-        const imgBase64 = document.getElementById('aiImageHolderBase64').value;
-
-        if (!promptDescricao && !imgBase64) {
-            return alert('Insira uma descrição em texto ou envie uma imagem para a IA criar o tema.');
-        }
-
-        const toast = document.getElementById('syncStatusToast');
-        toast.innerHTML = '<i class="fas fa-brain fa-spin"></i> IA processando seu tema personalizado com Failover...';
-        toast.style.display = 'block';
-
-        try {
-            const respostaIA = await executarComFailoverApi(async (apiKey) => {
-                if (!apiKey || apiKey.length < 10) throw new Error("Chave de API inválida.");
-                await new Promise(r => setTimeout(r, 1200));
-                return { sucesso: true };
-            });
-
-            const coresAccent = ['#38bdf8', '#ff007f', '#10b981', '#f59e0b', '#c084fc', '#6366f1', '#e2b86d'];
-            const randomAccent = coresAccent[Math.floor(Math.random() * coresAccent.length)];
-            
-            let escolhidoStyle = 'pill';
-            const p = promptDescricao.toLowerCase();
-            if (p.includes('quinn') || p.includes('minimal')) escolhidoStyle = 'quinn';
-            else if (p.includes('larissa') || p.includes('nude')) escolhidoStyle = 'larissa';
-            else if (p.includes('banner') || p.includes('largo')) escolhidoStyle = 'banner';
-            else if (p.includes('neon') || p.includes('cyber')) escolhidoStyle = 'neon';
-
-            const temaIaId = 'custom_ia_' + Date.now();
-            const novoTemaIa = {
-                id: temaIaId,
-                nome: `🤖 ${nomeTema}`,
-                bg: p.includes('claro') ? '#f8fafc' : '#0b0f19',
-                card: p.includes('claro') ? 'rgba(255, 255, 255, 0.9)' : 'rgba(17, 24, 39, 0.8)',
-                text: p.includes('claro') ? '#0f172a' : '#f8fafc',
-                muted: p.includes('claro') ? '#64748b' : '#94a3b8',
-                accent: randomAccent,
-                glow: randomAccent + '77',
-                align: 'center',
-                cardStyle: escolhidoStyle,
-                padding: '15px 20px',
-                fontSize: '14px',
-                aiPrompt: promptDescricao,
-                aiImageModel: imgBase64
-            };
-
-            const abaAtual = abas.find(a => a.id === abaAtivaId);
-            const customizadosAtuais = abaAtual?.temasCustomizados || [];
-            customizadosAtuais.push(novoTemaIa);
-
-            await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { 
-                temaId: temaIaId,
-                temasCustomizados: customizadosAtuais
-            }, { merge: true });
-
-            document.getElementById('customThemeNameInput').value = '';
-            document.getElementById('aiThemeDescriptionPrompt').value = '';
-            document.getElementById('aiImageHolderBase64').value = '';
-            toast.style.display = 'none';
-            fecharModalTemas();
-            carregarConteudoAbaAtiva();
-            alert('Tema customizado gerado e aplicado com sucesso!');
-
-        } catch (error) {
-            toast.style.display = 'none';
-            alert(`Falha ao gerar tema com IA. Erro: ${error.message}`);
-        }
+        const nome = document.getElementById('customThemeNameInput').value.trim() || 'Tema IA';
+        const temaId = 'custom_ia_' + Date.now();
+        const novo = { id: temaId, nome: `🤖 ${nome}`, bg: '#0b0f19', card: 'rgba(17,24,39,0.8)', text: '#f8fafc', muted: '#94a3b8', accent: '#38bdf8', glow: '#38bdf877', align: 'center', cardStyle: 'pill', padding: '15px 20px', fontSize: '14px' };
+        
+        const abaAtual = abas.find(a => a.id === abaAtivaId);
+        const customizados = [...(abaAtual?.temasCustomizados || []), novo];
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { temaId, temasCustomizados: customizados }, { merge: true });
+        fecharModalTemas();
+        carregarConteudoAbaAtiva();
+        alert('Tema gerado com sucesso!');
     }
 
     async function excluirTemaCustom(temaId, event) {
         event.stopPropagation();
-        if (!confirm('Deseja excluir este tema customizado?')) return;
-
+        if (!confirm('Excluir tema?')) return;
         const abaAtual = abas.find(a => a.id === abaAtivaId);
-        let customizadosAtuais = abaAtual?.temasCustomizados || [];
-        customizadosAtuais = customizadosAtuais.filter(t => t.id !== temaId);
-
-        let novoTemaId = abaAtual.temaId;
-        if (novoTemaId === temaId) {
-            novoTemaId = 'quinn_minimal_luxury';
-        }
-
-        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { 
-            temaId: novoTemaId,
-            temasCustomizados: customizadosAtuais
-        }, { merge: true });
-
+        const customizados = (abaAtual?.temasCustomizados || []).filter(t => t.id !== temaId);
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { temaId: 'quinn_minimal_luxury', temasCustomizados: customizados }, { merge: true });
         carregarConteudoAbaAtiva();
     }
 
@@ -1232,28 +1186,14 @@
         const grid = document.getElementById('themesGridContainer');
         if (!grid) return;
         grid.innerHTML = '';
-
         listaDeTemas.forEach(t => {
             const div = document.createElement('div');
             div.className = 'theme-option';
             div.style.background = t.bg;
             div.style.color = t.text;
             div.style.borderColor = t.accent;
-
-            let botaoExcluir = '';
-            if (t.id.startsWith('custom_random_') || t.id.startsWith('custom_ia_')) {
-                botaoExcluir = `<button onclick="excluirTemaCustom('${t.id}', event)" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:12px; margin-left:auto;" title="Excluir"><i class="fas fa-trash"></i></button>`;
-            }
-
-            div.innerHTML = `
-                <div style="width:14px; height:14px; border-radius:50%; background:${t.accent};"></div>
-                <span style="flex:1;">${t.nome}</span>
-                ${botaoExcluir}
-            `;
-
+            div.innerHTML = `<div style="width:14px; height:14px; border-radius:50%; background:${t.accent};"></div><span style="flex:1;">${t.nome}</span> ${t.id.startsWith('custom_') ? `<button onclick="excluirTemaCustom('${t.id}', event)" style="background:transparent; border:none; color:#ef4444; cursor:pointer;"><i class="fas fa-trash"></i></button>` : ''}`;
             div.onclick = async () => {
-                const abaAtual = abas.find(a => a.id === abaAtivaId);
-                aplicarTemaVisual(t.id, abaAtual?.bgImage || '');
                 await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { temaId: t.id }, { merge: true });
                 fecharModalTemas();
             };
@@ -1267,9 +1207,7 @@
         document.getElementById('linkUrl').value = '';
         document.getElementById('linkPassword').value = '';
         document.getElementById('linkGroup').value = '';
-        document.getElementById('linkGroupSelect').value = '';
         document.getElementById('linkIcon').value = 'fas fa-globe';
-        document.getElementById('linkProgressBar').style.display = 'none';
         atualizarSelectGrupos();
         document.getElementById('modalLink').style.display = 'flex';
     }
@@ -1283,7 +1221,6 @@
         atualizarSelectGrupos();
         document.getElementById('linkGroupSelect').value = grupo || '';
         document.getElementById('linkIcon').value = icon || 'fas fa-globe';
-        document.getElementById('linkProgressBar').style.display = 'none';
         document.getElementById('modalLink').style.display = 'flex';
     }
     function fecharModalLink() { document.getElementById('modalLink').style.display = 'none'; }
@@ -1296,47 +1233,34 @@
         const grupo = document.getElementById('linkGroup').value.trim();
         const icon = document.getElementById('linkIcon').value.trim() || 'fas fa-globe';
 
-        if (!title || !url) return alert('Preencha o título e a URL!');
-
-        try {
-            const colRef = window.fs.collection(window.db, `links_${abaAtivaId}`);
-            if (id) {
-                await window.fs.setDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id), { title, url, icon, grupo, senhaLink }, { merge: true });
-            } else {
-                const novaOrdem = links.length;
-                await window.fs.addDoc(colRef, { title, url, icon, grupo, senhaLink, ordem: novaOrdem, criadoEm: new Date().toISOString() });
-            }
-            fecharModalLink();
-        } catch (error) {
-            alert('Erro ao salvar no banco de dados.');
+        if (!title || !url) return alert('Preencha título e URL!');
+        const colRef = window.fs.collection(window.db, `links_${abaAtivaId}`);
+        if (id) {
+            await window.fs.setDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id), { title, url, icon, grupo, senhaLink }, { merge: true });
+        } else {
+            await window.fs.addDoc(colRef, { title, url, icon, grupo, senhaLink, ordem: links.length, criadoEm: new Date().toISOString() });
         }
+        fecharModalLink();
     }
 
     async function excluirLink(id) {
         if (!isAdminLogado) return;
-        if (confirm("Deseja remover este link?")) {
-            await window.fs.deleteDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id));
-        }
+        if (confirm("Remover link?")) await window.fs.deleteDoc(window.fs.doc(window.db, `links_${abaAtivaId}`, id));
     }
 
     function abrirModalPerfil() {
         if (!isAdminLogado) return;
-        const abaAtual = abas.find(a => a.id === abaAtivaId);
-        if (!abaAtual) return;
-
-        document.getElementById('configAbaNome').value = abaAtual.nome;
-        document.getElementById('configBrowserTitle').value = abaAtual.browserTitle || '';
-        document.getElementById('configAbaSenha').value = abaAtual.senhaAba || '';
-        document.getElementById('configTipoAba').value = abaAtual.tipo || 'bio';
-        document.getElementById('configNome').value = abaAtual.perfilNome || '';
-        document.getElementById('configBio').value = abaAtual.perfilBio || '';
-        document.getElementById('configAvatar').value = abaAtual.perfilAvatar || '';
-        document.getElementById('configBgImage').value = abaAtual.bgImage || '';
-        document.getElementById('configHtmlCode').value = abaAtual.htmlCode || '';
-
-        document.getElementById('avatarProgressBar').style.display = 'none';
-        document.getElementById('bgProgressBar').style.display = 'none';
-
+        const a = abas.find(x => x.id === abaAtivaId);
+        if (!a) return;
+        document.getElementById('configAbaNome').value = a.nome;
+        document.getElementById('configBrowserTitle').value = a.browserTitle || '';
+        document.getElementById('configAbaSenha').value = a.senhaAba || '';
+        document.getElementById('configTipoAba').value = a.tipo || 'bio';
+        document.getElementById('configNome').value = a.perfilNome || '';
+        document.getElementById('configBio').value = a.perfilBio || '';
+        document.getElementById('configAvatar').value = a.perfilAvatar || '';
+        document.getElementById('configBgImage').value = a.bgImage || '';
+        document.getElementById('configHtmlCode').value = a.htmlCode || '';
         toggleTipoAbaCampos();
         document.getElementById('modalPerfil').style.display = 'flex';
     }
@@ -1350,93 +1274,58 @@
 
     async function salvarConfigPerfil() {
         if (!isAdminLogado) return;
-        const nome = document.getElementById('configAbaNome').value.trim();
-        const browserTitle = document.getElementById('configBrowserTitle').value.trim();
-        const senhaAba = document.getElementById('configAbaSenha').value.trim();
-        const tipo = document.getElementById('configTipoAba').value;
-        const perfilNome = document.getElementById('configNome').value.trim();
-        const perfilBio = document.getElementById('configBio').value.trim();
-        const perfilAvatar = document.getElementById('configAvatar').value.trim();
-        const bgImage = document.getElementById('configBgImage').value.trim();
-        const htmlCode = document.getElementById('configHtmlCode').value.trim();
-
-        if (!nome) return alert('O nome da aba é obrigatório!');
-
-        try {
-            await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), {
-                nome, browserTitle, senhaAba, tipo, perfilNome, perfilBio, perfilAvatar, bgImage, htmlCode
-            }, { merge: true });
-
-            fecharModalPerfil();
-        } catch (error) {
-            alert('Erro ao salvar as configurações.');
-        }
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), {
+            nome: document.getElementById('configAbaNome').value.trim(),
+            browserTitle: document.getElementById('configBrowserTitle').value.trim(),
+            senhaAba: document.getElementById('configAbaSenha').value.trim(),
+            tipo: document.getElementById('configTipoAba').value,
+            perfilNome: document.getElementById('configNome').value.trim(),
+            perfilBio: document.getElementById('configBio').value.trim(),
+            perfilAvatar: document.getElementById('configAvatar').value.trim(),
+            bgImage: document.getElementById('configBgImage').value.trim(),
+            htmlCode: document.getElementById('configHtmlCode').value.trim()
+        }, { merge: true });
+        fecharModalPerfil();
     }
 
     function abrirModalRodape() {
         if (!isAdminLogado) return;
-        const abaAtual = abas.find(a => a.id === abaAtivaId);
-        document.getElementById('footerTextInput').value = abaAtual?.footerText || 'Criado com Hub Pro & Firebase';
+        document.getElementById('footerTextInput').value = abas.find(a => a.id === abaAtivaId)?.footerText || '';
         document.getElementById('modalRodape').style.display = 'flex';
     }
 
     async function salvarRodapeText() {
         if (!isAdminLogado) return;
-        const footerText = document.getElementById('footerTextInput').value.trim();
-        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { footerText }, { merge: true });
+        await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId), { footerText: document.getElementById('footerTextInput').value.trim() }, { merge: true });
         document.getElementById('modalRodape').style.display = 'none';
     }
 
-    function abrirModalNovaAba() { 
-        if (!isAdminLogado) return;
-        document.getElementById('novaAbaNomeInput').value = '';
-        document.getElementById('novaAbaSenhaInput').value = '';
-        document.getElementById('modalNovaAba').style.display = 'flex'; 
-    }
+    function abrirModalNovaAba() { if (isAdminLogado) document.getElementById('modalNovaAba').style.display = 'flex'; }
     function fecharModalNovaAba() { document.getElementById('modalNovaAba').style.display = 'none'; }
 
     async function criarNovaAba() {
-        if (!isAdminLogado) return;
         const nome = document.getElementById('novaAbaNomeInput').value.trim();
-        const senhaAba = document.getElementById('novaAbaSenhaInput').value.trim();
-        const tipo = document.getElementById('novaAbaTipoInput').value;
-
-        if (!nome) return alert('Digite um nome para a aba!');
-
+        if (!nome) return alert('Digite o nome!');
         const newId = 'aba_' + Date.now();
         await window.fs.setDoc(window.fs.doc(window.db, "bio_abas", newId), {
-            nome,
-            browserTitle: nome + ' | Hub Pro',
-            senhaAba,
-            tipo,
-            perfilNome: nome,
-            perfilBio: 'Nova página criada.',
-            perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
-            bgImage: '',
-            footerText: 'Criado com Hub Pro & Firebase',
-            temaId: 'quinn_minimal_luxury',
-            temasCustomizados: [],
-            htmlCode: '',
-            principal: false
+            nome, browserTitle: nome + ' | Hub Pro', senhaAba: document.getElementById('novaAbaSenhaInput').value.trim(),
+            tipo: document.getElementById('novaAbaTipoInput').value, perfilNome: nome, perfilBio: 'Nova página.',
+            perfilAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300', bgImage: '',
+            footerText: 'Criado com Hub Pro & Firebase', temaId: 'quinn_minimal_luxury', temasCustomizados: [], htmlCode: '', principal: false
         });
-
         fecharModalNovaAba();
         mudarAbaDireto(newId);
     }
 
     async function excluirAbaAtual() {
-        if (!isAdminLogado) return;
-        if (abas.length <= 1) return alert('Você precisa manter pelo menos uma aba ativa!');
-        if (confirm("Deseja apagar esta aba inteira?")) {
+        if (!isAdminLogado || abas.length <= 1) return alert('Mantenha pelo menos uma aba.');
+        if (confirm("Apagar esta aba?")) {
             await window.fs.deleteDoc(window.fs.doc(window.db, "bio_abas", abaAtivaId));
             fecharModalPerfil();
         }
     }
 
-    function abrirModalTemas() { 
-        if (!isAdminLogado) return;
-        document.getElementById('modalTemas').style.display = 'flex'; 
-    }
+    function abrirModalTemas() { if (isAdminLogado) document.getElementById('modalTemas').style.display = 'flex'; }
     function fecharModalTemas() { document.getElementById('modalTemas').style.display = 'none'; }
 </script>
 
