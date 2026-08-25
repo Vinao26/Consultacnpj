@@ -1434,7 +1434,10 @@
 
         // Função para Ação "Saiu Para Entrega" -> Envia WhatsApp + Muda Status
         async function markOrderDispatched(orderId, clientName, clientPhone) {
-            if (!confirm(`Deseja notificar ${clientName} no WhatsApp e marcar pedido como Saiu para Entrega?`)) return;
+            // Extrai apenas o primeiro nome do cliente
+            const firstName = (clientName || '').trim().split(' ')[0];
+
+            if (!confirm(`Deseja notificar ${firstName} no WhatsApp e marcar pedido como Saiu para Entrega?`)) return;
 
             // Determinar Saudação pelo Horário do Sistema
             const hour = new Date().getHours();
@@ -1451,8 +1454,8 @@
                 cleanPhone = '55' + cleanPhone;
             }
 
-            // Mensagem formatada conforme solicitado
-            const msg = `Olá, ${saudacao} ${clientName}! Seu pedido está a caminho. 🛵💨`;
+            // Mensagem formatada utilizando o primeiro nome
+            const msg = `Olá, ${saudacao} ${firstName}! Seu pedido está a caminho. 🛵💨`;
             const encodedMsg = encodeURIComponent(msg);
 
             // Atualiza status no banco Firebase para mover da fila de pendentes
