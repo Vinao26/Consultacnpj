@@ -3,8 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Título da Guia do Navegador -->
     <title id="dynamicPageTitle">Picadinhos da Nutri - Cardápio & Delivery</title>
     <link id="dynamicFavicon" rel="icon" type="image/x-icon" href="">
+
+    <!-- META TAGS PARA COMPARTILHAMENTO (WhatsApp, Facebook, Instagram, Twitter) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Picadinhos da Nutri - Cardápio & Delivery">
+    <meta property="og:description" content="Seja bem-vindo(a) à Picadinhos da Nutri. Confira nosso cardápio e faça seu pedido online!">
+    <meta property="og:image" content="https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/stores/logo/177677759169e7797706a76_medium.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Picadinhos da Nutri - Cardápio & Delivery">
+    <meta name="twitter:description" content="Seja bem-vindo(a) à Picadinhos da Nutri. Confira nosso cardápio e faça seu pedido online!">
+    <meta name="twitter:image" content="https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/stores/logo/177677759169e7797706a76_medium.png">
     
     <!-- Bootstrap 4 & FontAwesome -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
@@ -423,7 +436,7 @@
                         </ul>
 
                         <div class="tab-content">
-                            <!-- Aba Acompanhamento de Pedidos (NOVO) -->
+                            <!-- Aba Acompanhamento de Pedidos -->
                             <div class="tab-pane fade show active" id="adminOrders" role="tabpanel">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <h6 class="font-weight-bold small text-uppercase text-muted mb-0"><i class="fas fa-clipboard-list mr-1"></i> Acompanhamento de Pedidos</h6>
@@ -644,7 +657,7 @@
         const COLL_CATEGORIES = "picadinhos_delivery_categories";
         const COLL_BADGES = "picadinhos_delivery_badges";
         const COLL_ADDITIONALS = "picadinhos_delivery_additionals";
-        const COLL_ORDERS = "picadinhos_delivery_orders"; // Nova Coleção para Acompanhamento de Pedidos
+        const COLL_ORDERS = "picadinhos_delivery_orders";
 
         const COLOR_PALETTE = [
             '#dc3545', '#28a745', '#007bff', '#ffc107', '#fd7e14',
@@ -666,7 +679,7 @@
         let dbCategories = [];
         let dbBadges = [];
         let dbAdditionals = [];
-        let dbOrders = []; // Lista em tempo real de pedidos
+        let dbOrders = [];
 
         let cart = [];
         let currentCategory = 'TODOS';
@@ -719,12 +732,10 @@
                 renderAdminProducts();
             });
 
-            // Listener de Pedidos no Firebase em Tempo Real (Ordenado por Horário)
             window.fs.onSnapshot(window.fs.collection(window.db, COLL_ORDERS), (snapshot) => {
                 dbOrders = [];
                 snapshot.forEach(doc => dbOrders.push({ id: doc.id, ...doc.data() }));
                 
-                // Ordenar por data de criação (Quem pediu primeiro fica no topo)
                 dbOrders.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
                 renderAdminOrders();
@@ -1210,19 +1221,17 @@
                 changeVal: changeVal,
                 total: total,
                 items: orderItemsHistory,
-                status: 'pendente', // 'pendente' ou 'saiu_para_entrega'
+                status: 'pendente',
                 createdAt: now.getTime(),
                 dateStr: now.toLocaleString('pt-BR')
             };
 
-            // Salva pedido no banco para controle no Admin
             try {
                 await window.fs.addDoc(window.fs.collection(window.db, COLL_ORDERS), orderPayload);
             } catch (err) {
                 console.error("Erro ao registrar pedido no banco: ", err);
             }
 
-            // Histórico local
             saveOrderToHistory({
                 date: now.toLocaleString('pt-BR'),
                 total: total,
@@ -1432,14 +1441,11 @@
             return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
-        // Função para Ação "Saiu Para Entrega" -> Envia WhatsApp + Muda Status
         async function markOrderDispatched(orderId, clientName, clientPhone) {
-            // Extrai apenas o primeiro nome do cliente
             const firstName = (clientName || '').trim().split(' ')[0];
 
             if (!confirm(`Deseja notificar ${firstName} no WhatsApp e marcar pedido como Saiu para Entrega?`)) return;
 
-            // Determinar Saudação pelo Horário do Sistema
             const hour = new Date().getHours();
             let saudacao = "Boa noite";
             if (hour >= 5 && hour < 12) {
@@ -1448,20 +1454,16 @@
                 saudacao = "Boa tarde";
             }
 
-            // Tratar telefone para envio via WhatsApp
             let cleanPhone = (clientPhone || '').replace(/\D/g, '');
             if (cleanPhone.length === 10 || cleanPhone.length === 11) {
                 cleanPhone = '55' + cleanPhone;
             }
 
-            // Mensagem formatada utilizando o primeiro nome
             const msg = `Olá, ${saudacao} ${firstName}! Seu pedido está a caminho. 🛵💨`;
             const encodedMsg = encodeURIComponent(msg);
 
-            // Atualiza status no banco Firebase para mover da fila de pendentes
             await window.fs.setDoc(window.fs.doc(window.db, COLL_ORDERS, orderId), { status: 'saiu_para_entrega' }, { merge: true });
 
-            // Abre a janela do WhatsApp web/app do cliente
             window.open(`https://wa.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
 
             showToast('Status atualizado e WhatsApp aberto!');
