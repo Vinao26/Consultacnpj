@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Picadinhos da Nutri - Cardápio & Delivery</title>
+    <!-- Bootstrap 4 & FontAwesome -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.css">
+    <style>
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #222f3d;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding-bottom: 90px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        .main-header {
+            background-color: rgb(34, 47, 61);
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            min-height: 180px;
+            position: relative;
+            width: 100%;
+        }
+
+        /* Botão Admin Disfarçado no Topo */
+        .top-icon-btn {
+            position: absolute;
+            top: 10px;
+            color: #fff;
+            opacity: 0.25;
+            transition: opacity 0.3s;
+            z-index: 10;
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .top-icon-btn:hover {
+            opacity: 1;
+        }
+        .secret-admin-btn { right: 15px; }
+
+        .logo-rounded {
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            margin-top: 35px;
+            width: 110px;
+            height: 110px;
+        }
+
+        .btn-category {
+            background-color: rgb(221, 230, 232);
+            color: rgb(34, 47, 61);
+            border: none;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .btn-category:hover, .btn-category.active {
+            background-color: rgb(34, 47, 61);
+            color: #fff;
+        }
+
+        .item-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            cursor: pointer;
+            height: 100%;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .item-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .item-img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .itemName {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #222f3d;
+            white-space: normal !important;
+            word-break: break-word;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: visible;
+        }
+
+        /* Botões Flutuantes (Perfil à Esquerda / Carrinho à Direita) */
+        .floating-profile {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .floating-cart {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        /* Notificação Toast Elegante */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            transition: transform 0.3s ease-in-out;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .overflow-auto::-webkit-scrollbar {
+            display: none;
+        }
+        .overflow-auto {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notificação Toast Flutuante -->
+    <div id="toastNotification" class="toast-notification">
+        <i class="fas fa-check-circle"></i> <span id="toastText">Item adicionado ao carrinho!</span>
+    </div>
+
+    <!-- Cabeçalho Principal -->
+    <div class="container-fluid nopadding main-header" id="headerBg">
+        <!-- Botão Admin Disfarçado -->
+        <button class="top-icon-btn secret-admin-btn" onclick="openAdminModal()" title="Painel">
+            <i class="fas fa-lock"></i>
+        </button>
+        <div class="container text-center">
+            <img id="storeLogo" src="" alt="Logo" class="logo-rounded shadow-sm">
+        </div>
+    </div>
+
+    <div class="container mt-3 px-3">
+        <!-- Barra de Informações -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="font-weight-bold mb-0" id="storeTitle" style="font-size: 1.2rem;">Picadinhos da Nutri</h4>
+                </div>
+                <div class="welcome-container mt-3 p-3 rounded" style="background-color: rgb(221, 230, 232); color: rgb(34, 47, 61);">
+                    <p id="storeWelcome" class="mb-0 font-weight-bold small" style="white-space: pre-line; line-height: 1.4;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Busca e Categorias Fixas -->
+        <div class="sticky-top bg-light py-2" style="top: 0; z-index: 999;">
+            <div class="input-group mb-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-white border-right-0 small"><i class="fas fa-search text-muted"></i></span>
+                </div>
+                <input type="text" id="searchInput" class="form-control form-control-sm border-left-0" placeholder="Buscar um item..." onkeyup="filterProducts()">
+            </div>
+            <div class="d-flex overflow-auto pb-1" id="categoryContainer" style="gap: 8px;">
+                <!-- Categorias injetadas via JS -->
+            </div>
+        </div>
+
+        <!-- Grade de Produtos -->
+        <div class="row mx-n1" id="productGrid">
+            <!-- Produtos injetados via JS -->
+        </div>
+    </div>
+
+    <!-- Botão Flutuante de Perfil (Canto Esquerdo) -->
+    <div class="floating-profile">
+        <button class="btn btn-dark btn-lg rounded-circle shadow-lg d-flex align-items-center justify-content-center" onclick="openProfileModal()" title="Meu Perfil" style="width: 50px; height: 50px; background-color: rgb(34, 47, 61); border: none;">
+            <i class="fas fa-user text-white" style="font-size: 1.1rem;"></i>
+        </button>
+    </div>
+
+    <!-- Botão Flutuante do Carrinho (Canto Direito) -->
+    <div class="floating-cart">
+        <button class="btn btn-success btn-lg rounded-pill shadow-lg px-4 font-weight-bold d-flex align-items-center" onclick="openCartModal()" style="font-size: 0.95rem;">
+            <i class="fas fa-shopping-cart mr-2"></i> Ver Carrinho (<span id="cartCount">0</span>)
+        </button>
+    </div>
+
+    <!-- Modal de Detalhes / Seleção de Quantidade -->
+    <div class="modal fade" id="productModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title font-weight-bold">Adicionar ao Carrinho</h6>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body text-center py-3">
+                    <img id="modalProdImg" src="" class="img-fluid rounded mb-2" style="max-height: 120px; object-fit: cover;">
+                    <h6 id="modalProdName" class="font-weight-bold mb-1" style="font-size: 0.95rem; word-break: break-word;"></h6>
+                    <div id="modalPriceContainer" class="mb-3">
+                        <!-- Preços dinâmicos -->
+                    </div>
+
+                    <div class="d-flex justify-content-center align-items-center mb-3" style="gap: 15px;">
+                        <button class="btn btn-outline-secondary btn-sm rounded-circle px-2" onclick="changeModalQty(-1)"><i class="fas fa-minus"></i></button>
+                        <span id="modalQty" class="font-weight-bold px-2" style="font-size: 1.2rem;">1</span>
+                        <button class="btn btn-outline-secondary btn-sm rounded-circle px-2" onclick="changeModalQty(1)"><i class="fas fa-plus"></i></button>
+                    </div>
+
+                    <button class="btn btn-success btn-block btn-sm font-weight-bold py-2" onclick="confirmAddToCart()">
+                        Adicionar • R$ <span id="modalTotalSum">0,00</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Perfil do Cliente -->
+    <div class="modal fade" id="profileModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2 bg-light">
+                    <h6 class="modal-title font-weight-bold"><i class="fas fa-user-circle mr-1 text-success"></i> Meus Dados</h6>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body py-3">
+                    <p class="text-muted small mb-3">Estes dados ficam salvos no seu aparelho para agilizar seus próximos pedidos.</p>
+                    <form onsubmit="saveClientProfile(event)">
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Nome Completo</label>
+                            <input type="text" id="profileName" class="form-control form-control-sm" placeholder="Seu Nome" required>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="small font-weight-bold mb-1">Telefone / WhatsApp</label>
+                            <input type="tel" id="profilePhone" class="form-control form-control-sm" placeholder="(69) 9 9331-5429" maxlength="16" oninput="applyPhoneMask(event)" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="small font-weight-bold mb-1">Endereço Completo</label>
+                            <textarea id="profileAddress" class="form-control form-control-sm" placeholder="Rua, Número, Bairro" rows="2" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block btn-sm font-weight-bold">Salvar Dados</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Carrinho / Checkout -->
+    <div class="modal fade" id="cartModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title font-weight-bold"><i class="fas fa-shopping-bag mr-2"></i> Seu Pedido</h6>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div id="cartItemsList" class="mb-2">
+                        <!-- Itens do carrinho -->
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="font-weight-bold text-muted">Total:</span>
+                        <h5 class="text-success font-weight-bold mb-0">R$ <span id="cartTotal">0,00</span></h5>
+                    </div>
+
+                    <form id="checkoutForm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="font-weight-bold text-dark small text-uppercase mb-0"><i class="fas fa-map-marker-alt mr-1"></i> Dados para Entrega</h6>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="text" id="clientName" class="form-control form-control-sm" placeholder="Seu Nome Completo" oninput="checkProfileChanges()" required>
+                        </div>
+                        <div class="form-group mb-2">
+                            <input type="tel" id="clientPhone" class="form-control form-control-sm" placeholder="(69) 9 9331-5429" maxlength="16" oninput="applyPhoneMask(event); checkProfileChanges();" required>
+                        </div>
+                        <div class="form-group mb-2">
+                            <textarea id="clientAddress" class="form-control form-control-sm" placeholder="Endereço Completo (Rua, Número, Bairro, Comp.)" rows="2" oninput="checkProfileChanges()" required></textarea>
+                        </div>
+
+                        <!-- Aviso dinâmico se alterou os dados -->
+                        <div id="profileUpdateAlert" class="alert alert-info py-2 px-3 small mb-2" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Deseja salvar estas alterações no seu perfil padrão?</span>
+                                <button type="button" class="btn btn-sm btn-info font-weight-bold py-0 px-2" style="font-size: 0.75rem;" onclick="saveProfileFromCheckout()">Sim, salvar</button>
+                            </div>
+                        </div>
+
+                        <h6 class="font-weight-bold text-dark small text-uppercase mb-2 mt-3"><i class="fas fa-wallet mr-1"></i> Forma de Pagamento</h6>
+                        <div class="form-group mb-2">
+                            <select id="paymentMethod" class="form-control form-control-sm" onchange="toggleChangeField()">
+                                <option value="Pix">Pix (Acertado na entrega)</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Cartão">Cartão (Débito/Crédito)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-2" id="changeFieldGroup" style="display: none;">
+                            <label class="small text-muted mb-1">Troco para quanto? (Opcional)</label>
+                            <input type="number" id="cashGiven" class="form-control form-control-sm" placeholder="Ex: 50.00" onkeyup="calculateChange()">
+                            <small class="text-success font-weight-bold mt-1 d-block" id="changeOutput"></small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Continuar Comprando</button>
+                    <button type="button" class="btn btn-success btn-sm font-weight-bold px-3" onclick="finalizeOrder()">
+                        <i class="fab fa-whatsapp mr-1"></i> Enviar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Painel Administrativo -->
+    <div class="modal fade" id="adminModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white py-2">
+                    <h6 class="modal-title"><i class="fas fa-tools mr-2"></i> Painel Administrativo</h6>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Login Admin Simples -->
+                    <div id="adminLoginSection">
+                        <p class="text-muted small">Digite a senha de administrador:</p>
+                        <div class="input-group mb-3">
+                            <input type="password" id="adminPassword" class="form-control form-control-sm" placeholder="Senha">
+                            <div class="input-group-append">
+                                <button class="btn btn-dark btn-sm" type="button" onclick="checkAdminLogin()">Entrar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo do Admin -->
+                    <div id="adminDashboardSection" style="display: none;">
+                        <ul class="nav nav-tabs nav-fill mb-3" id="adminTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active small font-weight-bold py-2" id="products-tab" data-toggle="tab" href="#manageProducts" role="tab">Produtos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link small font-weight-bold py-2" id="settings-tab" data-toggle="tab" href="#manageSettings" role="tab">Configurações & WhatsApp</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="adminTabContent">
+                            <!-- Aba Produtos -->
+                            <div class="tab-pane fade show active" id="manageProducts" role="tabpanel">
+                                <h6 class="font-weight-bold small text-uppercase text-muted">Cadastrar / Editar Produto</h6>
+                                <form id="productForm" onsubmit="saveProduct(event)" class="mb-4 bg-light p-3 rounded border">
+                                    <input type="hidden" id="editIndex" value="">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4 mb-2">
+                                            <input type="text" id="prodName" class="form-control form-control-sm" placeholder="Nome do Produto" required>
+                                        </div>
+                                        <div class="form-group col-md-3 mb-2">
+                                            <input type="number" step="0.01" id="prodPrice" class="form-control form-control-sm" placeholder="Preço (R$)" required>
+                                        </div>
+                                        <div class="form-group col-md-5 mb-2">
+                                            <select id="prodCategory" class="form-control form-control-sm" required>
+                                                <option value="SALADAS">SALADAS</option>
+                                                <option value="FRUTAS">FRUTAS</option>
+                                                <option value="LEGUMES">LEGUMES</option>
+                                                <option value="HORTALIÇAS">HORTALIÇAS</option>
+                                                <option value="ALHO & FRANGO">ALHO & FRANGO</option>
+                                                <option value="Combos disponíveis">Combos disponíveis</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6 mb-2">
+                                            <label class="small font-weight-bold mb-1">Tipo de Destaque / Badge:</label>
+                                            <select id="prodBadgeType" class="form-control form-control-sm" onchange="toggleBadgeFields()">
+                                                <option value="none">Nenhum</option>
+                                                <option value="cashback">Cashback</option>
+                                                <option value="discount">Desconto (%)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-6 mb-2" id="discountPercentGroup" style="display: none;">
+                                            <label class="small font-weight-bold mb-1">Porcentagem de Desconto (Ex: 10):</label>
+                                            <input type="number" step="1" id="prodDiscountVal" class="form-control form-control-sm" placeholder="Ex: 10">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label class="small text-muted mb-1 font-weight-bold">Imagem do Produto (Compactação Automática):</label>
+                                        <input type="file" id="prodImageFile" class="form-control-file form-control-sm" accept="image/*" onchange="handleImageUpload(event, 'prodImgBase64', 'imagePreviewContainer')">
+                                        <input type="hidden" id="prodImgBase64">
+                                        <div class="mt-2" id="imagePreviewContainer"></div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm px-3">Salvar Produto</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetProductForm()">Cancelar</button>
+                                </form>
+
+                                <h6 class="font-weight-bold small text-uppercase text-muted">Produtos Cadastrados</h6>
+                                <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                                    <table class="table table-sm table-striped small">
+                                        <thead>
+                                            <tr>
+                                                <th>Img</th>
+                                                <th>Nome</th>
+                                                <th>Preço</th>
+                                                <th>Cat.</th>
+                                                <th class="text-right">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminProductsTable">
+                                            <!-- Preenchido via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Aba Configurações & WhatsApp -->
+                            <div class="tab-pane fade" id="manageSettings" role="tabpanel">
+                                <h6 class="font-weight-bold small text-uppercase text-muted">Configurações Gerais & WhatsApp</h6>
+                                <form onsubmit="saveSettings(event)">
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">Número do WhatsApp da Empresa (Ex: 5569999999999)</label>
+                                        <input type="text" id="settingWhatsapp" class="form-control form-control-sm" placeholder="55 + DDD + Número" required>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">Nome da Empresa</label>
+                                        <input type="text" id="settingStoreName" class="form-control form-control-sm" required>
+                                    </div>
+                                    
+                                    <!-- Upload de Logo -->
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">Logo da Empresa (Upload & Compactação)</label>
+                                        <input type="file" class="form-control-file form-control-sm mb-1" accept="image/*" onchange="handleImageUpload(event, 'settingLogoBase64', 'logoPreviewContainer')">
+                                        <input type="hidden" id="settingLogoBase64">
+                                        <div id="logoPreviewContainer" class="mt-1"></div>
+                                    </div>
+
+                                    <!-- Upload de Fundo Header -->
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">Imagem de Fundo do Header (Upload & Compactação)</label>
+                                        <input type="file" class="form-control-file form-control-sm mb-1" accept="image/*" onchange="handleImageUpload(event, 'settingBgBase64', 'bgPreviewContainer')">
+                                        <input type="hidden" id="settingBgBase64">
+                                        <div id="bgPreviewContainer" class="mt-1"></div>
+                                    </div>
+
+                                    <div class="form-group mb-2">
+                                        <label class="small font-weight-bold mb-1">Mensagem de Boas-Vindas</label>
+                                        <textarea id="settingWelcome" class="form-control form-control-sm" rows="3" required></textarea>
+                                    </div>
+
+                                    <div class="form-group mb-3 border-top pt-2">
+                                        <label class="small font-weight-bold mb-1 text-danger">Alterar Senha do Administrador</label>
+                                        <input type="password" id="settingNewAdminPass" class="form-control form-control-sm" placeholder="Nova senha (deixe em branco para manter a atual)">
+                                    </div>
+
+                                    <button type="submit" class="btn btn-success btn-sm px-4">Salvar Configurações</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+    <script>
+        const defaultSettings = {
+            storeName: "Picadinhos da Nutri",
+            whatsapp: "5569999999999",
+            logo: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/stores/logo/177677759169e7797706a76_medium.png",
+            bg: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/stores/background/177677698669e7771a7c624.png",
+            welcome: "Seja bem-vindo(a) à Picadinhos da Nutri. Faça seu pedido abaixo!\n\nFrescor de verdade tem regra 🥥\nPedidos com 1 dia de antecedência ou até às 09h do mesmo dia.",
+            adminPass: "admin"
+        };
+
+        const defaultProducts = [
+            { name: "Limão - 1Kg", price: 6.50, category: "FRUTAS", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/177462052069c68f684aa3a_75_75.jpeg", badgeType: "cashback", discountVal: 0 },
+            { name: "Frango Desfiado - 350g", price: 19.00, category: "ALHO & FRANGO", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/177461929369c68a9d5a18d_75_75.jpeg", badgeType: "discount", discountVal: 10 },
+            { name: "Bowl de Frutas 500g", price: 17.50, category: "FRUTAS", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/177827758269fe5cce06a95_75_75.jpeg", badgeType: "none", discountVal: 0 },
+            { name: "Alho Inteiro Descascado – 500g", price: 22.00, category: "ALHO & FRANGO", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/177461665569c6804f30e10_75_75.jpeg", badgeType: "cashback", discountVal: 0 },
+            { name: "Salada de Frutas 150g", price: 7.00, category: "FRUTAS", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/17793105396a0e1fcb8d823_75_75.jpeg", badgeType: "none", discountVal: 0 },
+            { name: "Bowl de Rúcula c/ Manga e Tomate - 1L", price: 15.00, category: "SALADAS", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/17823409236a3c5d3b6f3ef_75_75.jpeg", badgeType: "discount", discountVal: 15 },
+            { name: "Salada c/ Frango e Legumes - 350 mL", price: 8.50, category: "SALADAS", img: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/itens/17829456936a45979d0fbf9_75_75.jpeg", badgeType: "none", discountVal: 0 }
+        ];
+
+        let settings = JSON.parse(localStorage.getItem('store_settings')) || defaultSettings;
+        if (!settings.adminPass) settings.adminPass = "admin";
+
+        let products = JSON.parse(localStorage.getItem('store_products')) || defaultProducts;
+        let cart = [];
+        let currentCategory = 'TODOS';
+        
+        let selectedProductForModal = null;
+        let currentModalQty = 1;
+
+        function initApp() {
+            document.getElementById('storeTitle').innerText = settings.storeName;
+            document.getElementById('storeLogo').src = settings.logo;
+            document.getElementById('headerBg').style.backgroundImage = `url("${settings.bg}")`;
+            document.getElementById('storeWelcome').innerText = settings.welcome;
+
+            renderCategories();
+            renderProducts();
+            renderAdminTable();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastText').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // --- Máscara de Telefone Automática: (69) 9 9331-5429 ---
+        function applyPhoneMask(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.substring(0, 11);
+            
+            let formatted = '';
+            if (value.length > 0) {
+                formatted = '(' + value.substring(0, 2);
+            }
+            if (value.length >= 3) {
+                formatted += ') ' + value.substring(2, 3);
+            }
+            if (value.length >= 4) {
+                formatted += ' ' + value.substring(3, 7);
+            }
+            if (value.length >= 8) {
+                formatted += '-' + value.substring(7, 11);
+            }
+            e.target.value = formatted;
+        }
+
+        // Ferramenta Universal Integrada de Compactação de Imagem via Canvas
+        function handleImageUpload(event, targetInputId, previewContainerId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    const MAX_SIZE = 500;
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    document.getElementById(targetInputId).value = compressedDataUrl;
+                    document.getElementById(previewContainerId).innerHTML = `<img src="${compressedDataUrl}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;"><small class="text-success ml-2 font-weight-bold">Compactada com sucesso!</small>`;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleBadgeFields() {
+            const badgeType = document.getElementById('prodBadgeType').value;
+            const discountGroup = document.getElementById('discountPercentGroup');
+            discountGroup.style.display = badgeType === 'discount' ? 'block' : 'none';
+        }
+
+        function getEffectivePrice(p) {
+            if (p.badgeType === 'discount' && p.discountVal > 0) {
+                return p.price * (1 - (p.discountVal / 100));
+            }
+            return p.price;
+        }
+
+        function renderCategories() {
+            const categories = ['TODOS', ...new Set(products.map(p => p.category))];
+            const container = document.getElementById('categoryContainer');
+            container.innerHTML = categories.map(cat => `
+                <button class="btn btn-category px-3 py-1 ${currentCategory === cat ? 'active' : ''}" onclick="filterByCategory('${cat}')">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function filterByCategory(cat) {
+            currentCategory = cat;
+            renderCategories();
+            renderProducts();
+        }
+
+        function renderProducts(filteredList = null) {
+            const grid = document.getElementById('productGrid');
+            let list = filteredList || products;
+
+            if (currentCategory !== 'TODOS' && !filteredList) {
+                list = list.filter(p => p.category === currentCategory);
+            }
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center py-5 text-muted small">Nenhum produto encontrado.</div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map((p) => {
+                const realIndex = products.findIndex(prod => prod === p);
+                const effectivePrice = getEffectivePrice(p);
+                
+                let badgeHTML = '';
+                if (p.badgeType === 'cashback') {
+                    badgeHTML = `<span class="badge badge-warning text-dark" style="font-size: 0.65rem;">Cashback</span>`;
+                } else if (p.badgeType === 'discount' && p.discountVal > 0) {
+                    badgeHTML = `<span class="badge badge-danger text-white" style="font-size: 0.65rem;">${p.discountVal}% OFF</span>`;
+                }
+
+                let priceHTML = '';
+                if (p.badgeType === 'discount' && p.discountVal > 0) {
+                    priceHTML = `
+                        <div class="d-flex flex-column">
+                            <small class="text-muted" style="font-size: 0.7rem; text-decoration: line-through; line-height: 1;">R$ ${p.price.toFixed(2).replace('.', ',')}</small>
+                            <span class="text-success font-weight-bold" style="font-size: 0.85rem;">R$ ${effectivePrice.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `;
+                } else {
+                    priceHTML = `<span class="text-success font-weight-bold" style="font-size: 0.85rem;">R$ ${p.price.toFixed(2).replace('.', ',')}</span>`;
+                }
+
+                return `
+                    <div class="col-xl-3 col-md-4 col-6 px-1 mb-2">
+                        <div class="item-card p-2 d-flex flex-column justify-content-between" onclick="openProductModal(${realIndex})">
+                            <div class="d-flex align-items-center">
+                                <img src="${p.img}" alt="${p.name}" class="item-img mr-2">
+                                <div style="min-width: 0; width: 100%;">
+                                    <div class="itemName mb-1" title="${p.name}">${p.name}</div>
+                                    ${badgeHTML}
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                ${priceHTML}
+                                <button class="btn btn-sm btn-outline-success rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 26px; height: 26px;"><i class="fas fa-plus" style="font-size: 0.7rem;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+            renderProducts(filtered);
+        }
+
+        function openProductModal(index) {
+            selectedProductForModal = products[index];
+            currentModalQty = 1;
+            
+            document.getElementById('modalProdImg').src = selectedProductForModal.img;
+            document.getElementById('modalProdName').innerText = selectedProductForModal.name;
+            
+            const effectivePrice = getEffectivePrice(selectedProductForModal);
+            let priceContainerHTML = '';
+            if (selectedProductForModal.badgeType === 'discount' && selectedProductForModal.discountVal > 0) {
+                priceContainerHTML = `
+                    <small class="text-muted d-block" style="text-decoration: line-through; font-size: 0.9rem;">R$ ${selectedProductForModal.price.toFixed(2).replace('.', ',')}</small>
+                    <span class="text-success font-weight-bold" style="font-size: 1.2rem;">R$ ${effectivePrice.toFixed(2).replace('.', ',')}</span>
+                    <span class="badge badge-danger ml-1">${selectedProductForModal.discountVal}% OFF</span>
+                `;
+            } else {
+                priceContainerHTML = `<span class="text-success font-weight-bold" style="font-size: 1.2rem;">R$ ${selectedProductForModal.price.toFixed(2).replace('.', ',')}</span>`;
+            }
+            document.getElementById('modalPriceContainer').innerHTML = priceContainerHTML;
+            updateModalTotal();
+            
+            $('#productModal').modal('show');
+        }
+
+        function changeModalQty(val) {
+            currentModalQty += val;
+            if (currentModalQty < 1) currentModalQty = 1;
+            document.getElementById('modalQty').innerText = currentModalQty;
+            updateModalTotal();
+        }
+
+        function updateModalTotal() {
+            const effectivePrice = getEffectivePrice(selectedProductForModal);
+            let total = effectivePrice * currentModalQty;
+            document.getElementById('modalTotalSum').innerText = total.toFixed(2).replace('.', ',');
+        }
+
+        function confirmAddToCart() {
+            if (!selectedProductForModal) return;
+            const effectivePrice = getEffectivePrice(selectedProductForModal);
+            
+            const existing = cart.find(item => item.name === selectedProductForModal.name);
+            if (existing) {
+                existing.qty += currentModalQty;
+            } else {
+                cart.push({ name: selectedProductForModal.name, price: effectivePrice, qty: currentModalQty });
+            }
+            
+            updateCartCount();
+            $('#productModal').modal('hide');
+            showToast(`${currentModalQty}x ${selectedProductForModal.name} adicionado(s)!`);
+        }
+
+        function updateCartCount() {
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cartCount').innerText = totalItems;
+        }
+
+        // --- Gestão do Perfil do Cliente (Local Storage) ---
+        function openProfileModal() {
+            const savedProfile = JSON.parse(localStorage.getItem('client_profile'));
+            if (savedProfile) {
+                document.getElementById('profileName').value = savedProfile.name || '';
+                document.getElementById('profilePhone').value = savedProfile.phone || '';
+                document.getElementById('profileAddress').value = savedProfile.address || '';
+            }
+            $('#profileModal').modal('show');
+        }
+
+        function saveClientProfile(e) {
+            e.preventDefault();
+            const profile = {
+                name: document.getElementById('profileName').value.trim(),
+                phone: document.getElementById('profilePhone').value.trim(),
+                address: document.getElementById('profileAddress').value.trim()
+            };
+            localStorage.setItem('client_profile', JSON.stringify(profile));
+            $('#profileModal').modal('hide');
+            showToast('Dados do perfil salvos com sucesso!');
+        }
+
+        function loadSavedProfileToCheckout() {
+            const savedProfile = JSON.parse(localStorage.getItem('client_profile'));
+            if (savedProfile) {
+                document.getElementById('clientName').value = savedProfile.name || '';
+                document.getElementById('clientPhone').value = savedProfile.phone || '';
+                document.getElementById('clientAddress').value = savedProfile.address || '';
+            }
+            document.getElementById('profileUpdateAlert').style.display = 'none';
+        }
+
+        // Verifica em tempo real se o usuário alterou algum dado no checkout comparando com o perfil salvo
+        function checkProfileChanges() {
+            const savedProfile = JSON.parse(localStorage.getItem('client_profile'));
+            if (!savedProfile) return;
+
+            const currentName = document.getElementById('clientName').value.trim();
+            const currentPhone = document.getElementById('clientPhone').value.trim();
+            const currentAddress = document.getElementById('clientAddress').value.trim();
+
+            const isDifferent = (
+                currentName !== (savedProfile.name || '') ||
+                currentPhone !== (savedProfile.phone || '') ||
+                currentAddress !== (savedProfile.address || '')
+            );
+
+            const alertBox = document.getElementById('profileUpdateAlert');
+            alertBox.style.display = isDifferent ? 'block' : 'none';
+        }
+
+        // Salvar alterações direto do carrinho
+        function saveProfileFromCheckout() {
+            const profile = {
+                name: document.getElementById('clientName').value.trim(),
+                phone: document.getElementById('clientPhone').value.trim(),
+                address: document.getElementById('clientAddress').value.trim()
+            };
+            localStorage.setItem('client_profile', JSON.stringify(profile));
+            document.getElementById('profileUpdateAlert').style.display = 'none';
+            showToast('Perfil padrão atualizado com sucesso!');
+        }
+
+        function openCartModal() {
+            loadSavedProfileToCheckout(); // Preenche automaticamente ao abrir o carrinho
+            const list = document.getElementById('cartItemsList');
+            if (cart.length === 0) {
+                list.innerHTML = `<p class="text-center text-muted mb-0 small py-3">Seu carrinho está vazio.</p>`;
+                document.getElementById('cartTotal').innerText = '0,00';
+            } else {
+                let total = 0;
+                list.innerHTML = cart.map((item, index) => {
+                    let sub = item.price * item.qty;
+                    total += sub;
+                    return `
+                        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                            <div style="min-width: 0; padding-right: 5px; width: 65%;">
+                                <div class="font-weight-bold" style="font-size: 0.8rem; word-break: break-word;">${item.name}</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.qty}</small>
+                            </div>
+                            <div class="d-flex align-items-center flex-shrink-0">
+                                <span class="font-weight-bold mr-2" style="font-size: 0.85rem;">R$ ${sub.toFixed(2).replace('.', ',')}</span>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-1" style="font-size: 0.75rem;" onclick="removeFromCart(${index})">&times;</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('cartTotal').innerText = total.toFixed(2).replace('.', ',');
+            }
+            $('#cartModal').modal('show');
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            openCartModal();
+        }
+
+        function toggleChangeField() {
+            const method = document.getElementById('paymentMethod').value;
+            document.getElementById('changeFieldGroup').style.display = method === 'Dinheiro' ? 'block' : 'none';
+        }
+
+        function calculateChange() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const given = parseFloat(document.getElementById('cashGiven').value);
+            const output = document.getElementById('changeOutput');
+            if (given >= total) {
+                let change = given - total;
+                output.innerText = `Troco a devolver: R$ ${change.toFixed(2).replace('.', ',')}`;
+            } else {
+                output.innerText = `Valor pago é menor que o total.`;
+            }
+        }
+
+        function finalizeOrder() {
+            if (cart.length === 0) {
+                alert('Seu carrinho está vazio.');
+                return;
+            }
+            const name = document.getElementById('clientName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const address = document.getElementById('clientAddress').value.trim();
+            const payment = document.getElementById('paymentMethod').value;
+            const cashGiven = document.getElementById('cashGiven').value;
+
+            if (!name || !phone || !address) {
+                alert('Por favor, preencha todos os dados de entrega.');
+                return;
+            }
+
+            // Salva automaticamente no perfil do dispositivo ao concluir o pedido
+            const profile = { name, phone, address };
+            localStorage.setItem('client_profile', JSON.stringify(profile));
+
+            let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            let orderText = `*NOVO PEDIDO - ${settings.storeName}* 🛍️\n\n`;
+            orderText += `👤 *Cliente:* ${name}\n`;
+            orderText += `📞 *Telefone:* ${phone}\n`;
+            orderText += `📍 *Endereço:* ${address}\n\n`;
+            orderText += `🛒 *Itens do Pedido:*\n`;
+            cart.forEach(i => {
+                orderText += `• ${i.qty}x ${i.name} (R$ ${(i.price * i.qty).toFixed(2)})\n`;
+            });
+            orderText += `\n💰 *Total:* R$ ${total.toFixed(2)}`;
+            orderText += `\n💳 *Pagamento:* ${payment}`;
+            
+            if (payment === 'Dinheiro' && cashGiven) {
+                let change = cashGiven - total;
+                orderText += `\n💵 *Troco para:* R$ ${parseFloat(cashGiven).toFixed(2)} (Troco: R$ ${change.toFixed(2)})`;
+            }
+            
+            orderText += `\n\n_Pedido gerado via cardápio online_`;
+
+            const encoded = encodeURIComponent(orderText);
+            const whatsappNumber = settings.whatsapp || "5569999999999";
+            
+            window.open(`https://wa.me/${whatsappNumber}?text=${encoded}`, '_blank');
+            
+            cart = [];
+            updateCartCount();
+            $('#cartModal').modal('hide');
+            showToast('Pedido enviado para o WhatsApp com sucesso!');
+        }
+
+        // Painel Admin Logic
+        function openAdminModal() {
+            $('#adminModal').modal('show');
+        }
+
+        function checkAdminLogin() {
+            const pass = document.getElementById('adminPassword').value;
+            if (pass === settings.adminPass) {
+                document.getElementById('adminLoginSection').style.display = 'none';
+                document.getElementById('adminDashboardSection').style.display = 'block';
+                
+                document.getElementById('settingStoreName').value = settings.storeName;
+                document.getElementById('settingWhatsapp').value = settings.whatsapp || "";
+                document.getElementById('settingWelcome').value = settings.welcome;
+                document.getElementById('settingLogoBase64').value = settings.logo;
+                document.getElementById('settingBgBase64').value = settings.bg;
+
+                document.getElementById('logoPreviewContainer').innerHTML = `<img src="${settings.logo}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">`;
+                document.getElementById('bgPreviewContainer').innerHTML = `<img src="${settings.bg}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">`;
+            } else {
+                alert('Senha incorreta!');
+            }
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminProductsTable');
+            tbody.innerHTML = products.map((p, index) => `
+                <tr>
+                    <td class="align-middle"><img src="${p.img}" width="28" height="28" style="object-fit:cover; border-radius:4px;"></td>
+                    <td class="align-middle" style="word-break: break-word; max-width: 110px;">${p.name}</td>
+                    <td class="align-middle">R$ ${p.price.toFixed(2).replace('.', ',')}</td>
+                    <td class="align-middle"><span class="badge badge-secondary" style="font-size: 0.65rem;">${p.category}</span></td>
+                    <td class="align-middle text-right">
+                        <button class="btn btn-warning btn-sm py-0 px-1" onclick="editProduct(${index})"><i class="fas fa-edit" style="font-size: 0.7rem;"></i></button>
+                        <button class="btn btn-danger btn-sm py-0 px-1" onclick="deleteProduct(${index})"><i class="fas fa-trash" style="font-size: 0.7rem;"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const editIdx = document.getElementById('editIndex').value;
+            const name = document.getElementById('prodName').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const category = document.getElementById('prodCategory').value;
+            const badgeType = document.getElementById('prodBadgeType').value;
+            const discountVal = parseFloat(document.getElementById('prodDiscountVal').value) || 0;
+            const img = document.getElementById('prodImgBase64').value;
+
+            if (!img && editIdx === "") {
+                alert('Por favor, selecione uma imagem para o produto.');
+                return;
+            }
+
+            if (editIdx === "") {
+                products.push({ name, price, category, img, badgeType, discountVal });
+            } else {
+                const finalImg = img || products[editIdx].img;
+                products[editIdx] = { name, price, category, img: finalImg, badgeType, discountVal };
+                document.getElementById('editIndex').value = "";
+            }
+
+            localStorage.setItem('store_products', JSON.stringify(products));
+            resetProductForm();
+            
+            renderAdminTable();
+            renderCategories();
+            renderProducts();
+            showToast('Produto salvo com sucesso!');
+        }
+
+        function editProduct(index) {
+            const p = products[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('prodName').value = p.name;
+            document.getElementById('prodPrice').value = p.price;
+            document.getElementById('prodCategory').value = p.category;
+            document.getElementById('prodBadgeType').value = p.badgeType || 'none';
+            document.getElementById('prodDiscountVal').value = p.discountVal || 0;
+            document.getElementById('prodImgBase64').value = p.img;
+            
+            toggleBadgeFields();
+            document.getElementById('imagePreviewContainer').innerHTML = `<img src="${p.img}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;"><small class="text-muted ml-2">Imagem atual mantida</small>`;
+        }
+
+        function deleteProduct(index) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                products.splice(index, 1);
+                localStorage.setItem('store_products', JSON.stringify(products));
+                renderAdminTable();
+                renderCategories();
+                renderProducts();
+                showToast('Produto excluído.');
+            }
+        }
+
+        function resetProductForm() {
+            document.getElementById('editIndex').value = "";
+            document.getElementById('productForm').reset();
+            document.getElementById('prodImgBase64').value = "";
+            document.getElementById('imagePreviewContainer').innerHTML = "";
+            toggleBadgeFields();
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            settings.storeName = document.getElementById('settingStoreName').value;
+            settings.whatsapp = document.getElementById('settingWhatsapp').value.trim();
+            settings.welcome = document.getElementById('settingWelcome').value;
+            
+            const newLogo = document.getElementById('settingLogoBase64').value;
+            if (newLogo) settings.logo = newLogo;
+
+            const newBg = document.getElementById('settingBgBase64').value;
+            if (newBg) settings.bg = newBg;
+
+            const newPass = document.getElementById('settingNewAdminPass').value.trim();
+            if (newPass) {
+                settings.adminPass = newPass;
+                alert('Senha do administrador alterada com sucesso!');
+                document.getElementById('settingNewAdminPass').value = "";
+            }
+
+            localStorage.setItem('store_settings', JSON.stringify(settings));
+            initApp();
+            showToast('Configurações atualizadas!');
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
