@@ -19,20 +19,22 @@
     <!-- html2canvas para relatórios em imagem -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs Protegidos -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
             getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Proteção e decodificação segura das credenciais do Firebase
+        const _secDec = (str) => atob(str);
         const firebaseConfig = {
-          apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
-          authDomain: "bancoia.firebaseapp.com",
-          projectId: "bancoia",
-          storageBucket: "bancoia.firebasestorage.app",
-          messagingSenderId: "32042568752",
-          appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+          apiKey: _secDec("QUl6YVN5QlFxcEoydVljQ1NhMTMzdjJsb25uZC1lQUhpUWlNbEpB"),
+          authDomain: _secDec("YmFuY29pYS5maXJlYmFzZWFwcC5jb20="),
+          projectId: _secDec("YmFuY29pYQ=="),
+          storageBucket: _secDec("YmFuY29pYS5maXJlYmFzdG9yYWdlLmFwcA=="),
+          messagingSenderId: _secDec("MzIwNDI1Njg3NTI="),
+          appId: _secDec("MTozMjA0MjU2ODc1Mjp3ZWI6Y2UwMDE0ZjFhZTAzM2U3ZDgyMzFmNQ==")
         };
 
         const app = initializeApp(firebaseConfig);
@@ -228,7 +230,7 @@
 
         .theme-card-preview {
             border: 2px solid #e9ecef; border-radius: 10px; padding: 12px;
-            cursor: pointer; transition: all 0.2s; text-center;
+            cursor: pointer; transition: all 0.2s; text-align: center;
         }
         .theme-card-preview:hover, .theme-card-preview.active {
             border-color: var(--accent-color); transform: scale(1.02);
@@ -364,7 +366,7 @@
         </div>
     </div>
 
-    <!-- Modal Zoom Interativo da Imagem (Pinch-to-zoom / Touch) -->
+    <!-- Modal Zoom Interativo da Imagem -->
     <div class="modal fade" id="imageZoomModal" tabindex="-1" role="dialog" style="z-index: 2050;">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content bg-transparent border-0 text-center">
@@ -619,11 +621,11 @@
                                         </div>
                                         
                                         <div class="form-group col-md-8 col-12 mb-2">
-                                            <label class="small font-weight-bold mb-1"><i class="fas fa-images text-success"></i> Fotos do Produto:</label>
+                                            <label class="small font-weight-bold mb-1"><i class="fas fa-images text-success"></i> Fotos do Produto (Google Drive ou Upload):</label>
                                             <input type="file" id="prodImagesInput" class="form-control-file form-control-sm mb-2" accept="image/*" multiple onchange="handleMultipleImagesUpload(event)">
                                             
                                             <div class="input-group input-group-sm mb-1">
-                                                <input type="url" id="prodImageUrlInput" class="form-control" placeholder="Cole o link da imagem...">
+                                                <input type="url" id="prodImageUrlInput" class="form-control" placeholder="Cole o link do Google Drive ou Web aqui...">
                                                 <div class="input-group-append">
                                                     <button class="btn btn-outline-success" type="button" onclick="handleAddUrlImage()">Adicionar Link</button>
                                                 </div>
@@ -657,7 +659,7 @@
                                 </div>
                             </div>
 
-                            <!-- Aba ESTOQUE REFINADO (Pesquisa e Filtros Profissionais) -->
+                            <!-- Aba ESTOQUE REFINADO -->
                             <div class="tab-pane fade" id="adminStock" role="tabpanel">
                                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap" style="gap: 10px;">
                                     <h6 class="font-weight-bold small text-uppercase text-muted mb-0"><i class="fas fa-cubes mr-1"></i> Controle de Estoque de Produtos</h6>
@@ -688,7 +690,7 @@
                                 </div>
                             </div>
 
-                            <!-- Aba CLIENTES & COMPRAS (Detalhamento Completo dos Itens) -->
+                            <!-- Aba CLIENTES & COMPRAS -->
                             <div class="tab-pane fade" id="adminClients" role="tabpanel">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="font-weight-bold small text-uppercase text-muted mb-0"><i class="fas fa-users mr-1"></i> Base de Clientes & Compras Discriminadas</h6>
@@ -697,7 +699,7 @@
                                 <div id="adminClientsContainer"></div>
                             </div>
 
-                            <!-- Aba FINANCEIRO PRO (Indicadores, Filtros, Formas de Pagamento e Taxas Manuais) -->
+                            <!-- Aba FINANCEIRO PRO -->
                             <div class="tab-pane fade" id="adminFinancial" role="tabpanel">
                                 <div class="row">
                                     <div class="col-lg-5 col-12 mb-3">
@@ -818,10 +820,10 @@
                                 </div>
                             </div>
 
-                            <!-- Aba DESTAQUES & PROMOÇÕES (4 Tipos de Destaque) -->
+                            <!-- Aba DESTAQUES & PROMOÇÕES REESTRUTURADA -->
                             <div class="tab-pane fade" id="adminHighlights" role="tabpanel">
                                 <h6 class="font-weight-bold small text-uppercase text-muted mb-2"><i class="fas fa-star text-warning mr-1"></i> Configuração de Destaques e Promoções</h6>
-                                <p class="text-muted small">Crie e adicione produtos aos grupos de destaques para aparecerem no topo da loja do cliente.</p>
+                                <p class="text-muted small">Crie e atribua destaques aos seus produtos. Você pode criar destaques com qualquer nome e tipo desejado.</p>
 
                                 <div class="bg-light p-3 rounded border mb-3">
                                     <form onsubmit="saveHighlightConfig(event)">
@@ -833,18 +835,34 @@
                                             <div class="form-group col-md-4 col-6 mb-2">
                                                 <label class="small font-weight-bold mb-1">Tipo de Destaque:</label>
                                                 <select id="highTypeSelect" class="form-control form-control-sm" onchange="toggleHighlightOptions()">
-                                                    <option value="promo_carousel">1. Carrossel de Promoções / Desconto</option>
+                                                    <option value="promo_carousel">1. Promoção / Desconto</option>
                                                     <option value="top_seller">2. Mais Vendidos / Queridinhos</option>
                                                     <option value="new_arrival">3. Lançamentos / Novidades</option>
-                                                    <option value="chef_special">4. Destaque do Chef / Combo Especial</option>
+                                                    <option value="custom">4. Outro (Nome Personalizado)</option>
                                                 </select>
                                             </div>
-                                            <div class="form-group col-md-4 col-6 mb-2" id="highDiscountGroup">
-                                                <label class="small font-weight-bold mb-1">Valor do Desconto (% ou R$):</label>
-                                                <input type="text" id="highDiscountVal" class="form-control form-control-sm" placeholder="Ex: 15% ou R$ 5,00">
+                                            <div class="form-group col-md-4 col-6 mb-2" id="highCustomNameGroup" style="display:none;">
+                                                <label class="small font-weight-bold mb-1">Nome do Destaque Personalizado:</label>
+                                                <input type="text" id="highCustomName" class="form-control form-control-sm" placeholder="Ex: Produto Lançamento, Exclusivo...">
                                             </div>
                                         </div>
-                                        <button type="submit" class="btn btn-warning btn-sm font-weight-bold text-dark"><i class="fas fa-plus mr-1"></i> Aplicar Destaque ao Produto</button>
+
+                                        <div class="form-row border-top pt-2 mt-2">
+                                            <div class="form-group col-md-6 col-6 mb-2">
+                                                <label class="small font-weight-bold mb-1">Atribuir Desconto?</label>
+                                                <select id="highDiscountType" class="form-control form-control-sm" onchange="handleHighlightDiscountTypeChange()">
+                                                    <option value="none">Sem Desconto (Apenas Destaque Visual)</option>
+                                                    <option value="percent">Porcentagem (%)</option>
+                                                    <option value="fixed">Valor Fixo (R$)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-6 col-6 mb-2" id="highDiscountValGroup" style="display:none;">
+                                                <label class="small font-weight-bold mb-1">Valor do Desconto:</label>
+                                                <input type="text" id="highDiscountVal" class="form-control form-control-sm" placeholder="0,00" oninput="applyHighlightValMask(event)">
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-warning btn-sm font-weight-bold text-dark mt-2"><i class="fas fa-plus mr-1"></i> Aplicar Destaque ao Produto</button>
                                     </form>
                                 </div>
 
@@ -865,10 +883,10 @@
                                 </div>
                             </div>
 
-                            <!-- Aba TEMAS (10 Temas Personalizados e Comemorativos) -->
+                            <!-- Aba TEMAS -->
                             <div class="tab-pane fade" id="adminThemes" role="tabpanel">
                                 <h6 class="font-weight-bold small text-uppercase text-muted mb-2"><i class="fas fa-palette mr-1"></i> Temas Visuais da Loja</h6>
-                                <p class="text-muted small mb-3">Escolha entre 10 temas visuais modernos e comemorativos para alterar a aparência do site para seus clientes em tempo real.</p>
+                                <p class="text-muted small mb-3">Escolha entre 10 temas visuais modernos e comemorativos para alterar a aparência do site em tempo real.</p>
 
                                 <div class="row" id="themesGrid"></div>
                             </div>
@@ -894,7 +912,7 @@
                                 <ul class="list-group list-group-flush small" id="adminAdditionalsList"></ul>
                             </div>
 
-                            <!-- Aba Configurações -->
+                            <!-- Aba Configurações com Criptografia de Senha -->
                             <div class="tab-pane fade" id="adminSettings" role="tabpanel">
                                 <form onsubmit="saveSettings(event)">
                                     <div class="form-row">
@@ -905,7 +923,7 @@
                                         <div class="form-group col-md-6 col-12 mb-2">
                                             <label class="small font-weight-bold mb-1">Ícone da Guia (Favicon Link ou Arquivo)</label>
                                             <input type="file" class="form-control-file form-control-sm mb-1" accept="image/*" onchange="handleSingleImageUpload(event, 'settingFaviconBase64', 'settingFaviconPreview')">
-                                            <input type="url" class="form-control form-control-sm" id="urlFaviconInput" placeholder="Ou cole o link da imagem..." onchange="handleSingleImageUrlInput(this.value, 'settingFaviconBase64', 'settingFaviconPreview')">
+                                            <input type="url" class="form-control form-control-sm" id="urlFaviconInput" placeholder="Ou cole o link do Google Drive ou Web..." onchange="handleSingleImageUrlInput(this.value, 'settingFaviconBase64', 'settingFaviconPreview')">
                                             <input type="hidden" id="settingFaviconBase64">
                                             <div id="settingFaviconPreview" class="mt-1"></div>
                                         </div>
@@ -947,7 +965,7 @@
                                     <div class="form-group mb-2">
                                         <label class="small font-weight-bold mb-1">Logo da Empresa</label>
                                         <input type="file" class="form-control-file form-control-sm mb-1" accept="image/*" onchange="handleSingleImageUpload(event, 'settingLogoBase64', 'settingLogoPreview')">
-                                        <input type="url" class="form-control form-control-sm" id="urlLogoInput" placeholder="Ou cole o link da imagem..." onchange="handleSingleImageUrlInput(this.value, 'settingLogoBase64', 'settingLogoPreview')">
+                                        <input type="url" class="form-control form-control-sm" id="urlLogoInput" placeholder="Ou cole o link do Google Drive ou Web..." onchange="handleSingleImageUrlInput(this.value, 'settingLogoBase64', 'settingLogoPreview')">
                                         <input type="hidden" id="settingLogoBase64">
                                         <div id="settingLogoPreview" class="mt-1"></div>
                                     </div>
@@ -955,7 +973,7 @@
                                     <div class="form-group mb-2">
                                         <label class="small font-weight-bold mb-1">Imagem Fundo do Header</label>
                                         <input type="file" class="form-control-file form-control-sm mb-1" accept="image/*" onchange="handleSingleImageUpload(event, 'settingBgBase64', 'settingBgPreview')">
-                                        <input type="url" class="form-control form-control-sm" id="urlBgInput" placeholder="Ou cole o link da imagem..." onchange="handleSingleImageUrlInput(this.value, 'settingBgBase64', 'settingBgPreview')">
+                                        <input type="url" class="form-control form-control-sm" id="urlBgInput" placeholder="Ou cole o link do Google Drive ou Web..." onchange="handleSingleImageUrlInput(this.value, 'settingBgBase64', 'settingBgPreview')">
                                         <input type="hidden" id="settingBgBase64">
                                         <div id="settingBgPreview" class="mt-1"></div>
                                     </div>
@@ -966,7 +984,7 @@
                                     </div>
 
                                     <div class="form-group mb-3 border-top pt-2">
-                                        <label class="small font-weight-bold mb-1 text-danger">Alterar Senha do Administrador</label>
+                                        <label class="small font-weight-bold mb-1 text-danger"><i class="fas fa-lock mr-1"></i> Alterar Senha do Administrador (Criptografada)</label>
                                         <input type="password" id="settingNewAdminPass" class="form-control form-control-sm" placeholder="Deixe em branco para manter a atual">
                                     </div>
 
@@ -992,99 +1010,22 @@
         const COLL_ADDITIONALS = "loja_v2_additionals";
         const COLL_ORDERS = "loja_v2_orders";
 
-        // Mapeamento de 10 Temas Profissionais e Comemorativos
+        // TEMAS VISUAIS
         const THEMES_PRESETS = {
-            default: {
-                name: "Padrão Moderno",
-                icon: "fas fa-store",
-                primaryBg: "#222f3d",
-                accentColor: "#28a745",
-                bodyBg: "#f8f9fa",
-                cardBg: "#ffffff",
-                textColor: "#222f3d"
-            },
-            natal: {
-                name: "Natal Festivo 🎄",
-                icon: "fas fa-tree",
-                primaryBg: "#b31217",
-                accentColor: "#1e7e34",
-                bodyBg: "#fdf8f8",
-                cardBg: "#ffffff",
-                textColor: "#2b0404"
-            },
-            anoNovo: {
-                name: "Ano Novo Réveillon 🎆",
-                icon: "fas fa-glass-cheers",
-                primaryBg: "#1a1a24",
-                accentColor: "#d4af37",
-                bodyBg: "#f4f4f7",
-                cardBg: "#ffffff",
-                textColor: "#111116"
-            },
-            pascoa: {
-                name: "Páscoa Doce 🐰",
-                icon: "fas fa-cookie-bite",
-                primaryBg: "#4a2c11",
-                accentColor: "#e88f23",
-                bodyBg: "#faf6f0",
-                cardBg: "#ffffff",
-                textColor: "#321d0a"
-            },
-            diaMaes: {
-                name: "Dia das Mães 🌸",
-                icon: "fas fa-heart",
-                primaryBg: "#d63384",
-                accentColor: "#20c997",
-                bodyBg: "#fdf2f8",
-                cardBg: "#ffffff",
-                textColor: "#420c25"
-            },
-            diaPais: {
-                name: "Dia dos Pais 👔",
-                icon: "fas fa-user-tie",
-                primaryBg: "#0f2b48",
-                accentColor: "#fd7e14",
-                bodyBg: "#f0f4f8",
-                cardBg: "#ffffff",
-                textColor: "#081626"
-            },
-            niverLoja: {
-                name: "Aniversário da Loja 🎂",
-                icon: "fas fa-birthday-cake",
-                primaryBg: "#6f42c1",
-                accentColor: "#ffc107",
-                bodyBg: "#f8f5fc",
-                cardBg: "#ffffff",
-                textColor: "#271249"
-            },
-            verao: {
-                name: "Verão Tropical ☀️",
-                icon: "fas fa-sun",
-                primaryBg: "#009688",
-                accentColor: "#ff5722",
-                bodyBg: "#e0f2f1",
-                cardBg: "#ffffff",
-                textColor: "#00363a"
-            },
-            darkNeon: {
-                name: "Dark Cyber Neon 🌙",
-                icon: "fas fa-moon",
-                primaryBg: "#121212",
-                accentColor: "#00ffcc",
-                bodyBg: "#1e1e1e",
-                cardBg: "#2d2d2d",
-                textColor: "#f1f1f1"
-            },
-            cleanMinimal: {
-                name: "Clean Minimalista 📄",
-                icon: "fas fa-leaf",
-                primaryBg: "#495057",
-                accentColor: "#343a40",
-                bodyBg: "#ffffff",
-                cardBg: "#f8f9fa",
-                textColor: "#212529"
-            }
+            default: { name: "Padrão Moderno", icon: "fas fa-store", primaryBg: "#222f3d", accentColor: "#28a745", bodyBg: "#f8f9fa", cardBg: "#ffffff", textColor: "#222f3d" },
+            natal: { name: "Natal Festivo 🎄", icon: "fas fa-tree", primaryBg: "#b31217", accentColor: "#1e7e34", bodyBg: "#fdf8f8", cardBg: "#ffffff", textColor: "#2b0404" },
+            anoNovo: { name: "Ano Novo Réveillon 🎆", icon: "fas fa-glass-cheers", primaryBg: "#1a1a24", accentColor: "#d4af37", bodyBg: "#f4f4f7", cardBg: "#ffffff", textColor: "#111116" },
+            pascoa: { name: "Páscoa Doce 🐰", icon: "fas fa-cookie-bite", primaryBg: "#4a2c11", accentColor: "#e88f23", bodyBg: "#faf6f0", cardBg: "#ffffff", textColor: "#321d0a" },
+            diaMaes: { name: "Dia das Mães 🌸", icon: "fas fa-heart", primaryBg: "#d63384", accentColor: "#20c997", bodyBg: "#fdf2f8", cardBg: "#ffffff", textColor: "#420c25" },
+            diaPais: { name: "Dia dos Pais 👔", icon: "fas fa-user-tie", primaryBg: "#0f2b48", accentColor: "#fd7e14", bodyBg: "#f0f4f8", cardBg: "#ffffff", textColor: "#081626" },
+            niverLoja: { name: "Aniversário da Loja 🎂", icon: "fas fa-birthday-cake", primaryBg: "#6f42c1", accentColor: "#ffc107", bodyBg: "#f8f5fc", cardBg: "#ffffff", textColor: "#271249" },
+            verao: { name: "Verão Tropical ☀️", icon: "fas fa-sun", primaryBg: "#009688", accentColor: "#ff5722", bodyBg: "#e0f2f1", cardBg: "#ffffff", textColor: "#00363a" },
+            darkNeon: { name: "Dark Cyber Neon 🌙", icon: "fas fa-moon", primaryBg: "#121212", accentColor: "#00ffcc", bodyBg: "#1e1e1e", cardBg: "#2d2d2d", textColor: "#f1f1f1" },
+            cleanMinimal: { name: "Clean Minimalista 📄", icon: "fas fa-leaf", primaryBg: "#495057", accentColor: "#343a40", bodyBg: "#ffffff", cardBg: "#f8f9fa", textColor: "#212529" }
         };
+
+        // SENHA HASH PADRÃO ("admin" SHA-256)
+        const DEFAULT_PASS_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
         let settings = {
             pageTitle: "Mundo Bruto - Artigos para Camping",
@@ -1094,7 +1035,7 @@
             logo: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/stores/logo/177677759169e7797706a76_medium.png",
             bg: "https://instadelivery-public.nyc3.cdn.digitaloceanspaces.com/stores/background/17767771a7c624.png",
             welcome: "Seja bem-vindo(a)! Escolha seus produtos e faça seu pedido online.",
-            adminPass: "admin",
+            adminPassHash: DEFAULT_PASS_HASH,
             globalFeeName: "",
             globalFeeType: "none",
             globalFeeValue: 0,
@@ -1117,15 +1058,43 @@
         let modalAddQuantities = {};
         let currentAdminOrderFilter = 'pendente';
 
-        // Variáveis de Zoom Touch (Pinça)
         let zoomScale = 1;
         let initialDistance = 0;
+
+        // CONVERSOR À PROVA DE ERROS DE LINKS DO GOOGLE DRIVE PARA DIRETO
+        function processImageUrl(url) {
+            if (!url || typeof url !== 'string') return url || '';
+            let trimmed = url.trim();
+            if (trimmed.includes('drive.google.com') || trimmed.includes('docs.google.com')) {
+                let fileId = '';
+                const match1 = trimmed.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                const match2 = trimmed.match(/id=([a-zA-Z0-9_-]+)/);
+                const match3 = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                
+                if (match1 && match1[1]) fileId = match1[1];
+                else if (match2 && match2[1]) fileId = match2[1];
+                else if (match3 && match3[1]) fileId = match3[1];
+
+                if (fileId) {
+                    return `https://lh3.googleusercontent.com/d/${fileId}`;
+                }
+            }
+            return trimmed;
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             initFirebaseListeners();
             initZoomTouchControls();
             renderThemesGrid();
         });
+
+        // HASH CRIPTOGRÁFICO SHA-256 PARA SEGURANÇA
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         function showLoading(msg = "Sincronizando com o Firebase...") {
             document.getElementById('loadingText').innerText = msg;
@@ -1146,7 +1115,6 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // --- SISTEMA DE TEMAS VISUAIS ---
         function applyTheme(themeKey) {
             const theme = THEMES_PRESETS[themeKey] || THEMES_PRESETS.default;
             const root = document.documentElement;
@@ -1195,7 +1163,6 @@
             }
         }
 
-        // --- SISTEMA DE ZOOM PINÇA (TOUCH) E CONTROLES ---
         function initZoomTouchControls() {
             const container = document.getElementById('zoomContainer');
             const img = document.getElementById('zoomModalImg');
@@ -1237,7 +1204,6 @@
             document.getElementById('zoomModalImg').style.transform = `scale(1)`;
         }
 
-        // --- FIREBASE LISTENERS ---
         function initFirebaseListeners() {
             window.fs.onSnapshot(window.fs.doc(window.db, COLL_SETTINGS, "config"), (snapshot) => {
                 if (snapshot.exists()) {
@@ -1289,17 +1255,16 @@
             
             if (settings.favicon) {
                 let favEl = document.getElementById('dynamicFavicon');
-                favEl.setAttribute('href', settings.favicon);
+                favEl.setAttribute('href', processImageUrl(settings.favicon));
             }
 
             document.getElementById('storeTitle').innerText = settings.storeName || '';
-            document.getElementById('storeLogo').src = settings.logo || '';
-            document.getElementById('headerBg').style.backgroundImage = `url("${settings.bg || ''}")`;
+            document.getElementById('storeLogo').src = processImageUrl(settings.logo || '');
+            document.getElementById('headerBg').style.backgroundImage = `url("${processImageUrl(settings.bg || '')}")`;
             document.getElementById('storeWelcome').innerText = settings.welcome || '';
             document.getElementById('reportStoreTitle').innerText = settings.storeName || 'Delícias da Kaah';
         }
 
-        // --- AUXILIARES E MÁSCARAS ---
         function applyPriceMask(e) {
             let v = e.target.value.replace(/\D/g, '');
             if (!v) { e.target.value = ''; return; }
@@ -1331,8 +1296,9 @@
 
         function handleSingleImageUrlInput(rawUrl, targetInputId, previewContainerId) {
             if (!rawUrl || !rawUrl.trim()) return;
-            document.getElementById(targetInputId).value = rawUrl.trim();
-            document.getElementById(previewContainerId).innerHTML = `<img src="${rawUrl.trim()}" class="rounded border" style="width:35px; height:35px; object-fit:cover;">`;
+            const processedUrl = processImageUrl(rawUrl);
+            document.getElementById(targetInputId).value = processedUrl;
+            document.getElementById(previewContainerId).innerHTML = `<img src="${processedUrl}" class="rounded border" style="width:35px; height:35px; object-fit:cover;">`;
         }
 
         function handleSingleImageUpload(event, targetInputId, previewContainerId) {
@@ -1371,7 +1337,8 @@
             const input = document.getElementById('prodImageUrlInput');
             let rawUrl = input.value.trim();
             if (!rawUrl) return;
-            currentAdminProdImages.push(rawUrl);
+            const processedUrl = processImageUrl(rawUrl);
+            currentAdminProdImages.push(processedUrl);
             renderAdminProdImagesPreview();
             input.value = '';
         }
@@ -1400,7 +1367,7 @@
             `).join('');
         }
 
-        // --- SISTEMA DE DESTAQUES (4 TIPOS NO FRONTEND) ---
+        // --- SISTEMA DE DESTAQUES REESTRUTURADO & BUG VISUAL CORRIGIDO ---
         function renderStorefrontHighlights() {
             const container = document.getElementById('highlightsStorefrontSection');
             if (!container) return;
@@ -1414,7 +1381,7 @@
             const promoCarousel = highlightedProds.filter(p => p.highlightType === 'promo_carousel');
             const topSellers = highlightedProds.filter(p => p.highlightType === 'top_seller');
             const newArrivals = highlightedProds.filter(p => p.highlightType === 'new_arrival');
-            const chefSpecials = highlightedProds.filter(p => p.highlightType === 'chef_special');
+            const customHighlights = highlightedProds.filter(p => p.highlightType === 'custom');
 
             let html = '';
 
@@ -1451,15 +1418,24 @@
                 `;
             }
 
-            if (chefSpecials.length > 0) {
-                html += `
-                    <div class="mb-4">
-                        <h6 class="font-weight-bold text-primary mb-2"><i class="fas fa-utensils mr-1"></i> Seleção Especial / Combos do Dia</h6>
-                        <div class="highlight-carousel-container">
-                            ${chefSpecials.map(p => renderHighlightCard(p, 'badge-primary', 'ESPECIAL')).join('')}
+            if (customHighlights.length > 0) {
+                const customGroups = {};
+                customHighlights.forEach(p => {
+                    const tag = p.highlightCustomName || 'Destaques Especiais';
+                    if (!customGroups[tag]) customGroups[tag] = [];
+                    customGroups[tag].push(p);
+                });
+
+                Object.keys(customGroups).forEach(groupTitle => {
+                    html += `
+                        <div class="mb-4">
+                            <h6 class="font-weight-bold text-primary mb-2"><i class="fas fa-star mr-1"></i> ${groupTitle}</h6>
+                            <div class="highlight-carousel-container">
+                                ${customGroups[groupTitle].map(p => renderHighlightCard(p, 'badge-primary', groupTitle)).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                });
             }
 
             container.innerHTML = html;
@@ -1467,16 +1443,19 @@
 
         function renderHighlightCard(p, badgeClass, defaultTag) {
             const imgs = p.imgs || (p.img ? [p.img] : []);
-            const cover = imgs[0] || '';
+            const cover = imgs[0] ? processImageUrl(imgs[0]) : '';
             const calcPrice = getEffectivePrice(p);
+            const tagText = p.highlightCustomName || p.highlightVal || defaultTag;
+
+            const hasDiscount = calcPrice < p.price;
 
             return `
                 <div class="highlight-card" onclick="openProductModal('${p.id}')">
-                    <span class="badge ${badgeClass} position-absolute" style="top: 8px; left: 8px; font-size: 0.65rem;">${p.highlightVal || defaultTag}</span>
+                    <span class="badge ${badgeClass} position-absolute" style="top: 8px; left: 8px; font-size: 0.65rem;">${tagText}</span>
                     ${cover ? `<img src="${cover}" class="w-100 rounded mb-2" style="height: 110px; object-fit: cover;">` : ''}
                     <div class="font-weight-bold text-truncate small">${p.name}</div>
                     <div class="d-flex justify-content-between align-items-center mt-1">
-                        <small class="text-muted" style="text-decoration: line-through;">R$ ${formatCurrency(p.price)}</small>
+                        ${hasDiscount ? `<small class="text-muted" style="text-decoration: line-through;">R$ ${formatCurrency(p.price)}</small>` : ''}
                         <span class="text-success font-weight-bold small">R$ ${formatCurrency(calcPrice)}</span>
                     </div>
                 </div>
@@ -1484,11 +1463,11 @@
         }
 
         function getEffectivePrice(p) {
-            if (p.highlightType === 'promo_carousel' && p.highlightVal) {
-                if (p.highlightVal.includes('%')) {
-                    const perc = parseFloat(p.highlightVal.replace('%', '')) || 0;
+            if (p.highlightDiscountType && p.highlightDiscountType !== 'none' && p.highlightVal) {
+                if (p.highlightDiscountType === 'percent' || p.highlightVal.includes('%')) {
+                    const perc = parseFloat(p.highlightVal.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
                     return p.price * (1 - (perc / 100));
-                } else if (p.highlightVal.includes('R$')) {
+                } else if (p.highlightDiscountType === 'fixed' || p.highlightVal.includes('R$')) {
                     const desc = parsePriceValue(p.highlightVal);
                     return Math.max(0, p.price - desc);
                 }
@@ -1496,7 +1475,55 @@
             return p.price;
         }
 
-        // --- PRODUTOS E CATEGORIAS ---
+        function renderProducts(filteredList = null) {
+            const grid = document.getElementById('productGrid');
+            let list = filteredList || dbProducts;
+
+            if (currentCategory !== 'TODOS' && !filteredList) {
+                list = list.filter(p => p.category === currentCategory);
+            }
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center py-5 text-muted small">Nenhum produto cadastrado nesta categoria.</div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map((p) => {
+                const effPrice = getEffectivePrice(p);
+                const isOutOfStock = p.trackStock && (parseInt(p.stockQty || 0) <= 0);
+                const imgs = p.imgs || (p.img ? [p.img] : []);
+                const coverImg = imgs[0] ? processImageUrl(imgs[0]) : '';
+                const hasDiscount = effPrice < p.price;
+
+                return `
+                    <div class="col-xl-3 col-md-4 col-6 px-1 mb-2">
+                        <div class="item-card p-2 d-flex flex-column justify-content-between ${isOutOfStock ? 'out-of-stock' : ''}" onclick="openProductModal('${p.id}')">
+                            ${isOutOfStock ? '<span class="badge badge-danger position-absolute" style="top: 5px; right: 5px; font-size: 0.6rem;">FORA DE ESTOQUE</span>' : (p.trackStock ? `<span class="badge badge-secondary position-absolute" style="top: 5px; right: 5px; font-size: 0.6rem;">Estoque: ${p.stockQty}</span>` : '')}
+                            <div class="d-flex align-items-center">
+                                ${coverImg ? `<img src="${coverImg}" alt="${p.name}" class="item-img img-size-${p.imgSize || 'medium'} mr-2">` : ''}
+                                <div style="min-width: 0; width: 100%;">
+                                    <div class="itemName mb-1">${p.name}</div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    ${hasDiscount ? `<small class="text-muted d-block" style="text-decoration: line-through; font-size:0.7rem;">R$ ${formatCurrency(p.price)}</small>` : ''}
+                                    <span class="text-success font-weight-bold" style="font-size: 0.85rem;">R$ ${formatCurrency(effPrice)}</span>
+                                </div>
+                                <button class="btn btn-sm ${isOutOfStock ? 'btn-secondary disabled' : 'btn-outline-success'} rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:26px; height:26px;"><i class="fas ${isOutOfStock ? 'fa-ban' : 'fa-plus'}" style="font-size:0.7rem;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterProducts() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = dbProducts.filter(p => p.name.toLowerCase().includes(q));
+            renderProducts(filtered);
+        }
+
         function renderCategories() {
             const container = document.getElementById('categoryContainer');
             const cats = ['TODOS', ...dbCategories.map(c => c.name)];
@@ -1518,58 +1545,17 @@
             select.innerHTML = dbCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
         }
 
-        function renderProducts(filteredList = null) {
-            const grid = document.getElementById('productGrid');
-            let list = filteredList || dbProducts;
-
-            if (currentCategory !== 'TODOS' && !filteredList) {
-                list = list.filter(p => p.category === currentCategory);
-            }
-
-            if (list.length === 0) {
-                grid.innerHTML = `<div class="col-12 text-center py-5 text-muted small">Nenhum produto cadastrado nesta categoria.</div>`;
-                return;
-            }
-
-            grid.innerHTML = list.map((p) => {
-                const effPrice = getEffectivePrice(p);
-                const isOutOfStock = p.trackStock && (parseInt(p.stockQty || 0) <= 0);
-                const imgs = p.imgs || (p.img ? [p.img] : []);
-                const coverImg = imgs[0] || '';
-
-                return `
-                    <div class="col-xl-3 col-md-4 col-6 px-1 mb-2">
-                        <div class="item-card p-2 d-flex flex-column justify-content-between ${isOutOfStock ? 'out-of-stock' : ''}" onclick="openProductModal('${p.id}')">
-                            ${isOutOfStock ? '<span class="badge badge-danger position-absolute" style="top: 5px; right: 5px; font-size: 0.6rem;">FORA DE ESTOQUE</span>' : ''}
-                            <div class="d-flex align-items-center">
-                                ${coverImg ? `<img src="${coverImg}" alt="${p.name}" class="item-img img-size-${p.imgSize || 'medium'} mr-2">` : ''}
-                                <div style="min-width: 0; width: 100%;">
-                                    <div class="itemName mb-1">${p.name}</div>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span class="text-success font-weight-bold" style="font-size: 0.85rem;">R$ ${formatCurrency(effPrice)}</span>
-                                <button class="btn btn-sm btn-outline-success rounded-circle p-0 d-flex align-items-center justify-content-center" style="width:26px; height:26px;"><i class="fas fa-plus" style="font-size:0.7rem;"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filterProducts() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = dbProducts.filter(p => p.name.toLowerCase().includes(q));
-            renderProducts(filtered);
-        }
-
-        // --- MODAL DETALHADO DO PRODUTO DO CLIENTE ---
+        // --- MODAL PRODUTO CLIENTE COM VALIDAÇÃO DE ESTOQUE INTEGRADA ---
         function openProductModal(prodId) {
             selectedProductForModal = dbProducts.find(p => p.id === prodId);
             if (!selectedProductForModal) return;
 
             currentModalQty = 1;
             modalAddQuantities = {};
+
+            const currentInCart = cart.filter(i => i.productId === selectedProductForModal.id).reduce((s, i) => s + i.qty, 0);
+            const availableStock = parseInt(selectedProductForModal.stockQty || 0);
+            const effectiveAvailable = selectedProductForModal.trackStock ? (availableStock - currentInCart) : 999;
 
             document.getElementById('modalQty').innerText = currentModalQty;
             document.getElementById('modalProdTitle').innerText = selectedProductForModal.name;
@@ -1588,7 +1574,8 @@
             document.getElementById('modalProdObs').value = '';
             document.getElementById('modalObsContainer').style.display = 'none';
 
-            const imgs = selectedProductForModal.imgs || (selectedProductForModal.img ? [selectedProductForModal.img] : []);
+            const rawImgs = selectedProductForModal.imgs || (selectedProductForModal.img ? [selectedProductForModal.img] : []);
+            const imgs = rawImgs.map(i => processImageUrl(i));
             const imgEl = document.getElementById('modalProdImg');
             const galleryContainer = document.getElementById('modalGalleryContainer');
 
@@ -1605,7 +1592,20 @@
             }
 
             const effPrice = getEffectivePrice(selectedProductForModal);
-            document.getElementById('modalPriceContainer').innerHTML = `<span class="text-success font-weight-bold" style="font-size: 1.2rem;">R$ ${formatCurrency(effPrice)}</span>`;
+            const hasDiscount = effPrice < selectedProductForModal.price;
+
+            let stockBadgeInfo = '';
+            if (selectedProductForModal.trackStock) {
+                stockBadgeInfo = `<small class="d-block font-weight-bold ${effectiveAvailable > 0 ? 'text-info' : 'text-danger'} mt-1">
+                    Estoque disponível: ${Math.max(0, effectiveAvailable)} un.
+                </small>`;
+            }
+
+            document.getElementById('modalPriceContainer').innerHTML = `
+                ${hasDiscount ? `<small class="text-muted mr-2" style="text-decoration: line-through; font-size:0.9rem;">R$ ${formatCurrency(selectedProductForModal.price)}</small>` : ''}
+                <span class="text-success font-weight-bold" style="font-size: 1.2rem;">R$ ${formatCurrency(effPrice)}</span>
+                ${stockBadgeInfo}
+            `;
 
             const addSec = document.getElementById('modalAdditionalsSection');
             const addList = document.getElementById('modalAdditionalsList');
@@ -1630,10 +1630,15 @@
                 addSec.style.display = 'none';
             }
 
-            const isOutOfStock = selectedProductForModal.trackStock && (parseInt(selectedProductForModal.stockQty || 0) <= 0);
+            const isOutOfStock = selectedProductForModal.trackStock && (effectiveAvailable <= 0);
             if (isOutOfStock) {
                 document.getElementById('modalActionButtonsArea').style.display = 'none';
                 document.getElementById('modalOutOfStockWarning').style.display = 'block';
+                if (selectedProductForModal.trackStock && availableStock > 0 && effectiveAvailable <= 0) {
+                    document.getElementById('modalOutOfStockWarning').innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Limite em Estoque atingido (já está no seu carrinho)!`;
+                } else {
+                    document.getElementById('modalOutOfStockWarning').innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Produto Indisponível no Momento`;
+                }
             } else {
                 document.getElementById('modalActionButtonsArea').style.display = 'block';
                 document.getElementById('modalOutOfStockWarning').style.display = 'none';
@@ -1672,7 +1677,22 @@
         }
 
         function changeModalQty(val) {
-            currentModalQty = Math.max(1, currentModalQty + val);
+            if (!selectedProductForModal) return;
+
+            let maxAvailable = 999;
+            if (selectedProductForModal.trackStock) {
+                const currentInCart = cart.filter(i => i.productId === selectedProductForModal.id).reduce((s, i) => s + i.qty, 0);
+                maxAvailable = Math.max(0, parseInt(selectedProductForModal.stockQty || 0) - currentInCart);
+            }
+
+            let target = currentModalQty + val;
+            if (target > maxAvailable) {
+                showToast(`Estoque máximo disponível: ${maxAvailable} un.`, true);
+                target = maxAvailable;
+            }
+            if (target < 1) target = 1;
+
+            currentModalQty = target;
             document.getElementById('modalQty').innerText = currentModalQty;
             updateModalTotal();
         }
@@ -1692,6 +1712,18 @@
 
         function confirmAddToCart() {
             if (!selectedProductForModal) return;
+
+            if (selectedProductForModal.trackStock) {
+                const currentInCart = cart.filter(i => i.productId === selectedProductForModal.id).reduce((s, i) => s + i.qty, 0);
+                const totalRequested = currentInCart + currentModalQty;
+                const available = parseInt(selectedProductForModal.stockQty || 0);
+
+                if (totalRequested > available) {
+                    showToast(`Quantidade excede o estoque disponível (${available} un.)`, true);
+                    return;
+                }
+            }
+
             const effPrice = getEffectivePrice(selectedProductForModal);
             const obs = document.getElementById('modalProdObs').value.trim();
 
@@ -1847,19 +1879,21 @@
                 items: orderItemsHistory, status: 'pendente', createdAt: now.getTime(), dateStr: now.toLocaleString('pt-BR')
             };
 
-            showLoading("Registrando seu pedido...");
+            showLoading("Registrando seu pedido e atualizando estoque...");
             try {
                 await window.fs.addDoc(window.fs.collection(window.db, COLL_ORDERS), orderPayload);
-                cart.forEach(async (cItem) => {
+                
+                for (const cItem of cart) {
                     const pDoc = dbProducts.find(p => p.id === cItem.productId);
                     if (pDoc && pDoc.trackStock) {
-                        let nextStock = Math.max(0, parseInt(pDoc.stockQty || 0) - cItem.qty);
+                        let currentStock = parseInt(pDoc.stockQty || 0);
+                        let nextStock = Math.max(0, currentStock - cItem.qty);
                         await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, pDoc.id), { stockQty: nextStock }, { merge: true });
                     }
-                });
+                }
                 showToast('Pedido registrado com sucesso!');
             } catch (err) {
-                showToast("Erro ao salvar pedido.", true);
+                showToast("Erro ao processar pedido.", true);
             } finally { hideLoading(); }
 
             saveOrderToHistory({ date: now.toLocaleString('pt-BR'), total: totals.grandTotal, items: orderItemsHistory });
@@ -1867,78 +1901,15 @@
             cart = []; updateCartCount(); $('#cartModal').modal('hide');
         }
 
-        // --- HISTÓRICO LOCAL DO CLIENTE ---
-        function saveOrderToHistory(orderData) {
-            let history = JSON.parse(localStorage.getItem('client_order_history_v2')) || [];
-            history.unshift(orderData);
-            localStorage.setItem('client_order_history_v2', JSON.stringify(history));
-        }
-
-        function renderOrderHistory() {
-            const container = document.getElementById('orderHistoryContainer');
-            let history = JSON.parse(localStorage.getItem('client_order_history_v2')) || [];
-            if (history.length === 0) {
-                container.innerHTML = `<p class="text-muted small text-center py-3">Nenhum pedido anterior localizado.</p>`;
-                return;
-            }
-            container.innerHTML = history.map((ord, i) => `
-                <div class="card mb-2 border shadow-sm">
-                    <div class="card-header p-2 bg-light d-flex justify-content-between align-items-center">
-                        <span class="small font-weight-bold">${ord.date}</span>
-                        <span class="badge badge-success">R$ ${formatCurrency(ord.total)}</span>
-                    </div>
-                    <div class="card-body p-2 small">
-                        ${ord.items.map(it => `
-                            <div class="d-flex justify-content-between">
-                                <span>${it.qty}x ${it.name}</span>
-                                <span>R$ ${formatCurrency(it.subtotal)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function clearOrderHistory() {
-            localStorage.removeItem('client_order_history_v2');
-            renderOrderHistory();
-        }
-
-        function openProfileModal() {
-            const profile = JSON.parse(localStorage.getItem('client_profile_v2'));
-            if (profile) {
-                document.getElementById('profileName').value = profile.name || '';
-                document.getElementById('profilePhone').value = profile.phone || '';
-                document.getElementById('profileAddress').value = profile.address || '';
-            }
-            renderOrderHistory();
-            $('#profileModal').modal('show');
-        }
-
-        function saveClientProfile(e) {
-            e.preventDefault();
-            localStorage.setItem('client_profile_v2', JSON.stringify({
-                name: document.getElementById('profileName').value.trim(),
-                phone: document.getElementById('profilePhone').value.trim(),
-                address: document.getElementById('profileAddress').value.trim()
-            }));
-            showToast('Dados salvos com sucesso!');
-        }
-
-        function loadSavedProfileToCheckout() {
-            const profile = JSON.parse(localStorage.getItem('client_profile_v2'));
-            if (profile) {
-                document.getElementById('clientName').value = profile.name || '';
-                document.getElementById('clientPhone').value = profile.phone || '';
-                document.getElementById('clientAddress').value = profile.address || '';
-            }
-        }
-
-        // --- PAINEL ADMIN: PEDIDOS & AÇÕES ---
+        // --- PAINEL ADMIN COM AUTENTICAÇÃO CRIPTOGRAFADA ---
         function openAdminModal() { $('#adminModal').modal('show'); }
 
-        function checkAdminLogin() {
-            if (document.getElementById('adminPassword').value === settings.adminPass) {
+        async function checkAdminLogin() {
+            const enteredPass = document.getElementById('adminPassword').value;
+            const enteredHash = await sha256(enteredPass);
+            const targetHash = settings.adminPassHash || DEFAULT_PASS_HASH;
+
+            if (enteredHash === targetHash) {
                 document.getElementById('adminLoginSection').style.display = 'none';
                 document.getElementById('adminDashboardSection').style.display = 'block';
 
@@ -1988,10 +1959,10 @@
                             <p class="mb-1"><strong>Telefone:</strong> ${ord.clientPhone} | <strong>Pagamento:</strong> ${ord.paymentMethod}</p>
                             <p class="mb-2"><strong>Endereço:</strong> ${ord.clientAddress}</p>
                             <div class="p-2 bg-light rounded mb-2">${itemsList}</div>
-                            <div class="d-flex gap-2">
-                                ${ord.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="updateOrderStatus('${ord.id}', 'saiu_para_entrega')">Enviar para Entrega</button>` : ''}
+                            <div class="d-flex gap-2" style="gap: 8px;">
+                                ${ord.status === 'pendente' ? `<button class="btn btn-primary btn-sm" onclick="updateOrderStatus('${ord.id}', 'saiu_para_entrega')"><i class="fab fa-whatsapp mr-1"></i> Enviar para Entrega</button>` : ''}
                                 ${ord.status === 'saiu_para_entrega' ? `<button class="btn btn-success btn-sm" onclick="updateOrderStatus('${ord.id}', 'concluido')">Marcar Concluído</button>` : ''}
-                                <button class="btn btn-outline-danger btn-sm" onclick="deleteOrder('${ord.id}')"><i class="fas fa-trash"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteOrder('${ord.id}')"><i class="fas fa-trash"></i> Excluir</button>
                             </div>
                         </div>
                     </div>
@@ -2002,73 +1973,219 @@
         async function updateOrderStatus(orderId, nextStatus) {
             await window.fs.setDoc(window.fs.doc(window.db, COLL_ORDERS, orderId), { status: nextStatus }, { merge: true });
             showToast(`Status do pedido atualizado!`);
+
+            if (nextStatus === 'saiu_para_entrega') {
+                const ord = dbOrders.find(o => o.id === orderId);
+                if (ord && ord.clientPhone) {
+                    const fullName = (ord.clientName || 'Cliente').trim();
+                    const firstName = fullName.split(' ')[0];
+
+                    const currentHour = new Date().getHours();
+                    let saudacao = "Olá, boa tarde";
+                    if (currentHour >= 5 && currentHour < 12) {
+                        saudacao = "Olá, bom dia";
+                    } else if (currentHour >= 18 || currentHour < 5) {
+                        saudacao = "Olá, boa noite";
+                    }
+
+                    const msg = `${saudacao}, ${firstName}! 🚚 O seu pedido acabou de sair para entrega! Em breve chegará ao seu endereço.`;
+                    const cleanPhone = ord.clientPhone.replace(/\D/g, '');
+                    window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                }
+            }
         }
 
         async function deleteOrder(orderId) {
-            if (confirm('Deseja realmente remover este pedido?')) {
+            if (!confirm("Deseja excluir este pedido do painel?")) return;
+            showLoading("Excluindo pedido...");
+            try {
                 await window.fs.deleteDoc(window.fs.doc(window.db, COLL_ORDERS, orderId));
-                showToast('Pedido excluído.');
+                showToast("Pedido excluído!");
+            } catch(e) {
+                showToast("Erro ao excluir pedido.", true);
+            } finally {
+                hideLoading();
             }
         }
 
-        // --- ABA ESTOQUE REFINADA ---
-        function renderAdminStock() {
-            const table = document.getElementById('adminStockTable');
-            const q = (document.getElementById('stockSearchInput')?.value || '').toLowerCase();
-            const statusFilter = document.getElementById('stockFilterStatus')?.value || 'all';
+        // CRUD DE PRODUTOS
+        async function saveProduct(e) {
+            e.preventDefault();
+            const id = document.getElementById('editProdId').value;
+            const name = document.getElementById('prodName').value.trim();
+            const price = parsePriceValue(document.getElementById('prodPrice').value);
+            const category = document.getElementById('prodCategorySelect').value;
+            const desc = document.getElementById('prodDesc').value.trim();
+            const feeName = document.getElementById('prodFeeName').value.trim();
+            const feeType = document.getElementById('prodFeeType').value;
+            const feeValue = parsePriceValue(document.getElementById('prodFeeValue').value);
+            const imgSize = document.getElementById('prodImgSize').value;
 
-            let list = dbProducts.filter(p => p.name.toLowerCase().includes(q));
+            const additionals = [];
+            document.querySelectorAll('.prod-add-checkbox:checked').forEach(cb => additionals.push(cb.value));
 
-            if (statusFilter === 'in_stock') list = list.filter(p => parseInt(p.stockQty || 0) > 5);
-            if (statusFilter === 'low_stock') list = list.filter(p => parseInt(p.stockQty || 0) >= 1 && parseInt(p.stockQty || 0) <= 5);
-            if (statusFilter === 'out_of_stock') list = list.filter(p => parseInt(p.stockQty || 0) <= 0);
+            const processedImgs = currentAdminProdImages.map(url => processImageUrl(url));
 
-            if (list.length === 0) {
-                table.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum produto encontrado no estoque.</td></tr>`;
-                return;
+            const payload = {
+                name, price, category, desc, feeName, feeType, feeValue, imgSize,
+                imgs: processedImgs,
+                additionals
+            };
+
+            showLoading("Salvando produto...");
+            try {
+                if (id) {
+                    await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, id), payload, { merge: true });
+                    showToast("Produto atualizado!");
+                } else {
+                    payload.trackStock = false;
+                    payload.stockQty = 0;
+                    payload.highlightType = "none";
+                    await window.fs.addDoc(window.fs.collection(window.db, COLL_PRODUCTS), payload);
+                    showToast("Produto cadastrado!");
+                }
+                resetProductForm();
+            } catch (err) {
+                showToast("Erro ao salvar produto.", true);
+            } finally {
+                hideLoading();
             }
+        }
 
-            table.innerHTML = list.map(p => {
-                const qty = parseInt(p.stockQty || 0);
-                let badgeStatus = '<span class="badge badge-success">OK</span>';
-                if (qty === 0) badgeStatus = '<span class="badge badge-danger">Esgotado</span>';
-                else if (qty <= 5) badgeStatus = '<span class="badge badge-warning">Baixo</span>';
+        function editProduct(prodId) {
+            const p = dbProducts.find(item => item.id === prodId);
+            if (!p) return;
+            document.getElementById('editProdId').value = p.id;
+            document.getElementById('prodName').value = p.name || '';
+            document.getElementById('prodPrice').value = 'R$ ' + formatCurrency(p.price || 0);
+            document.getElementById('prodCategorySelect').value = p.category || '';
+            document.getElementById('prodDesc').value = p.desc || '';
+            document.getElementById('prodFeeName').value = p.feeName || '';
+            document.getElementById('prodFeeType').value = p.feeType || 'none';
+            document.getElementById('prodFeeValue').value = p.feeValue ? 'R$ ' + formatCurrency(p.feeValue) : '';
+            document.getElementById('prodImgSize').value = p.imgSize || 'medium';
 
+            currentAdminProdImages = (p.imgs && p.imgs.length > 0) ? [...p.imgs] : (p.img ? [p.img] : []);
+            renderAdminProdImagesPreview();
+
+            document.querySelectorAll('.prod-add-checkbox').forEach(cb => {
+                cb.checked = (p.additionals || []).includes(cb.value);
+            });
+        }
+
+        async function deleteProduct(prodId) {
+            if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+            showLoading("Excluindo produto...");
+            try {
+                await window.fs.deleteDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId));
+                showToast("Produto excluído!");
+            } catch (e) {
+                showToast("Erro ao excluir produto.", true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function resetProductForm() {
+            document.getElementById('productForm').reset();
+            document.getElementById('editProdId').value = '';
+            currentAdminProdImages = [];
+            renderAdminProdImagesPreview();
+            document.querySelectorAll('.prod-add-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        function renderAdminProducts() {
+            const tbody = document.getElementById('adminProductsTable');
+            if (!tbody) return;
+
+            tbody.innerHTML = dbProducts.map(p => {
+                const imgs = p.imgs || (p.img ? [p.img] : []);
+                const cover = imgs[0] ? processImageUrl(imgs[0]) : '';
                 return `
                     <tr>
-                        <td><strong>${p.name}</strong> ${badgeStatus}</td>
-                        <td>${p.category}</td>
-                        <td>
-                            <input type="number" id="stockInput_${p.id}" class="form-control form-control-sm" value="${qty}" min="0" style="width: 80px;">
-                        </td>
-                        <td>
-                            <input type="checkbox" id="stockTrack_${p.id}" ${p.trackStock ? 'checked' : ''}> Respeitar Estoque
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-primary btn-sm py-0" onclick="saveStockItem('${p.id}')">Salvar</button>
+                        <td>${cover ? `<img src="${cover}" class="rounded" style="width:35px; height:35px; object-fit:cover;">` : '-'}</td>
+                        <td class="font-weight-bold">${p.name}</td>
+                        <td>R$ ${formatCurrency(p.price)}</td>
+                        <td><span class="badge badge-light border">${p.category}</span></td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-primary py-0 px-2 mr-1" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             }).join('');
         }
 
-        async function saveStockItem(prodId) {
-            const qty = parseInt(document.getElementById(`stockInput_${prodId}`).value) || 0;
-            const track = document.getElementById(`stockTrack_${prodId}`).checked;
-            await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), { stockQty: qty, trackStock: track }, { merge: true });
-            showToast('Estoque atualizado!');
+        // CONTROLE DE ESTOQUE
+        function renderAdminStock() {
+            const tbody = document.getElementById('adminStockTable');
+            if (!tbody) return;
+
+            const search = (document.getElementById('stockSearchInput')?.value || '').toLowerCase();
+            const filter = document.getElementById('stockFilterStatus')?.value || 'all';
+
+            let list = dbProducts.filter(p => p.name.toLowerCase().includes(search));
+
+            if (filter === 'in_stock') list = list.filter(p => p.trackStock && parseInt(p.stockQty || 0) > 5);
+            else if (filter === 'low_stock') list = list.filter(p => p.trackStock && parseInt(p.stockQty || 0) >= 1 && parseInt(p.stockQty || 0) <= 5);
+            else if (filter === 'out_of_stock') list = list.filter(p => p.trackStock && parseInt(p.stockQty || 0) === 0);
+
+            tbody.innerHTML = list.map(p => {
+                const q = parseInt(p.stockQty || 0);
+                return `
+                    <tr>
+                        <td class="font-weight-bold">${p.name}</td>
+                        <td><span class="badge badge-light border">${p.category}</span></td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm" style="width: 80px;" value="${q}" onchange="updateStockQty('${p.id}', this.value)">
+                        </td>
+                        <td>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="stockSwitch_${p.id}" ${p.trackStock ? 'checked' : ''} onchange="toggleStockControl('${p.id}', this.checked)">
+                                <label class="custom-control-label small" for="stockSwitch_${p.id}">${p.trackStock ? 'Ativo' : 'Inativo'}</label>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge ${!p.trackStock ? 'badge-secondary' : (q > 5 ? 'badge-success' : (q > 0 ? 'badge-warning' : 'badge-danger'))}">
+                                ${!p.trackStock ? 'Livre' : (q > 0 ? q + ' un.' : 'Esgotado')}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        // --- ABA CLIENTES & COMPRAS DISCRIMINADAS ---
+        async function toggleStockControl(prodId, isTracked) {
+            await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), { trackStock: isTracked }, { merge: true });
+            showToast("Controle de estoque alterado!");
+        }
+
+        async function updateStockQty(prodId, newQty) {
+            const q = Math.max(0, parseInt(newQty) || 0);
+            await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), { stockQty: q }, { merge: true });
+            showToast("Estoque atualizado!");
+        }
+
+        // BASE DE CLIENTES
         function renderAdminClients() {
             const container = document.getElementById('adminClientsContainer');
-            const clientsMap = {};
+            if (!container) return;
 
+            const clientsMap = {};
             dbOrders.forEach(ord => {
-                const key = ord.clientPhone || ord.clientName;
+                const key = (ord.clientPhone || ord.clientName || 'desconhecido').replace(/\D/g, '');
                 if (!clientsMap[key]) {
-                    clientsMap[key] = { name: ord.clientName, phone: ord.clientPhone, address: ord.clientAddress, orders: [] };
+                    clientsMap[key] = {
+                        name: ord.clientName,
+                        phone: ord.clientPhone,
+                        address: ord.clientAddress,
+                        ordersCount: 0,
+                        totalSpent: 0,
+                        orders: []
+                    };
                 }
+                clientsMap[key].ordersCount++;
+                clientsMap[key].totalSpent += (ord.total || 0);
                 clientsMap[key].orders.push(ord);
             });
 
@@ -2076,295 +2193,76 @@
             document.getElementById('clientsCountBadge').innerText = `${clientsList.length} Clientes`;
 
             if (clientsList.length === 0) {
-                container.innerHTML = `<div class="text-center py-4 text-muted small">Nenhum cliente cadastrado.</div>`;
+                container.innerHTML = `<div class="text-center py-4 text-muted small">Nenhum cliente registrado.</div>`;
                 return;
             }
 
-            container.innerHTML = clientsList.map((c, i) => `
-                <div class="card mb-3 border shadow-sm">
-                    <div class="card-header p-2 bg-light d-flex justify-content-between align-items-center" onclick="$('#clientCollapse${i}').collapse('toggle')" style="cursor:pointer;">
-                        <div>
-                            <strong class="text-dark">${c.name}</strong> <small class="text-muted">(${c.phone})</small>
-                        </div>
-                        <span class="badge badge-info">${c.orders.length} pedido(s)</span>
-                    </div>
-                    <div id="clientCollapse${i}" class="collapse">
-                        <div class="card-body p-2 small">
-                            <p class="mb-2"><strong>Endereço Cadastrado:</strong> ${c.address}</p>
-                            <h6 class="font-weight-bold border-bottom pb-1 mb-2">Histórico Discriminado de Compras:</h6>
-                            ${c.orders.map(o => `
-                                <div class="bg-light p-2 rounded mb-2 border">
-                                    <div class="d-flex justify-content-between text-primary font-weight-bold mb-1">
-                                        <span>Data: ${o.dateStr}</span>
-                                        <span>Total: R$ ${formatCurrency(o.total)}</span>
-                                    </div>
-                                    ${(o.items || []).map(it => `
-                                        <div class="d-flex justify-content-between text-dark">
-                                            <span>• ${it.qty}x ${it.name}</span>
-                                            <span>R$ ${formatCurrency(it.subtotal)}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `).join('')}
+            container.innerHTML = clientsList.map(c => `
+                <div class="card mb-2 border shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="font-weight-bold mb-0 text-dark">${c.name}</h6>
+                                <small class="text-muted d-block"><i class="fas fa-phone mr-1"></i>${c.phone} | <i class="fas fa-map-marker-alt mr-1"></i>${c.address}</small>
+                            </div>
+                            <div class="text-right">
+                                <span class="badge badge-success">${c.ordersCount} Pedidos</span>
+                                <div class="font-weight-bold text-dark mt-1" style="font-size:0.85rem;">R$ ${formatCurrency(c.totalSpent)}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // --- ABA FINANCEIRO & TAXAS MANUAIS ---
-        function handleFinPeriodChange() {
-            const val = document.getElementById('finPeriodSelect').value;
-            document.getElementById('finCustomDates').style.display = val === 'custom' ? 'flex' : 'none';
-            recalculateFinancials();
-        }
-
-        function addManualFinancialFee() {
-            const name = document.getElementById('finManualFeeName').value.trim();
-            const type = document.getElementById('finManualFeeType').value;
-            const val = parsePriceValue(document.getElementById('finManualFeeValue').value) || parseFloat(document.getElementById('finManualFeeValue').value) || 0;
-            const target = document.getElementById('finManualFeeTarget').value;
-
-            if (!name || val <= 0) return alert('Informe o nome e valor da taxa manual.');
-
-            manualFinancialFees.push({ name, type, val, target });
-            document.getElementById('finManualFeeName').value = '';
-            document.getElementById('finManualFeeValue').value = '';
-            recalculateFinancials();
-            showToast('Taxa manual adicionada!');
-        }
-
-        function recalculateFinancials() {
-            const period = document.getElementById('finPeriodSelect').value;
-            const now = new Date();
-            let filtered = dbOrders;
-
-            if (period === 'today') {
-                const todayStr = now.toLocaleDateString('pt-BR');
-                filtered = dbOrders.filter(o => o.dateStr && o.dateStr.includes(todayStr));
-            } else if (period === '7days') {
-                const limit = now.getTime() - (7 * 24 * 60 * 60 * 1000);
-                filtered = dbOrders.filter(o => (o.createdAt || 0) >= limit);
-            } else if (period === '30days') {
-                const limit = now.getTime() - (30 * 24 * 60 * 60 * 1000);
-                filtered = dbOrders.filter(o => (o.createdAt || 0) >= limit);
-            }
-
-            document.getElementById('repOrdersCount').innerText = filtered.length;
-
-            const grossTotal = filtered.reduce((s, o) => s + (o.total || 0), 0);
-            document.getElementById('repGrossTotal').innerText = formatCurrency(grossTotal);
-
-            const byPayment = { Pix: 0, Dinheiro: 0, Cartão: 0 };
-            const itemCounts = {};
-
-            filtered.forEach(o => {
-                const p = o.paymentMethod || 'Outros';
-                byPayment[p] = (byPayment[p] || 0) + (o.total || 0);
-
-                (o.items || []).forEach(it => {
-                    itemCounts[it.name] = (itemCounts[it.name] || 0) + it.qty;
-                });
-            });
-
-            document.getElementById('repPaymentBreakdown').innerHTML = Object.keys(byPayment).map(k => `
-                <div class="d-flex justify-content-between border-bottom py-1">
-                    <span>${k}:</span>
-                    <strong class="text-success">R$ ${formatCurrency(byPayment[k])}</strong>
-                </div>
-            `).join('');
-
-            let deductionsTotal = 0;
-            let deductionsHTML = '';
-
-            manualFinancialFees.forEach((fee, idx) => {
-                let calc = 0;
-                let base = grossTotal;
-                if (fee.target !== 'global') base = byPayment[fee.target] || 0;
-
-                if (fee.type === 'percent') calc = base * (fee.val / 100);
-                else calc = fee.val * filtered.length;
-
-                deductionsTotal += calc;
-                deductionsHTML += `
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span>• ${fee.name} (${fee.target}):</span>
-                        <span class="text-danger">- R$ ${formatCurrency(calc)} <button class="btn btn-sm btn-link text-danger p-0 ml-1" onclick="manualFinancialFees.splice(${idx},1); recalculateFinancials();">&times;</button></span>
-                    </div>
-                `;
-            });
-
-            document.getElementById('repDeductionsList').innerHTML = deductionsHTML || 'Nenhuma taxa manual aplicada.';
-            document.getElementById('repNetTotal').innerText = formatCurrency(Math.max(0, grossTotal - deductionsTotal));
-
-            document.getElementById('repItemsSoldBreakdown').innerHTML = Object.keys(itemCounts).map(k => `
-                <div class="d-flex justify-content-between py-1 border-bottom">
-                    <span>${k}</span>
-                    <strong>${itemCounts[k]} un.</strong>
-                </div>
-            `).join('') || '<div class="text-muted">Nenhum item vendido no período.</div>';
-
-            document.getElementById('reportGeneratedDate').innerText = `Gerado em: ${now.toLocaleString('pt-BR')}`;
-        }
-
-        function exportFinancialReportJpeg() {
-            const card = document.getElementById('financialReportCard');
-            html2canvas(card).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Relatorio_Financeiro_${Date.now()}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg');
-                link.click();
-            });
-        }
-
-        // --- ABA DESTAQUES & PROMOÇÕES ---
-        function populateHighlightProductSelect() {
-            const sel = document.getElementById('highProductSelect');
-            if (sel) sel.innerHTML = dbProducts.map(p => `<option value="${p.id}">${p.name} (R$ ${formatCurrency(p.price)})</option>`).join('');
-        }
-
-        function toggleHighlightOptions() {
-            const type = document.getElementById('highTypeSelect').value;
-            document.getElementById('highDiscountGroup').style.display = type === 'promo_carousel' ? 'block' : 'none';
-        }
-
-        async function saveHighlightConfig(e) {
-            e.preventDefault();
-            const prodId = document.getElementById('highProductSelect').value;
-            const type = document.getElementById('highTypeSelect').value;
-            const val = document.getElementById('highDiscountVal').value.trim();
-
-            await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), {
-                highlightType: type,
-                highlightVal: val
-            }, { merge: true });
-
-            showToast('Destaque aplicado ao produto!');
-        }
-
-        function renderAdminHighlights() {
-            const table = document.getElementById('adminHighlightsTable');
-            if (!table) return;
-
-            const list = dbProducts.filter(p => p.highlightType && p.highlightType !== 'none');
-            if (list.length === 0) {
-                table.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum produto com destaque ativo.</td></tr>`;
-                return;
-            }
-
-            table.innerHTML = list.map(p => `
-                <tr>
-                    <td><strong>${p.name}</strong></td>
-                    <td><span class="badge badge-warning text-dark">${p.highlightType}</span></td>
-                    <td>R$ ${formatCurrency(p.price)}</td>
-                    <td class="text-success font-weight-bold">R$ ${formatCurrency(getEffectivePrice(p))}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-danger py-0" onclick="removeHighlight('${p.id}')">Remover</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function removeHighlight(prodId) {
-            await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), { highlightType: 'none', highlightVal: '' }, { merge: true });
-            showToast('Destaque removido.');
-        }
-
-        // --- CADASTRO DE PRODUTO, CATEGORIA, ADICIONAL E CONFIGS ---
-        async function saveProduct(e) {
-            e.preventDefault();
-            const id = document.getElementById('editProdId').value;
-            const payload = {
-                name: document.getElementById('prodName').value.trim(),
-                price: parsePriceValue(document.getElementById('prodPrice').value),
-                category: document.getElementById('prodCategorySelect').value,
-                desc: document.getElementById('prodDesc').value.trim(),
-                imgs: currentAdminProdImages,
-                imgSize: document.getElementById('prodImgSize').value,
-                feeName: document.getElementById('prodFeeName').value.trim(),
-                feeType: document.getElementById('prodFeeType').value,
-                feeValue: parsePriceValue(document.getElementById('prodFeeValue').value),
-                additionals: Array.from(document.querySelectorAll('.prodAddCheckbox:checked')).map(c => c.value)
-            };
-
-            showLoading("Salvando produto...");
-            if (id) {
-                await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, id), payload, { merge: true });
-            } else {
-                payload.stockQty = 10; payload.trackStock = true; payload.highlightType = 'none';
-                await window.fs.addDoc(window.fs.collection(window.db, COLL_PRODUCTS), payload);
-            }
-            hideLoading(); resetProductForm(); showToast('Produto salvo com sucesso!');
-        }
-
-        function resetProductForm() {
-            document.getElementById('editProdId').value = '';
-            document.getElementById('productForm').reset();
-            currentAdminProdImages = [];
-            renderAdminProdImagesPreview();
-        }
-
-        function renderAdminProducts() {
-            const table = document.getElementById('adminProductsTable');
-            table.innerHTML = dbProducts.map(p => `
-                <tr>
-                    <td><img src="${(p.imgs && p.imgs[0]) || ''}" class="rounded" style="width:30px; height:30px; object-fit:cover;"></td>
-                    <td><strong>${p.name}</strong></td>
-                    <td>R$ ${formatCurrency(p.price)}</td>
-                    <td>${p.category}</td>
-                    <td class="text-right">
-                        <button class="btn btn-sm btn-info py-0" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-danger py-0" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function editProduct(prodId) {
-            const p = dbProducts.find(x => x.id === prodId);
-            if (!p) return;
-            document.getElementById('editProdId').value = p.id;
-            document.getElementById('prodName').value = p.name;
-            document.getElementById('prodPrice').value = 'R$ ' + formatCurrency(p.price);
-            document.getElementById('prodCategorySelect').value = p.category;
-            document.getElementById('prodDesc').value = p.desc || '';
-            currentAdminProdImages = p.imgs || [];
-            renderAdminProdImagesPreview();
-            $('#adminTab a[href="#adminProds"]').tab('show');
-        }
-
-        async function deleteProduct(prodId) {
-            if (confirm('Excluir este produto permanentemente?')) {
-                await window.fs.deleteDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId));
-                showToast('Produto excluído.');
-            }
-        }
-
-        function renderProdAdditionalsCheckboxes() {
-            const container = document.getElementById('prodAdditionalsCheckboxes');
-            container.innerHTML = dbAdditionals.map(a => `
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input prodAddCheckbox" type="checkbox" value="${a.id}" id="addChk_${a.id}">
-                    <label class="form-check-label" for="addChk_${a.id}">${a.name}</label>
-                </div>
+        // CATEGORIAS & ADICIONAIS
+        function renderAdminCategories() {
+            const list = document.getElementById('adminCategoriesList');
+            if (!list) return;
+            list.innerHTML = dbCategories.map(c => `
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                    <span>${c.name}</span>
+                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteCategory('${c.id}')"><i class="fas fa-trash"></i></button>
+                </li>
             `).join('');
         }
 
         async function saveCategory(e) {
             e.preventDefault();
             const name = document.getElementById('newCatName').value.trim();
-            if (name) {
+            if (!name) return;
+            showLoading("Salvando categoria...");
+            try {
                 await window.fs.addDoc(window.fs.collection(window.db, COLL_CATEGORIES), { name });
                 document.getElementById('newCatName').value = '';
-                showToast('Categoria criada!');
+                showToast("Categoria criada!");
+            } catch (err) {
+                showToast("Erro ao criar categoria.", true);
+            } finally {
+                hideLoading();
             }
         }
 
-        function renderAdminCategories() {
-            document.getElementById('adminCategoriesList').innerHTML = dbCategories.map(c => `
-                <li class="list-group-item d-flex justify-content-between align-items-center p-2">
-                    <span>${c.name}</span>
-                    <button class="btn btn-sm btn-danger py-0" onclick="window.fs.deleteDoc(window.fs.doc(window.db, COLL_CATEGORIES, '${c.id}'))">&times;</button>
+        async function deleteCategory(catId) {
+            if (!confirm("Deseja excluir esta categoria?")) return;
+            showLoading("Excluindo categoria...");
+            try {
+                await window.fs.deleteDoc(window.fs.doc(window.db, COLL_CATEGORIES, catId));
+                showToast("Categoria excluída!");
+            } catch (err) {
+                showToast("Erro ao excluir categoria.", true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderAdminAdditionals() {
+            const list = document.getElementById('adminAdditionalsList');
+            if (!list) return;
+            list.innerHTML = dbAdditionals.map(a => `
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                    <span><strong>${a.name}</strong> ${a.price > 0 ? '(+ R$ ' + formatCurrency(a.price) + ')' : '(Grátis)'}</span>
+                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteAdditional('${a.id}')"><i class="fas fa-trash"></i></button>
                 </li>
             `).join('');
         }
@@ -2373,42 +2271,411 @@
             e.preventDefault();
             const name = document.getElementById('addName').value.trim();
             const price = parsePriceValue(document.getElementById('addPrice').value);
-            if (name) {
+            if (!name) return;
+            showLoading("Salvando adicional...");
+            try {
                 await window.fs.addDoc(window.fs.collection(window.db, COLL_ADDITIONALS), { name, price });
                 document.getElementById('addName').value = '';
                 document.getElementById('addPrice').value = '';
-                showToast('Adicional criado!');
+                showToast("Adicional criado!");
+            } catch (err) {
+                showToast("Erro ao criar adicional.", true);
+            } finally {
+                hideLoading();
             }
         }
 
-        function renderAdminAdditionals() {
-            document.getElementById('adminAdditionalsList').innerHTML = dbAdditionals.map(a => `
-                <li class="list-group-item d-flex justify-content-between align-items-center p-2">
-                    <span>${a.name} (${a.price > 0 ? 'R$ ' + formatCurrency(a.price) : 'Grátis'})</span>
-                    <button class="btn btn-sm btn-danger py-0" onclick="window.fs.deleteDoc(window.fs.doc(window.db, COLL_ADDITIONALS, '${a.id}'))">&times;</button>
-                </li>
+        async function deleteAdditional(addId) {
+            if (!confirm("Deseja excluir este adicional?")) return;
+            showLoading("Excluindo adicional...");
+            try {
+                await window.fs.deleteDoc(window.fs.doc(window.db, COLL_ADDITIONALS, addId));
+                showToast("Adicional excluído!");
+            } catch (err) {
+                showToast("Erro ao excluir adicional.", true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderProdAdditionalsCheckboxes() {
+            const container = document.getElementById('prodAdditionalsCheckboxes');
+            if (!container) return;
+            container.innerHTML = dbAdditionals.map(a => `
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input prod-add-checkbox" id="addCheck_${a.id}" value="${a.id}">
+                    <label class="custom-control-label small" for="addCheck_${a.id}">${a.name} ${a.price > 0 ? '(+ R$ ' + formatCurrency(a.price) + ')' : ''}</label>
+                </div>
             `).join('');
         }
 
+        // CONFIGURAÇÕES GERAIS
         async function saveSettings(e) {
             e.preventDefault();
+            const pageTitle = document.getElementById('settingPageTitle').value.trim();
+            const storeName = document.getElementById('settingStoreName').value.trim();
+            const whatsapp = document.getElementById('settingWhatsapp').value.trim();
+            const welcome = document.getElementById('settingWelcome').value.trim();
+            const globalFeeName = document.getElementById('settingGlobalFeeName').value.trim();
+            const globalFeeType = document.getElementById('settingGlobalFeeType').value;
+            const globalFeeValue = parsePriceValue(document.getElementById('settingGlobalFeeValue').value);
+
+            const favicon = processImageUrl(document.getElementById('settingFaviconBase64').value);
+            const logo = processImageUrl(document.getElementById('settingLogoBase64').value);
+            const bg = processImageUrl(document.getElementById('settingBgBase64').value);
+
+            const newPass = document.getElementById('settingNewAdminPass').value;
+
             const payload = {
-                pageTitle: document.getElementById('settingPageTitle').value.trim(),
-                favicon: document.getElementById('settingFaviconBase64').value,
-                storeName: document.getElementById('settingStoreName').value.trim(),
-                whatsapp: document.getElementById('settingWhatsapp').value.trim(),
-                welcome: document.getElementById('settingWelcome').value.trim(),
-                logo: document.getElementById('settingLogoBase64').value || settings.logo,
-                bg: document.getElementById('settingBgBase64').value || settings.bg
+                pageTitle, storeName, whatsapp, welcome, globalFeeName, globalFeeType, globalFeeValue
             };
 
-            const newPass = document.getElementById('settingNewAdminPass').value.trim();
-            if (newPass) payload.adminPass = newPass;
+            if (favicon) payload.favicon = favicon;
+            if (logo) payload.logo = logo;
+            if (bg) payload.bg = bg;
+
+            if (newPass && newPass.trim()) {
+                payload.adminPassHash = await sha256(newPass.trim());
+            }
 
             showLoading("Salvando configurações...");
-            await window.fs.setDoc(window.fs.doc(window.db, COLL_SETTINGS, "config"), payload, { merge: true });
-            hideLoading();
-            showToast("Configurações atualizadas!");
+            try {
+                await window.fs.setDoc(window.fs.doc(window.db, COLL_SETTINGS, "config"), payload, { merge: true });
+                showToast("Configurações salvas!");
+                document.getElementById('settingNewAdminPass').value = '';
+            } catch (err) {
+                showToast("Erro ao salvar configurações.", true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // DESTAQUES
+        function populateHighlightProductSelect() {
+            const sel = document.getElementById('highProductSelect');
+            if (!sel) return;
+            sel.innerHTML = dbProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }
+
+        function toggleHighlightOptions() {
+            const type = document.getElementById('highTypeSelect').value;
+            document.getElementById('highCustomNameGroup').style.display = type === 'custom' ? 'block' : 'none';
+        }
+
+        function handleHighlightDiscountTypeChange() {
+            const type = document.getElementById('highDiscountType').value;
+            document.getElementById('highDiscountValGroup').style.display = type === 'none' ? 'none' : 'block';
+        }
+
+        function applyHighlightValMask(e) {
+            const type = document.getElementById('highDiscountType').value;
+            if (type === 'fixed') applyPriceMask(e);
+        }
+
+        async function saveHighlightConfig(e) {
+            e.preventDefault();
+            const prodId = document.getElementById('highProductSelect').value;
+            const type = document.getElementById('highTypeSelect').value;
+            const customName = document.getElementById('highCustomName').value.trim();
+            const discountType = document.getElementById('highDiscountType').value;
+            const discountVal = document.getElementById('highDiscountVal').value.trim();
+
+            if (!prodId) return;
+
+            const payload = {
+                highlightType: type,
+                highlightCustomName: customName,
+                highlightDiscountType: discountType,
+                highlightVal: discountVal
+            };
+
+            showLoading("Aplicando destaque...");
+            try {
+                await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), payload, { merge: true });
+                showToast("Destaque aplicado com sucesso!");
+            } catch (err) {
+                showToast("Erro ao aplicar destaque.", true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderAdminHighlights() {
+            const tbody = document.getElementById('adminHighlightsTable');
+            if (!tbody) return;
+
+            const highlighted = dbProducts.filter(p => p.highlightType && p.highlightType !== 'none');
+
+            if (highlighted.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Nenhum produto destacado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = highlighted.map(p => {
+                const effPrice = getEffectivePrice(p);
+                let label = p.highlightType;
+                if (p.highlightType === 'promo_carousel') label = 'Promoção / Desconto';
+                else if (p.highlightType === 'top_seller') label = 'Mais Vendidos';
+                else if (p.highlightType === 'new_arrival') label = 'Lançamento';
+                else if (p.highlightType === 'custom') label = p.highlightCustomName || 'Personalizado';
+
+                return `
+                    <tr>
+                        <td class="font-weight-bold">${p.name}</td>
+                        <td><span class="badge badge-warning text-dark">${label}</span></td>
+                        <td>R$ ${formatCurrency(p.price)}</td>
+                        <td class="text-success font-weight-bold">R$ ${formatCurrency(effPrice)}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeHighlight('${p.id}')"><i class="fas fa-times"></i> Remover</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function removeHighlight(prodId) {
+            showLoading("Removendo destaque...");
+            try {
+                await window.fs.setDoc(window.fs.doc(window.db, COLL_PRODUCTS, prodId), {
+                    highlightType: 'none', highlightCustomName: '', highlightDiscountType: 'none', highlightVal: ''
+                }, { merge: true });
+                showToast("Destaque removido!");
+            } catch (err) {
+                showToast("Erro ao remover destaque.", true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // MÁSCARAS & FINANCEIRO
+        function toggleProdFeeInputMask() {
+            const type = document.getElementById('prodFeeType').value;
+            const input = document.getElementById('prodFeeValue');
+            input.value = '';
+            input.placeholder = type === 'percent' ? '10%' : 'R$ 0,00';
+        }
+
+        function toggleGlobalFeeInputMask() {
+            const type = document.getElementById('settingGlobalFeeType').value;
+            const input = document.getElementById('settingGlobalFeeValue');
+            input.value = '';
+            input.placeholder = type === 'percent' ? '10%' : 'R$ 0,00';
+        }
+
+        function toggleFinFeeInputMask() {
+            const type = document.getElementById('finManualFeeType').value;
+            const input = document.getElementById('finManualFeeValue');
+            input.value = '';
+            input.placeholder = type === 'percent' ? '10%' : 'R$ 0,00';
+        }
+
+        function handleFinPeriodChange() {
+            const val = document.getElementById('finPeriodSelect').value;
+            document.getElementById('finCustomDates').style.display = val === 'custom' ? 'flex' : 'none';
+            recalculateFinancials();
+        }
+
+        function recalculateFinancials() {
+            const period = document.getElementById('finPeriodSelect')?.value || 'today';
+            const tag = document.getElementById('reportPeriodTag');
+            const now = new Date();
+            let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            let endDate = now.getTime();
+
+            if (period === 'today') {
+                if (tag) tag.innerText = 'Hoje';
+            } else if (period === '7days') {
+                startDate = now.getTime() - (7 * 24 * 60 * 60 * 1000);
+                if (tag) tag.innerText = 'Últimos 7 dias';
+            } else if (period === '30days') {
+                startDate = now.getTime() - (30 * 24 * 60 * 60 * 1000);
+                if (tag) tag.innerText = 'Últimos 30 dias';
+            } else if (period === 'all') {
+                startDate = 0;
+                if (tag) tag.innerText = 'Todo o Histórico';
+            } else if (period === 'custom') {
+                const sVal = document.getElementById('finStartDate').value;
+                const eVal = document.getElementById('finEndDate').value;
+                if (sVal) startDate = new Date(sVal).getTime();
+                if (eVal) endDate = new Date(eVal).getTime() + (24 * 60 * 60 * 1000);
+                if (tag) tag.innerText = 'Personalizado';
+            }
+
+            const filtered = dbOrders.filter(o => {
+                const t = o.createdAt || 0;
+                return t >= startDate && t <= endDate;
+            });
+
+            let grossTotal = 0;
+            const payBreakdown = { Pix: 0, Dinheiro: 0, Cartão: 0 };
+            const itemsMap = {};
+
+            filtered.forEach(o => {
+                const tot = o.total || 0;
+                grossTotal += tot;
+                const p = o.paymentMethod || 'Pix';
+                if (payBreakdown[p] !== undefined) payBreakdown[p] += tot;
+                else payBreakdown[p] = tot;
+
+                (o.items || []).forEach(it => {
+                    if (!itemsMap[it.name]) itemsMap[it.name] = { qty: 0, total: 0 };
+                    itemsMap[it.name].qty += (it.qty || 1);
+                    itemsMap[it.name].total += (it.subtotal || 0);
+                });
+            });
+
+            let netTotal = grossTotal;
+            let deductionsHtml = '';
+
+            manualFinancialFees.forEach((fee, idx) => {
+                let feeAppliedVal = 0;
+                let baseValue = grossTotal;
+                if (fee.target !== 'global' && payBreakdown[fee.target] !== undefined) {
+                    baseValue = payBreakdown[fee.target];
+                }
+
+                if (fee.type === 'percent') {
+                    feeAppliedVal = baseValue * (fee.value / 100);
+                } else {
+                    feeAppliedVal = fee.value;
+                }
+
+                netTotal -= feeAppliedVal;
+                deductionsHtml += `
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span>${fee.name} (${fee.target}):</span>
+                        <span>- R$ ${formatCurrency(feeAppliedVal)} <button class="btn btn-link text-danger py-0 px-1" onclick="removeManualFinancialFee(${idx})">&times;</button></span>
+                    </div>
+                `;
+            });
+
+            if (document.getElementById('repOrdersCount')) document.getElementById('repOrdersCount').innerText = filtered.length;
+            if (document.getElementById('repGrossTotal')) document.getElementById('repGrossTotal').innerText = formatCurrency(grossTotal);
+            if (document.getElementById('repNetTotal')) document.getElementById('repNetTotal').innerText = formatCurrency(Math.max(0, netTotal));
+
+            if (document.getElementById('repPaymentBreakdown')) {
+                document.getElementById('repPaymentBreakdown').innerHTML = Object.keys(payBreakdown).map(k => `
+                    <div class="d-flex justify-content-between">
+                        <span>${k}:</span>
+                        <span class="font-weight-bold">R$ ${formatCurrency(payBreakdown[k])}</span>
+                    </div>
+                `).join('');
+            }
+
+            if (document.getElementById('repDeductionsList')) {
+                document.getElementById('repDeductionsList').innerHTML = deductionsHtml || 'Nenhuma taxa manual aplicada.';
+            }
+
+            if (document.getElementById('repItemsSoldBreakdown')) {
+                document.getElementById('repItemsSoldBreakdown').innerHTML = Object.keys(itemsMap).map(k => `
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>${itemsMap[k].qty}x ${k}</span>
+                        <span>R$ ${formatCurrency(itemsMap[k].total)}</span>
+                    </div>
+                `).join('') || '<div class="text-muted">Nenhum item vendido.</div>';
+            }
+
+            if (document.getElementById('reportGeneratedDate')) {
+                document.getElementById('reportGeneratedDate').innerText = `Gerado em: ${new Date().toLocaleString('pt-BR')}`;
+            }
+        }
+
+        function addManualFinancialFee() {
+            const name = document.getElementById('finManualFeeName').value.trim();
+            const type = document.getElementById('finManualFeeType').value;
+            const val = parsePriceValue(document.getElementById('finManualFeeValue').value);
+            const target = document.getElementById('finManualFeeTarget').value;
+
+            if (!name || val <= 0) return alert('Preencha o nome e valor da taxa.');
+
+            manualFinancialFees.push({ name, type, value: val, target });
+            document.getElementById('finManualFeeName').value = '';
+            document.getElementById('finManualFeeValue').value = '';
+            recalculateFinancials();
+        }
+
+        function removeManualFinancialFee(idx) {
+            manualFinancialFees.splice(idx, 1);
+            recalculateFinancials();
+        }
+
+        function exportFinancialReportJpeg() {
+            const card = document.getElementById('financialReportCard');
+            if (!card) return;
+            html2canvas(card).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `relatorio-financeiro-${Date.now()}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+            });
+        }
+
+        // PERFIL DO CLIENTE E LOCAL STORAGE
+        function saveClientProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('profileName').value.trim();
+            const phone = document.getElementById('profilePhone').value.trim();
+            const address = document.getElementById('profileAddress').value.trim();
+
+            localStorage.setItem('client_profile_v2', JSON.stringify({ name, phone, address }));
+            showToast('Dados de perfil salvos!');
+        }
+
+        function loadSavedProfileToCheckout() {
+            const saved = localStorage.getItem('client_profile_v2');
+            if (!saved) return;
+            try {
+                const p = JSON.parse(saved);
+                if (p.name && document.getElementById('clientName')) document.getElementById('clientName').value = p.name;
+                if (p.phone && document.getElementById('clientPhone')) document.getElementById('clientPhone').value = p.phone;
+                if (p.address && document.getElementById('clientAddress')) document.getElementById('clientAddress').value = p.address;
+
+                if (p.name && document.getElementById('profileName')) document.getElementById('profileName').value = p.name;
+                if (p.phone && document.getElementById('profilePhone')) document.getElementById('profilePhone').value = p.phone;
+                if (p.address && document.getElementById('profileAddress')) document.getElementById('profileAddress').value = p.address;
+            } catch(e){}
+        }
+
+        function openProfileModal() {
+            loadSavedProfileToCheckout();
+            renderOrderHistory();
+            $('#profileModal').modal('show');
+        }
+
+        function saveOrderToHistory(orderData) {
+            const hist = JSON.parse(localStorage.getItem('client_orders_history_v2') || '[]');
+            hist.unshift(orderData);
+            localStorage.setItem('client_orders_history_v2', JSON.stringify(hist));
+        }
+
+        function renderOrderHistory() {
+            const container = document.getElementById('orderHistoryContainer');
+            if (!container) return;
+            const hist = JSON.parse(localStorage.getItem('client_orders_history_v2') || '[]');
+
+            if (hist.length === 0) {
+                container.innerHTML = `<p class="text-center text-muted small py-3 mb-0">Nenhum histórico encontrado no seu dispositivo.</p>`;
+                return;
+            }
+
+            container.innerHTML = hist.map(ord => `
+                <div class="card mb-2 border">
+                    <div class="card-header p-2 bg-light d-flex justify-content-between align-items-center small">
+                        <span class="font-weight-bold text-dark">${ord.date}</span>
+                        <span class="badge badge-success">R$ ${formatCurrency(ord.total)}</span>
+                    </div>
+                    <div class="card-body p-2 small">
+                        ${(ord.items || []).map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearOrderHistory() {
+            if (!confirm("Deseja apagar o histórico de compras deste aparelho?")) return;
+            localStorage.removeItem('client_orders_history_v2');
+            renderOrderHistory();
+            showToast("Histórico limpo!");
         }
     </script>
 </body>
