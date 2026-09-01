@@ -125,6 +125,19 @@
         .suggestion-item:hover, .suggestion-item:active { background: rgba(139, 92, 246, 0.15); }
         .suggestion-hint { font-size: 10px; color: var(--text-muted); }
 
+        .live-preview {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+            display: none;
+        }
+
         .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--accent-purple), #6366f1); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 15px var(--purple-glow); transition: var(--transition); margin-top: 4px; }
         .btn-submit:active { transform: scale(0.98); }
 
@@ -136,15 +149,35 @@
         .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; transition: var(--transition); }
         .item-card.purchased { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
         
-        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .custom-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--card-border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); background: var(--input-bg); }
+        .item-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .custom-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--card-border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); background: var(--input-bg); flex-shrink: 0; }
         .item-card.purchased .custom-checkbox { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
         
-        .item-title { font-size: 14px; font-weight: 600; cursor: pointer; }
+        /* Badge Visual de Quantidade */
+        .qtd-badge {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .item-card.purchased .qtd-badge {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border-color: var(--card-border);
+        }
+
+        .item-title { font-size: 14px; font-weight: 600; cursor: pointer; word-break: break-word; }
         .item-card.purchased .item-title { text-decoration: line-through; color: var(--text-muted); opacity: 0.8; }
 
-        .item-right { display: flex; align-items: center; gap: 8px; }
-        .item-price { font-size: 13px; font-weight: 700; color: var(--text-main); }
+        .item-right { display: flex; align-items: center; gap: 6px; }
+        .item-price { font-size: 13px; font-weight: 700; color: var(--text-main); margin-right: 4px; }
         .item-card.purchased .item-price { color: var(--accent-green); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
@@ -195,21 +228,29 @@
         <form id="formItem" onsubmit="adicionarItem(event)">
             <div class="form-group">
                 <label>Estabelecimento / Mercado</label>
-                <input type="text" id="mercadoInput" class="input-field" placeholder="Ex: Mercado Betone, Clovis..." required list="listaMercados">
-                <datalist id="listaMercados"></datalist>
+                <input type="text" id="mercadoInput" class="input-field" placeholder="Ex: Mercado Betoni, Clovis..." required autocomplete="off" oninput="filtrarMercados(this.value)" onfocus="filtrarMercados(this.value)">
+                <div id="mercadosSuggestionsBox" class="suggestions-box"></div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>Item</label>
+                <input type="text" id="nomeItemInput" class="input-field" placeholder="Ex: Arroz 5kg, Leite..." required autocomplete="off" oninput="filtrarSugestoes(this.value)" onfocus="filtrarSugestoes(this.value)">
+                <div id="suggestionsBox" class="suggestions-box"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
                 <div class="form-group">
-                    <label>Item</label>
-                    <input type="text" id="nomeItemInput" class="input-field" placeholder="Ex: Arroz 5kg, Leite..." required autocomplete="off" oninput="filtrarSugestoes(this.value)" onfocus="filtrarSugestoes(this.value)">
-                    <div id="suggestionsBox" class="suggestions-box"></div>
+                    <label>Qtd.</label>
+                    <input type="number" id="qtdInput" class="input-field" value="1" min="1" step="any" oninput="atualizarInformativoSubtotal()" required>
                 </div>
                 <div class="form-group">
-                    <label>Preço (R$)</label>
-                    <input type="text" id="precoInput" class="input-field" inputmode="numeric" placeholder="R$ 0,00" oninput="formatarMoedaMaquininha(this)">
+                    <label>Preço Unit. (R$)</label>
+                    <input type="text" id="precoInput" class="input-field" inputmode="numeric" placeholder="R$ 0,00" oninput="formatarMoedaMaquininha(this); atualizarInformativoSubtotal();">
                 </div>
             </div>
+
+            <!-- Informativo do Valor Total do Item -->
+            <div id="livePreview" class="live-preview"></div>
 
             <button type="submit" class="btn-submit"><i class="fas fa-plus"></i> Adicionar na Lista</button>
         </form>
@@ -225,15 +266,22 @@
         <input type="hidden" id="editId">
         <div class="form-group">
             <label>Mercado</label>
-            <input type="text" id="editMercado" class="input-field">
+            <input type="text" id="editMercado" class="input-field" autocomplete="off" oninput="filtrarMercadosEdit(this.value)" onfocus="filtrarMercadosEdit(this.value)">
+            <div id="editMercadosSuggestionsBox" class="suggestions-box"></div>
         </div>
         <div class="form-group">
             <label>Produto</label>
             <input type="text" id="editNome" class="input-field">
         </div>
-        <div class="form-group">
-            <label>Preço Unitário / Total (R$)</label>
-            <input type="text" id="editPreco" class="input-field" inputmode="numeric" placeholder="R$ 0,00" oninput="formatarMoedaMaquininha(this)">
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+            <div class="form-group">
+                <label>Qtd.</label>
+                <input type="number" id="editQtd" class="input-field" min="1" step="any">
+            </div>
+            <div class="form-group">
+                <label>Preço Unit. (R$)</label>
+                <input type="text" id="editPreco" class="input-field" inputmode="numeric" placeholder="R$ 0,00" oninput="formatarMoedaMaquininha(this)">
+            </div>
         </div>
         <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
             <button class="btn-secondary" onclick="fecharModalEdit()">Cancelar</button>
@@ -260,10 +308,16 @@
             if (!e.target.closest('#nomeItemInput') && !e.target.closest('#suggestionsBox')) {
                 ocultarSugestoes();
             }
+            if (!e.target.closest('#mercadoInput') && !e.target.closest('#mercadosSuggestionsBox')) {
+                ocultarSugestoesMercados();
+            }
+            if (!e.target.closest('#editMercado') && !e.target.closest('#editMercadosSuggestionsBox')) {
+                ocultarSugestoesMercadosEdit();
+            }
         });
     });
 
-    // LÓGICA ESTILO MAQUININHA (DIGITAÇÃO DIRETA DOS CENTAVOS)
+    // LÓGICA ESTILO MAQUININHA
     function formatarMoedaMaquininha(input) {
         let valor = input.value.replace(/\D/g, '');
         if (!valor) {
@@ -285,6 +339,20 @@
         return 'R$ ' + numero.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
+    function atualizarInformativoSubtotal() {
+        const qtd = parseFloat(document.getElementById('qtdInput').value) || 0;
+        const precoUnitario = converterMoedaParaNumero(document.getElementById('precoInput').value);
+        const livePreview = document.getElementById('livePreview');
+
+        if (precoUnitario > 0 && qtd > 0) {
+            const subtotal = qtd * precoUnitario;
+            livePreview.innerText = `Subtotal: ${qtd}x R$ ${precoUnitario.toFixed(2).replace('.', ',')} = R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            livePreview.style.display = 'block';
+        } else {
+            livePreview.style.display = 'none';
+        }
+    }
+
     function aplicarTemaAutomatico() {
         const horaAtual = new Date().getHours();
         const eNoite = horaAtual < 6 || horaAtual >= 18;
@@ -299,6 +367,81 @@
             snapshot.forEach(doc => itensLista.push({ id: doc.id, ...doc.data() }));
             renderizarPainel();
         });
+    }
+
+    // AUTOCOMPLETE PERSONALIZADO PARA ESTABELECIMENTOS
+    function obterMercadosUnicos() {
+        return [...new Set(itensLista.map(i => i.mercado).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    }
+
+    function filtrarMercados(termo) {
+        const box = document.getElementById('mercadosSuggestionsBox');
+        const mercados = obterMercadosUnicos();
+        if (mercados.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        const termoBusca = (termo || '').toLowerCase().trim();
+        const filtrados = termoBusca ? mercados.filter(m => m.toLowerCase().includes(termoBusca)) : mercados;
+
+        if (filtrados.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        box.innerHTML = '';
+        filtrados.forEach(mercado => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.innerHTML = `<span><i class="fas fa-store" style="margin-right:6px; color:var(--accent-purple);"></i>${mercado}</span>`;
+            div.onclick = () => {
+                document.getElementById('mercadoInput').value = mercado;
+                ocultarSugestoesMercados();
+            };
+            box.appendChild(div);
+        });
+
+        box.style.display = 'block';
+    }
+
+    function ocultarSugestoesMercados() {
+        document.getElementById('mercadosSuggestionsBox').style.display = 'none';
+    }
+
+    function filtrarMercadosEdit(termo) {
+        const box = document.getElementById('editMercadosSuggestionsBox');
+        const mercados = obterMercadosUnicos();
+        if (mercados.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        const termoBusca = (termo || '').toLowerCase().trim();
+        const filtrados = termoBusca ? mercados.filter(m => m.toLowerCase().includes(termoBusca)) : mercados;
+
+        if (filtrados.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        box.innerHTML = '';
+        filtrados.forEach(mercado => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.innerHTML = `<span><i class="fas fa-store" style="margin-right:6px; color:var(--accent-purple);"></i>${mercado}</span>`;
+            div.onclick = () => {
+                document.getElementById('editMercado').value = mercado;
+                ocultarSugestoesMercadosEdit();
+            };
+            box.appendChild(div);
+        });
+
+        box.style.display = 'block';
+    }
+
+    function ocultarSugestoesMercadosEdit() {
+        document.getElementById('editMercadosSuggestionsBox').style.display = 'none';
     }
 
     function escutarSugestoes() {
@@ -390,14 +533,19 @@
         e.preventDefault();
         const mercado = document.getElementById('mercadoInput').value.trim();
         const nome = document.getElementById('nomeItemInput').value.trim();
-        const preco = converterMoedaParaNumero(document.getElementById('precoInput').value);
+        const quantidade = parseFloat(document.getElementById('qtdInput').value) || 1;
+        const precoUnitario = converterMoedaParaNumero(document.getElementById('precoInput').value);
+        
+        const precoTotal = quantidade * precoUnitario;
 
         if (!mercado || !nome) return alert('Preencha o mercado e o nome do item.');
 
         const item = {
             mercado: mercado,
             nome: nome,
-            preco: preco,
+            quantidade: quantidade,
+            precoUnitario: precoUnitario,
+            preco: precoTotal,
             marcado: false,
             criadoEm: new Date().toISOString()
         };
@@ -409,7 +557,10 @@
 
         document.getElementById('nomeItemInput').value = '';
         document.getElementById('precoInput').value = '';
+        document.getElementById('qtdInput').value = '1';
+        document.getElementById('livePreview').style.display = 'none';
         ocultarSugestoes();
+        ocultarSugestoesMercados();
         document.getElementById('nomeItemInput').focus();
     }
 
@@ -423,10 +574,6 @@
         let totalGeralCarrinho = 0;
         let totalGeralPrevisto = 0;
         let marcadosCount = 0;
-
-        const mercadosUnicos = [...new Set(itensLista.map(i => i.mercado))];
-        const datalist = document.getElementById('listaMercados');
-        datalist.innerHTML = mercadosUnicos.map(m => `<option value="${m}">`).join('');
 
         itensLista.forEach(item => {
             if (!porMercado[item.mercado]) porMercado[item.mercado] = [];
@@ -447,8 +594,13 @@
         const container = document.getElementById('marketsContainer');
         container.innerHTML = '';
 
-        Object.keys(porMercado).sort().forEach(mercado => {
-            const itens = porMercado[mercado];
+        // ORDENAÇÃO ALFABÉTICA DOS MERCADOS
+        const mercadosOrdenados = Object.keys(porMercado).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+        mercadosOrdenados.forEach(mercado => {
+            // ORDENAÇÃO ALFABÉTICA DOS ITENS DENTRO DO MERCADO
+            const itens = porMercado[mercado].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+            
             let subtotalMercado = 0;
             itens.forEach(i => { if (i.marcado) subtotalMercado += i.preco; });
 
@@ -469,16 +621,23 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = `item-card ${item.marcado ? 'purchased' : ''}`;
                 
+                // BADGE VISUAL DE QUANTIDADE
+                const qtdBadge = (item.quantidade && item.quantidade > 0) 
+                    ? `<span class="qtd-badge">${item.quantidade}x</span>` 
+                    : '';
+
                 itemDiv.innerHTML = `
                     <div class="item-left" onclick="alternarMarcado('${item.id}', ${item.marcado})">
                         <div class="custom-checkbox">
                             ${item.marcado ? '<i class="fas fa-check" style="font-size:12px;"></i>' : ''}
                         </div>
+                        ${qtdBadge}
                         <span class="item-title">${item.nome}</span>
                     </div>
                     <div class="item-right">
                         <span class="item-price">${item.preco > 0 ? 'R$ ' + item.preco.toFixed(2) : 'S/ Preço'}</span>
-                        <button class="btn-icon" style="padding:4px 8px;" onclick="abrirEditModal('${item.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn-icon" style="padding:4px 8px;" title="Editar" onclick="abrirEditModal('${item.id}')"><i class="fas fa-pen"></i></button>
+                        <button class="btn-icon" style="padding:4px 8px; color:#ef4444;" title="Excluir" onclick="deletarItemDireto('${item.id}', '${item.nome}')"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 `;
                 content.appendChild(itemDiv);
@@ -490,6 +649,13 @@
         });
     }
 
+    async function deletarItemDireto(id, nome) {
+        if (confirm(`Deseja remover "${nome}" da lista?`)) {
+            const { doc, deleteDoc } = window.fs;
+            await deleteDoc(doc(window.db, "lista_compras", id));
+        }
+    }
+
     function abrirEditModal(id) {
         const item = itensLista.find(i => i.id === id);
         if (!item) return;
@@ -497,25 +663,35 @@
         document.getElementById('editId').value = item.id;
         document.getElementById('editMercado').value = item.mercado;
         document.getElementById('editNome').value = item.nome;
-        document.getElementById('editPreco').value = converterNumeroParaMoeda(item.preco);
+        document.getElementById('editQtd').value = item.quantidade || 1;
+        document.getElementById('editPreco').value = converterNumeroParaMoeda(item.precoUnitario || item.preco);
 
         document.getElementById('modalEdit').style.display = 'flex';
     }
 
     function fecharModalEdit() {
         document.getElementById('modalEdit').style.display = 'none';
+        ocultarSugestoesMercadosEdit();
     }
 
     async function salvarItemEditado() {
         const id = document.getElementById('editId').value;
         const mercado = document.getElementById('editMercado').value.trim();
         const nome = document.getElementById('editNome').value.trim();
-        const preco = converterMoedaParaNumero(document.getElementById('editPreco').value);
+        const quantidade = parseFloat(document.getElementById('editQtd').value) || 1;
+        const precoUnitario = converterMoedaParaNumero(document.getElementById('editPreco').value);
+        const precoTotal = quantidade * precoUnitario;
 
         if (!mercado || !nome) return alert('Campos inválidos.');
 
         const { doc, updateDoc } = window.fs;
-        await updateDoc(doc(window.db, "lista_compras", id), { mercado, nome, preco });
+        await updateDoc(doc(window.db, "lista_compras", id), { 
+            mercado, 
+            nome, 
+            quantidade,
+            precoUnitario,
+            preco: precoTotal 
+        });
         
         await aprenderItem(nome);
         
@@ -556,16 +732,19 @@
 
         let blocosHTML = '';
 
-        Object.keys(porMercado).forEach(mercado => {
-            const itens = porMercado[mercado];
+        const mercadosOrdenados = Object.keys(porMercado).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+        mercadosOrdenados.forEach(mercado => {
+            const itens = porMercado[mercado].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
             let subtotal = 0;
             let linhas = '';
 
             itens.forEach(i => {
                 subtotal += i.preco;
+                const qtdTexto = (i.quantidade && i.quantidade > 0) ? `${i.quantidade}x ` : '';
                 linhas += `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
-                        <td style="padding: 8px 12px; font-size: 12px; font-weight: 600;">${i.nome}</td>
+                        <td style="padding: 8px 12px; font-size: 12px; font-weight: 600;">${qtdTexto}${i.nome}</td>
                         <td style="padding: 8px 12px; font-size: 12px; font-weight: 700; text-align: right; color: #10b981;">R$ ${i.preco.toFixed(2)}</td>
                     </tr>
                 `;
