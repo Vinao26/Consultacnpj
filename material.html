@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title id="pageTitle">Pedido de Material Merchan</title>
+  <link id="dynamicFavicon" rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+      getFirestore, doc, setDoc, getDoc, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+      authDomain: "bancoia.firebaseapp.com",
+      projectId: "bancoia",
+      storageBucket: "bancoia.firebasestorage.app",
+      messagingSenderId: "32042568752",
+      appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+    };
+
+    const app = initializeApp(firebaseConfig, "merchanAppInstance");
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.fs = { doc, setDoc, getDoc, onSnapshot };
+  </script>
+
+  <style>
+    :root {
+      --bg-0: #08111f;
+      --bg-1: #101a2e;
+      --surface: #ffffff;
+      --surface-2: #f4f6fb;
+      --ink: #0c1222;
+      --ink-soft: #3d4a63;
+      --muted: #7b869c;
+      --line: #e4e9f2;
+      --line-strong: #d5dce8;
+      --accent: #f59b2c;
+      --accent-deep: #e07a12;
+      --navy: #12203a;
+      --navy-2: #1b2d4f;
+      --success: #128c4a;
+      --success-2: #0e7a40;
+      --whatsapp: #1f9d54;
+      --danger: #e23b3b;
+      --danger-soft: #fff1f1;
+      --shadow-sm: 0 1px 2px rgba(12, 18, 34, 0.06);
+      --shadow: 0 10px 30px rgba(8, 17, 31, 0.08);
+      --shadow-lg: 0 22px 50px rgba(8, 17, 31, 0.16);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --dock-h: 92px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg-0);
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 760px;
+      min-height: 100vh;
+      background:
+        radial-gradient(1200px 420px at 10% -10%, rgba(245, 155, 44, 0.18), transparent 50%),
+        radial-gradient(900px 380px at 100% 0%, rgba(56, 117, 255, 0.16), transparent 46%),
+        linear-gradient(180deg, #0b1628 0%, #10203a 180px, #eef2f8 180px, #e8edf5 100%);
+    }
+
+    .container {
+      width: 100%;
+      padding: 18px 16px calc(var(--dock-h) + 18px);
+    }
+
+    .export-header {
+      display: none;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #12203a, #1b3258);
+      color: #fff;
+    }
+    .exporting .export-header { display: block; }
+    .export-header h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
+    .export-header p { margin-top: 4px; font-size: 13px; color: rgba(255,255,255,0.78); }
+
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #ffb347, #f59b2c);
+      box-shadow: 0 8px 18px rgba(245, 155, 44, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-mark svg { width: 24px; height: 24px; }
+
+    .hero h1 {
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #fff;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.68);
+      font-weight: 500;
+    }
+
+    .order-chip {
+      min-width: 74px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .order-chip strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .order-chip span {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .card-label .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(245, 155, 44, 0.15);
+    }
+
+    .grid-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    @media (min-width: 560px) {
+      .grid-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .container { padding: 24px 22px calc(var(--dock-h) + 20px); }
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .field input,
+    .item-label-input,
+    .input-size,
+    .admin-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-2);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s, background .18s;
+    }
+
+    .field input:focus,
+    .item-label-input:focus,
+    .input-size:focus,
+    .admin-input:focus {
+      background: #fff;
+      border-color: #f3b056;
+      box-shadow: 0 0 0 4px rgba(245, 155, 44, 0.16);
+    }
+
+    details {
+      background: var(--surface);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px 14px 16px;
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    .cat-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: #fff;
+      overflow: hidden;
+      background-size: contain !important;
+      background-repeat: no-repeat !important;
+      background-position: center !important;
+    }
+
+    .cat-icon svg { width: 18px; height: 18px; }
+
+    .cat-copy {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cat-name {
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .cat-hint {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .cat-badge {
+      min-width: 28px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .cat-badge.is-active {
+      background: #fff4e5;
+      color: #b45309;
+    }
+
+    summary::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      margin-left: 4px;
+      border-right: 2px solid #9aa6bb;
+      border-bottom: 2px solid #9aa6bb;
+      transform: rotate(-45deg);
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+
+    details[open] summary::after {
+      transform: rotate(45deg) translate(-2px, -2px);
+    }
+
+    details[open] summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .item-list {
+      padding: 8px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: linear-gradient(180deg, #fbfcfe, #fff);
+    }
+
+    .item-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .item-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      flex: 1 1 160px;
+      word-break: break-word;
+      padding-left: 4px;
+    }
+
+    .item-label-input {
+      flex: 1 1 160px;
+      height: 40px;
+    }
+
+    .item-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .input-size {
+      width: 72px;
+      height: 40px;
+      text-align: center;
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .qty-btn {
+      width: 36px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      color: var(--navy);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-btn:active { background: #e8edf5; }
+
+    .input-qty {
+      width: 38px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: inherit;
+      color: var(--ink);
+      outline: none;
+      -moz-appearance: textfield;
+    }
+
+    .input-qty::-webkit-outer-spin-button,
+    .input-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .btn-add-extra {
+      margin-top: 2px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1.5px dashed #c9d3e4;
+      background: #f7f9fd;
+      color: var(--navy-2);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .18s, background .18s, color .18s;
+    }
+
+    .btn-add-extra:hover {
+      border-color: #f59b2c;
+      background: #fff8ee;
+      color: #b45309;
+    }
+
+    .btn-remove {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ffd0d0;
+      border-radius: 12px;
+      background: var(--danger-soft);
+      color: var(--danger);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .actions {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, rgba(232,237,245,0), #e8edf5 28%);
+      z-index: 20;
+    }
+
+    .btn {
+      flex: 1;
+      height: 52px;
+      border: none;
+      border-radius: 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: -0.02em;
+      transition: transform .15s ease, filter .15s ease;
+      position: relative;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn svg { width: 18px; height: 18px; }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(180deg, #24385c, #12203a);
+      box-shadow: 0 10px 20px rgba(18, 32, 58, 0.28);
+    }
+
+    .btn-success {
+      color: #fff;
+      background: linear-gradient(180deg, #27b862, #1f9d54);
+      box-shadow: 0 10px 20px rgba(31, 157, 84, 0.28);
+    }
+
+    .btn.is-loading {
+      pointer-events: none;
+      opacity: 0.8;
+      color: transparent !important;
+    }
+
+    .btn.is-loading::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: btnSpin 0.7s linear infinite;
+    }
+
+    @keyframes btnSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(var(--dock-h) + 8px);
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 4000;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #12203a;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: var(--shadow-lg);
+      transition: opacity .2s, transform .2s;
+      max-width: calc(100% - 32px);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .stealth-footer {
+      text-align: center;
+      padding: 12px 0 24px;
+    }
+    .stealth-dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      background: #9aa6bb;
+      opacity: 0.25;
+      border-radius: 50%;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* PAINEL ADMIN E ALERTAS VISUAIS ENHANCED */
+    .admin-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(8, 17, 31, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .admin-modal.active { display: flex; }
+
+    .admin-card {
+      background: #fff;
+      width: 100%;
+      max-width: 650px;
+      max-height: 90vh;
+      border-radius: 20px;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+
+    .admin-header h2 { font-size: 18px; font-weight: 800; color: var(--navy); }
+    .admin-close { background: none; border: none; font-size: 20px; font-weight: 800; cursor: pointer; color: var(--muted); }
+
+    .admin-alert {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      animation: alertSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes alertSlideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .admin-alert.show { display: flex; }
+    .admin-alert.success { background: #e6f7ed; color: #0e7a40; border: 1px solid #b7ebd0; }
+    .admin-alert.error { background: #fde8e8; color: #e23b3b; border: 1px solid #f8b4b4; }
+    .admin-alert.info { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
+
+    .admin-sec-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-deep);
+      margin-top: 8px;
+    }
+
+    .admin-cat-block {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .admin-cat-item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+
+    /* ESTILOS ESPECÍFICOS DE EXPORTAÇÃO COMPLETA E REFINADA */
+    .exporting .hero,
+    .exporting .actions,
+    .exporting .btn-add-extra,
+    .exporting .btn-remove,
+    .exporting .qty-btn,
+    .exporting .toast,
+    .exporting .stealth-footer {
+      display: none !important;
+    }
+
+    .exporting {
+      background: #ffffff !important;
+      padding: 12px !important;
+    }
+
+    .exporting details:not([open]) { 
+      display: none !important; 
+    }
+
+    .exporting details {
+      border: 1px solid #dcdfe6 !important;
+      border-radius: 12px !important;
+      box-shadow: none !important;
+      margin-bottom: 16px !important;
+      background: #ffffff !important;
+      overflow: hidden !important;
+    }
+
+    .exporting summary {
+      display: flex !important;
+      background: #f0f4f9 !important;
+      border-bottom: 2px solid #3d4a63 !important;
+      padding: 10px 14px !important;
+      pointer-events: none !important;
+    }
+
+    .exporting summary::after {
+      display: none !important;
+    }
+
+    .exporting .cat-name {
+      font-size: 15px !important;
+      font-weight: 800 !important;
+      color: #12203a !important;
+    }
+
+    .exporting .cat-hint {
+      display: none !important;
+    }
+
+    .exporting .cat-badge {
+      display: none !important;
+    }
+
+    .exporting .item-list {
+      padding: 6px 12px 10px !important;
+      background: #ffffff !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
+
+    .exporting .item-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 8px 10px !important;
+      border: none !important;
+      border-bottom: 1px dashed #e4e9f2 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+    }
+
+    .exporting .item-row:last-child {
+      border-bottom: none !important;
+    }
+
+    .exporting .empty-item { 
+      display: none !important; 
+    }
+
+    .exporting .item-label {
+      font-size: 13.5px !important;
+      font-weight: 700 !important;
+      color: #0c1222 !important;
+    }
+
+    .exporting .qty-control {
+      border: none !important;
+      background: transparent !important;
+    }
+
+    .exporting input {
+      border: none !important;
+      background: transparent !important;
+      pointer-events: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      height: auto !important;
+      font-weight: 800 !important;
+      color: #12203a !important;
+    }
+
+    .exporting .export-qty-badge {
+      background: #eef2ff;
+      color: #12203a;
+      border: 1px solid #c7d2fe;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .exporting .card {
+      box-shadow: none !important;
+      border: 1px solid #d5dce8 !important;
+      background: #f8fafc !important;
+      margin-bottom: 16px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="container" id="formContainer">
+      <div class="export-header">
+        <h2 id="pdfHeaderTitle">Relatório de Pedido de Merchan</h2>
+        <p>Gerado automaticamente pelo sistema</p>
+      </div>
+
+      <div class="hero">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#12203a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16"></path>
+              <path d="M4 12h16"></path>
+              <path d="M4 17h10"></path>
+              <circle cx="18.5" cy="17" r="2" fill="#12203a" stroke="none"></circle>
+            </svg>
+          </div>
+          <div>
+            <h1 id="heroTitle">Solicitação de Materiais</h1>
+            <p class="subtitle" id="heroSubtitle">Informe os dados e as quantidades dos itens.</p>
+          </div>
+        </div>
+        <div class="order-chip">
+          <strong id="selectedCount">0</strong>
+          <span>itens</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label"><span class="dot"></span> Dados do setor</div>
+        <div class="grid-fields">
+          <div class="field"><label>RN</label><input type="text" id="rn" placeholder="Seu Setor"></div>
+          <div class="field"><label>Filial</label><input type="text" id="filial" placeholder="Sua Filial"></div>
+          <div class="field"><label>Cidade</label><input type="text" id="cidade" placeholder="Sua Cidade"></div>
+        </div>
+      </div>
+
+      <div id="categoriesContainer"></div>
+
+      <div class="stealth-footer">
+        <span class="stealth-dot" onclick="openAdminModal()" title=""></span>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="exportJPEG()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+            <path d="M12 4v12"></path>
+            <path d="M8 8l4-4 4 4"></path>
+          </svg>
+          Exportar Solicitação
+        </button>
+        <button class="btn btn-success" onclick="sendWhatsApp()">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.04 2C6.58 2 2.15 6.43 2.15 11.89c0 1.75.46 3.45 1.32 4.95L2 22l5.31-1.39a9.86 9.86 0 0 0 4.73 1.2h.01c5.46 0 9.89-4.43 9.89-9.89C21.94 6.43 17.5 2 12.04 2zm5.75 14.08c-.24.68-1.4 1.26-1.95 1.34-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.26-4.78-4.18-4.93-4.38-.14-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.01-2.41.26-.29.57-.36.76-.36h.55c.18 0 .41-.06.64.49.24.57.82 1.99.89 2.14.07.15.12.32.02.51-.1.2-.15.32-.3.49-.14.17-.3.38-.43.51-.14.14-.29.29-.12.56.16.28.73 1.2 1.57 1.95 1.08.96 1.99 1.26 2.27 1.4.28.14.44.12.6-.07.16-.2.69-.8.87-1.08.18-.27.37-.23.62-.14.25.09 1.58.75 1.85.88.27.14.45.2.52.31.07.11.07.64-.17 1.32z"></path>
+          </svg>
+          Enviar WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ADMIN COM ALERTAS VISUAIS E ESTADOS DE CARREGAMENTO -->
+  <div class="admin-modal" id="adminModal">
+    <div class="admin-card" id="adminLoginArea">
+      <div class="admin-header">
+        <h2>Acesso Administrativo</h2>
+        <button class="admin-close" onclick="closeAdminModal()">✕</button>
+      </div>
+
+      <div class="admin-alert" id="loginAlert"></div>
+
+      <div class="field">
+        <label>Senha de Administrador</label>
+        <input type="password" id="adminPassInput" class="admin-input" placeholder="Digite a senha..." onkeydown="if(event.key==='Enter') loginAdmin()">
+      </div>
+      <button class="btn btn-primary" id="btnLoginAdmin" onclick="loginAdmin()">Entrar no Painel</button>
+    </div>
+
+    <div class="admin-card" id="adminPanelArea" style="display:none;">
+      <div class="admin-header">
+        <h2>Painel de Controle Admin</h2>
+        <button class="admin-close" onclick="closeAdminModal()">✕</button>
+      </div>
+
+      <div class="admin-alert" id="panelAlert"></div>
+
+      <!-- Configurações Gerais -->
+      <div class="admin-sec-title">Configurações Gerais do Site</div>
+      <div class="field">
+        <label>Título da Aba (Navegador)</label>
+        <input type="text" id="cfgTabTitle" class="admin-input">
+      </div>
+      <div class="field">
+        <label>Favicon (Ícone da Aba) - Upload/Tratamento</label>
+        <input type="file" id="faviconFileInput" accept="image/*" onchange="handleFaviconUpload(event)">
+      </div>
+      <div class="field">
+        <label>Título Principal (Hero)</label>
+        <input type="text" id="cfgHeroTitle" class="admin-input">
+      </div>
+      <div class="field">
+        <label>Subtítulo Principal</label>
+        <input type="text" id="cfgHeroSubtitle" class="admin-input">
+      </div>
+      <button class="btn btn-primary" id="btnSaveGenConfig" onclick="saveGeneralConfig()">Salvar Configurações Gerais</button>
+
+      <!-- Alterar Senha -->
+      <div class="admin-sec-title">Segurança</div>
+      <div class="field">
+        <label>Nova Senha de Admin</label>
+        <input type="password" id="cfgNewPass" class="admin-input" placeholder="Nova senha...">
+      </div>
+      <button class="btn btn-primary" id="btnSaveNewPass" onclick="saveNewPassword()">Alterar Senha</button>
+
+      <!-- Gerenciar Categorias e Itens -->
+      <div class="admin-sec-title">Categorias e Itens Padrão</div>
+      <div id="adminCategoriesList" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+      <button class="btn btn-success" onclick="addNewAdminCategory()">+ Adicionar Nova Categoria</button>
+      <button class="btn btn-primary" id="btnSaveCategories" onclick="saveCategoriesConfig()" style="margin-top:10px;">Salvar Todas as Categorias e Itens</button>
+    </div>
+  </div>
+
+  <div class="toast" id="appToast"></div>
+
+  <script>
+    const defaultCategoriesData = [
+      {
+        id: "cat_1",
+        name: "Material de Execução",
+        hint: "Ferramentas e insumos",
+        color: "#1d4ed8",
+        iconImg: "",
+        items: ["Grampo", "Canetão", "Tinta de canetão", "Fita adesiva", "Fita dupla face", "Óculos", "Luva", "Escova", "Chave philips", "Grampeador"]
+      },
+      {
+        id: "cat_2",
+        name: "Uniforme",
+        hint: "Vestuário e tamanho",
+        color: "#7c3aed",
+        iconImg: "",
+        items: ["Camisa", "Botina", "Calça"]
+      },
+      {
+        id: "cat_3",
+        name: "Cartazes Cerveja",
+        hint: "Sinalização de cerveja",
+        color: "#c2410c",
+        iconImg: "",
+        items: ["Menu cerveja", "Menu nab"]
+      },
+      {
+        id: "cat_4",
+        name: "Família Cervejas",
+        hint: "Marcas da linha",
+        color: "#b45309",
+        iconImg: "",
+        items: ["Brahma", "Skol", "Original", "Antarctica", "Budweiser"]
+      },
+      {
+        id: "cat_5",
+        name: "Cartazes NAB",
+        hint: "Não alcoólicos",
+        color: "#0f766e",
+        iconImg: "",
+        items: ["Guaraná", "Pepsi", "Sukita", "Bare", "Redbull", "H2oh", "Soda limonada"]
+      },
+      {
+        id: "cat_6",
+        name: "Faixas",
+        hint: "Faixas promocionais",
+        color: "#be185d",
+        iconImg: "",
+        items: ["Skol", "Brahma", "Budweiser", "Antarctica", "Trezentinha"]
+      }
+    ];
+
+    let currentGeneralConfig = {
+      tabTitle: "Pedido de Material Merchan",
+      heroTitle: "Solicitação de Materiais",
+      heroSubtitle: "Informe os dados e as quantidades dos itens.",
+      favicon: "",
+      adminPass: "admin123"
+    };
+
+    let currentCategories = [...defaultCategoriesData];
+
+    const EXTRA_ITEMS_KEY = 'merchan_extra_items_v3';
+
+    function getCustomItems() {
+      const saved = localStorage.getItem(EXTRA_ITEMS_KEY);
+      return saved ? JSON.parse(saved) : {};
+    }
+
+    function saveCustomItems(customData) {
+      localStorage.setItem(EXTRA_ITEMS_KEY, JSON.stringify(customData));
+    }
+
+    function iconSvg() {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v13H4z"></path><path d="M8 7V5a4 4 0 0 1 8 0v2"></path></svg>`;
+    }
+
+    // --- CONEXÃO FIREBASE E SINCRONIZAÇÃO EM TEMPO REAL ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedHeaderData();
+      
+      const checkFirebase = setInterval(() => {
+        if (window.db && window.fs) {
+          clearInterval(checkFirebase);
+          setupFirebaseListeners();
+        }
+      }, 100);
+    });
+
+    function setupFirebaseListeners() {
+      const { doc, onSnapshot, setDoc } = window.fs;
+
+      onSnapshot(doc(window.db, "merchan_config", "general"), (docSnap) => {
+        if (docSnap.exists()) {
+          currentGeneralConfig = docSnap.data();
+          applyGeneralConfig();
+        } else {
+          setDoc(doc(window.db, "merchan_config", "general"), currentGeneralConfig);
+        }
+      });
+
+      onSnapshot(doc(window.db, "merchan_categories", "data"), (docSnap) => {
+        if (docSnap.exists()) {
+          currentCategories = docSnap.data().list || [];
+          renderForm();
+        } else {
+          setDoc(doc(window.db, "merchan_categories", "data"), { list: currentCategories });
+        }
+      });
+    }
+
+    function applyGeneralConfig() {
+      document.getElementById('pageTitle').innerText = currentGeneralConfig.tabTitle || "Pedido de Material Merchan";
+      document.getElementById('heroTitle').innerText = currentGeneralConfig.heroTitle || "Solicitação de Materiais";
+      document.getElementById('heroSubtitle').innerText = currentGeneralConfig.heroSubtitle || "Informe os dados e as quantidades dos itens.";
+      document.getElementById('pdfHeaderTitle').innerText = currentGeneralConfig.heroTitle || "Solicitação de Materiais";
+      
+      if (currentGeneralConfig.favicon) {
+        updateFaviconInDOM(currentGeneralConfig.favicon);
+      }
+    }
+
+    function updateFaviconInDOM(dataUrl) {
+      let favicon = document.getElementById('dynamicFavicon');
+      if (favicon) {
+        favicon.remove();
+      }
+      favicon = document.createElement('link');
+      favicon.id = 'dynamicFavicon';
+      favicon.rel = 'icon';
+      favicon.type = 'image/png';
+      favicon.href = dataUrl;
+      document.head.appendChild(favicon);
+    }
+
+    function renderForm() {
+      const container = document.getElementById('categoriesContainer');
+      container.innerHTML = '';
+      const customData = getCustomItems();
+
+      currentCategories.forEach(catObj => {
+        const details = document.createElement('details');
+        const metaColor = catObj.color || "#12203a";
+        const metaHint = catObj.hint || "Itens da categoria";
+
+        const summary = document.createElement('summary');
+        
+        let iconHtml = iconSvg();
+        let bgStyle = `background-color:${metaColor};`;
+        if (catObj.iconImg) {
+          bgStyle += `background-image:url(${catObj.iconImg});`;
+          iconHtml = '';
+        }
+
+        summary.innerHTML = `
+          <span class="cat-icon" style="${bgStyle}">${iconHtml}</span>
+          <span class="cat-copy">
+            <span class="cat-name">${catObj.name}</span>
+            <span class="cat-hint">${metaHint}</span>
+          </span>
+          <span class="cat-badge">0</span>
+        `;
+        details.appendChild(summary);
+
+        const itemList = document.createElement('div');
+        itemList.className = 'item-list';
+
+        (catObj.items || []).forEach(item => {
+          itemList.appendChild(createItemRow(catObj.name, item, true));
+        });
+
+        if (customData[catObj.name] && Array.isArray(customData[catObj.name])) {
+          customData[catObj.name].forEach((customItemObj) => {
+            itemList.appendChild(createItemRow(catObj.name, customItemObj.name, false, customItemObj.id));
+          });
+        }
+
+        const btnAddExtra = document.createElement('div');
+        btnAddExtra.className = 'btn-add-extra';
+        btnAddExtra.innerHTML = '+ Adicionar item extra nesta categoria';
+        btnAddExtra.onclick = () => handleAddExtra(itemList, catObj.name);
+        itemList.appendChild(btnAddExtra);
+
+        details.appendChild(itemList);
+        container.appendChild(details);
+      });
+
+      updateOrderSummary();
+    }
+
+    function createItemRow(category, name, isFixed, customId = null) {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.dataset.category = category;
+      row.dataset.fixed = isFixed;
+
+      const isUniform = category === "Uniforme";
+
+      if (isFixed) {
+        row.innerHTML = `
+          <span class="item-label">${name}</span>
+          <div class="item-controls">
+            ${isUniform ? `<input type="text" class="input-size" placeholder="Tam">` : ''}
+            <div class="qty-control">
+              <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
+              <input type="number" class="input-qty" value="0" min="0">
+              <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+            </div>
+          </div>
+        `;
+      } else {
+        row.dataset.customId = customId;
+        row.innerHTML = `
+          <input type="text" class="item-label-input" value="${name}" placeholder="Nome do item..." oninput="updateCustomItemName(this)">
+          <div class="item-controls">
+            ${isUniform ? `<input type="text" class="input-size" placeholder="Tam">` : ''}
+            <div class="qty-control">
+              <button type="button" class="qty-btn" onclick="changeQty(this, -1)">-</button>
+              <input type="number" class="input-qty" value="0" min="0">
+              <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+            </div>
+            <button type="button" class="btn-remove" onclick="removeCustomItem(this)" title="Excluir">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"></path></svg>
+            </button>
+          </div>
+        `;
+      }
+
+      return row;
+    }
+
+    function handleAddExtra(container, category) {
+      const customData = getCustomItems();
+      if (!customData[category]) customData[category] = [];
+
+      const newId = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      customData[category].push({ id: newId, name: '' });
+      saveCustomItems(customData);
+
+      const row = createItemRow(category, '', false, newId);
+      container.insertBefore(row, container.lastElementChild);
+      const nameInput = row.querySelector('.item-label-input');
+      if (nameInput) nameInput.focus();
+    }
+
+    function updateCustomItemName(input) {
+      const row = input.closest('.item-row');
+      const category = row.dataset.category;
+      const customId = row.dataset.customId;
+      const customData = getCustomItems();
+
+      if (customData[category]) {
+        const item = customData[category].find(i => i.id === customId);
+        if (item) {
+          item.name = input.value;
+          saveCustomItems(customData);
+        }
+      }
+    }
+
+    function removeCustomItem(btn) {
+      const row = btn.closest('.item-row');
+      const category = row.dataset.category;
+      const customId = row.dataset.customId;
+      const customData = getCustomItems();
+
+      if (customData[category]) {
+        customData[category] = customData[category].filter(i => i.id !== customId);
+        saveCustomItems(customData);
+      }
+
+      const details = row.closest('details');
+      row.remove();
+      refreshCategoryBadge(details);
+      updateOrderSummary();
+    }
+
+    function changeQty(btn, change) {
+      const input = btn.parentNode.querySelector('.input-qty');
+      let val = parseInt(input.value) || 0;
+      val += change;
+      if (val < 0) val = 0;
+      input.value = val;
+      refreshCategoryBadge(btn.closest('details'));
+      updateOrderSummary();
+    }
+
+    function refreshCategoryBadge(details) {
+      if (!details) return;
+      let count = 0;
+      details.querySelectorAll('.item-row').forEach(row => {
+        count += parseInt(row.querySelector('.input-qty')?.value) || 0;
+      });
+      const badge = details.querySelector('.cat-badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.classList.toggle('is-active', count > 0);
+      }
+    }
+
+    function updateOrderSummary() {
+      let total = 0;
+      document.querySelectorAll('.input-qty').forEach(input => {
+        total += parseInt(input.value) || 0;
+      });
+      const el = document.getElementById('selectedCount');
+      if (el) el.textContent = total;
+    }
+
+    const fields = ['rn', 'filial', 'cidade'];
+    function loadSavedHeaderData() {
+      fields.forEach(field => {
+        const value = localStorage.getItem(`merchan_${field}`);
+        if (value) document.getElementById(field).value = value;
+      });
+    }
+
+    fields.forEach(field => {
+      document.getElementById(field).addEventListener('input', (e) => {
+        localStorage.setItem(`merchan_${field}`, e.target.value);
+      });
+    });
+
+    document.getElementById('categoriesContainer').addEventListener('input', (e) => {
+      if (e.target.classList.contains('input-qty')) {
+        if ((parseInt(e.target.value) || 0) < 0) e.target.value = 0;
+        refreshCategoryBadge(e.target.closest('details'));
+        updateOrderSummary();
+      }
+    });
+
+    function getSelectedItems() {
+      const items = [];
+      document.querySelectorAll('.item-row').forEach(row => {
+        const qtyInput = row.querySelector('.input-qty');
+        const sizeInput = row.querySelector('.input-size');
+        const qty = parseInt(qtyInput?.value) || 0;
+
+        let itemName = "";
+        if (row.dataset.fixed === "true") {
+          itemName = row.querySelector('.item-label').textContent;
+        } else {
+          itemName = row.querySelector('.item-label-input').value.trim();
+        }
+
+        if (qty > 0 && itemName !== "") {
+          items.push({
+            category: row.dataset.category,
+            name: itemName,
+            qty: qty,
+            size: sizeInput && sizeInput.value.trim() !== "" ? sizeInput.value.trim() : null
+          });
+        }
+      });
+      return items;
+    }
+
+    function exportJPEG() {
+      const container = document.getElementById('formContainer');
+
+      // Marca itens sem quantidade para ocultar no relatório
+      document.querySelectorAll('.item-row').forEach(row => {
+        const qty = parseInt(row.querySelector('.input-qty').value) || 0;
+        let itemName = "";
+        if (row.dataset.fixed === "true") {
+          itemName = row.querySelector('.item-label')?.textContent || "";
+        } else {
+          itemName = row.querySelector('.item-label-input')?.value.trim() || "";
+        }
+
+        if (qty > 0 && itemName !== "") {
+          row.classList.remove('empty-item');
+          
+          // Formatação limpa de quantidade/tamanho no export
+          let exportBadge = row.querySelector('.export-qty-badge');
+          if (!exportBadge) {
+            exportBadge = document.createElement('span');
+            exportBadge.className = 'export-qty-badge';
+            row.appendChild(exportBadge);
+          }
+          const sizeInput = row.querySelector('.input-size');
+          const sizeText = sizeInput && sizeInput.value.trim() ? ` (Tam: ${sizeInput.value.trim()})` : '';
+          exportBadge.textContent = `${qty} un${sizeText}`;
+        } else {
+          row.classList.add('empty-item');
+        }
+      });
+
+      // Abre apenas os blocos de categoria que contenham ao menos um item preenchido
+      document.querySelectorAll('details').forEach(d => {
+        const hasValidItem = d.querySelector('.item-row:not(.empty-item)');
+        d.open = !!hasValidItem;
+      });
+
+      container.classList.add('exporting');
+
+      html2canvas(container, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `pedido-merchan-${document.getElementById('rn').value || 'geral'}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.92);
+        link.click();
+
+        // Restaura a interface ao estado original
+        container.classList.remove('exporting');
+        document.querySelectorAll('.empty-item').forEach(e => e.classList.remove('empty-item'));
+        document.querySelectorAll('.export-qty-badge').forEach(b => b.remove());
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('appToast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    function sendWhatsApp() {
+      const rn = document.getElementById('rn').value;
+      const filial = document.getElementById('filial').value;
+      const cidade = document.getElementById('cidade').value;
+      const items = getSelectedItems();
+
+      if (items.length === 0) {
+        showToast("Selecione a quantidade de pelo menos um item!");
+        return;
+      }
+
+      let text = `📋 *${(currentGeneralConfig.heroTitle || 'SOLICITAÇÃO DE MATERIAL MERCHAN').toUpperCase()}*\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      text += `👤 *RN:* ${rn || 'Não informado'}\n`;
+      text += `🏢 *Filial:* ${filial || 'Não informada'}\n`;
+      text += `📍 *Cidade:* ${cidade || 'Não informada'}\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+      text += `📦 *ITENS SOLICITADOS:*\n`;
+
+      let currentCat = '';
+      items.forEach(item => {
+        if (currentCat !== item.category) {
+          currentCat = item.category;
+          text += `\n📌 *_${currentCat.toUpperCase()}_*\n`;
+        }
+
+        const sizeInfo = item.size ? ` *(Tam: ${item.size})*` : '';
+        text += `• ${item.name}${sizeInfo} ➔ *${item.qty} un.*\n`;
+      });
+
+      const encodedText = encodeURIComponent(text);
+      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+    }
+
+    // --- PAINEL ADMIN, SISTEMA DE ALERTAS E FEEDBACK VISUAL ---
+    function openAdminModal() {
+      document.getElementById('adminModal').classList.add('active');
+      document.getElementById('adminLoginArea').style.display = 'flex';
+      document.getElementById('adminPanelArea').style.display = 'none';
+      document.getElementById('adminPassInput').value = '';
+      hideAlert('loginAlert');
+      hideAlert('panelAlert');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.remove('active');
+    }
+
+    function showAlert(alertId, message, type = 'info') {
+      const alertEl = document.getElementById(alertId);
+      if (!alertEl) return;
+      alertEl.className = `admin-alert show ${type}`;
+      alertEl.innerHTML = `
+        <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+        <span>${message}</span>
+      `;
+    }
+
+    function hideAlert(alertId) {
+      const alertEl = document.getElementById(alertId);
+      if (alertEl) alertEl.className = 'admin-alert';
+    }
+
+    function setBtnLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        if (loading) btn.classList.add('is-loading');
+        else btn.classList.remove('is-loading');
+      }
+    }
+
+    function loginAdmin() {
+      const pass = document.getElementById('adminPassInput').value;
+      const btnId = 'btnLoginAdmin';
+      setBtnLoading(btnId, true);
+
+      setTimeout(() => {
+        setBtnLoading(btnId, false);
+        if (pass === (currentGeneralConfig.adminPass || "admin123")) {
+          document.getElementById('adminLoginArea').style.display = 'none';
+          document.getElementById('adminPanelArea').style.display = 'flex';
+          loadAdminPanelData();
+          showAlert('panelAlert', 'Acesso autenticado com sucesso!', 'success');
+        } else {
+          showAlert('loginAlert', 'Senha incorreta! Tente novamente.', 'error');
+        }
+      }, 300);
+    }
+
+    function loadAdminPanelData() {
+      document.getElementById('cfgTabTitle').value = currentGeneralConfig.tabTitle || '';
+      document.getElementById('cfgHeroTitle').value = currentGeneralConfig.heroTitle || '';
+      document.getElementById('cfgHeroSubtitle').value = currentGeneralConfig.heroSubtitle || '';
+      renderAdminCategories();
+    }
+
+    function processImage(file, targetWidth, targetHeight, quality, callback) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+
+          ctx.clearRect(0, 0, targetWidth, targetHeight);
+
+          const scale = Math.min(targetWidth / img.width, targetHeight / img.height);
+          const drawWidth = img.width * scale;
+          const drawHeight = img.height * scale;
+
+          const offsetX = (targetWidth - drawWidth) / 2;
+          const offsetY = (targetHeight - drawHeight) / 2;
+
+          ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+
+          const dataUrl = canvas.toDataURL('image/png', quality);
+          callback(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleFaviconUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        showAlert('panelAlert', 'Processando e redimensionando favicon...', 'info');
+        processImage(file, 64, 64, 0.9, (compressedDataUrl) => {
+          currentGeneralConfig.favicon = compressedDataUrl;
+          updateFaviconInDOM(compressedDataUrl);
+          showAlert('panelAlert', 'Favicon atualizado! Clique em Salvar Configurações Gerais para confirmar.', 'success');
+        });
+      }
+    }
+
+    async function saveGeneralConfig() {
+      const btnId = 'btnSaveGenConfig';
+      setBtnLoading(btnId, true);
+      
+      try {
+        currentGeneralConfig.tabTitle = document.getElementById('cfgTabTitle').value.trim();
+        currentGeneralConfig.heroTitle = document.getElementById('cfgHeroTitle').value.trim();
+        currentGeneralConfig.heroSubtitle = document.getElementById('cfgHeroSubtitle').value.trim();
+
+        const { doc, setDoc } = window.fs;
+        await setDoc(doc(window.db, "merchan_config", "general"), currentGeneralConfig);
+        
+        applyGeneralConfig();
+        showAlert('panelAlert', 'Configurações gerais salvas e sincronizadas!', 'success');
+      } catch (err) {
+        showAlert('panelAlert', 'Erro ao salvar no Firebase: ' + err.message, 'error');
+      } finally {
+        setBtnLoading(btnId, false);
+      }
+    }
+
+    async function saveNewPassword() {
+      const newP = document.getElementById('cfgNewPass').value.trim();
+      if (!newP) {
+        showAlert('panelAlert', 'Por favor, digite a nova senha desejada.', 'error');
+        return;
+      }
+
+      const btnId = 'btnSaveNewPass';
+      setBtnLoading(btnId, true);
+
+      try {
+        currentGeneralConfig.adminPass = newP;
+        const { doc, setDoc } = window.fs;
+        await setDoc(doc(window.db, "merchan_config", "general"), currentGeneralConfig);
+        document.getElementById('cfgNewPass').value = '';
+        showAlert('panelAlert', 'Senha alterada e sincronizada com sucesso!', 'success');
+      } catch (err) {
+        showAlert('panelAlert', 'Erro ao atualizar senha: ' + err.message, 'error');
+      } finally {
+        setBtnLoading(btnId, false);
+      }
+    }
+
+    function renderAdminCategories() {
+      const container = document.getElementById('adminCategoriesList');
+      container.innerHTML = '';
+
+      currentCategories.forEach((cat, cIdx) => {
+        const block = document.createElement('div');
+        block.className = 'admin-cat-block';
+
+        let itemsHtml = '';
+        (cat.items || []).forEach((item, iIdx) => {
+          itemsHtml += `
+            <div class="admin-cat-item-row">
+              <input type="text" class="admin-input" value="${item}" onchange="updateAdminItemName(${cIdx}, ${iIdx}, this.value)" style="height:36px;">
+              <button class="btn-remove" onclick="removeAdminItem(${cIdx}, ${iIdx})" style="width:36px; height:36px;">✕</button>
+            </div>
+          `;
+        });
+
+        block.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <input type="text" class="admin-input" value="${cat.name}" onchange="updateAdminCatName(${cIdx}, this.value)" style="font-weight:800;" placeholder="Nome da Categoria">
+            <button class="btn-remove" onclick="removeAdminCategory(${cIdx})" title="Excluir Categoria">✕</button>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="text" class="admin-input" value="${cat.hint || ''}" onchange="updateAdminCatHint(${cIdx}, this.value)" placeholder="Subtítulo/Dica">
+            <input type="color" value="${cat.color || '#12203a'}" onchange="updateAdminCatColor(${cIdx}, this.value)" style="height:44px; width:100%; border-radius:12px; cursor:pointer; border:1px solid var(--line);">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:800; color:var(--muted);">ÍCONE DA CATEGORIA (IMAGE UPLOAD):</label>
+            <input type="file" accept="image/*" onchange="handleAdminCatIconUpload(${cIdx}, event)" style="font-size:12px; margin-top:4px;">
+          </div>
+          <div style="font-size:12px; font-weight:800; color:var(--navy); margin-top:6px;">Itens Padrão:</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">${itemsHtml}</div>
+          <button class="btn-add-extra" onclick="addAdminItem(${cIdx})">+ Adicionar Item Padrão</button>
+        `;
+
+        container.appendChild(block);
+      });
+    }
+
+    function updateAdminCatName(cIdx, val) { currentCategories[cIdx].name = val; }
+    function updateAdminCatHint(cIdx, val) { currentCategories[cIdx].hint = val; }
+    function updateAdminCatColor(cIdx, val) { currentCategories[cIdx].color = val; }
+
+    function handleAdminCatIconUpload(cIdx, event) {
+      const file = event.target.files[0];
+      if (file) {
+        showAlert('panelAlert', 'Processando imagem do ícone...', 'info');
+        processImage(file, 128, 128, 0.9, (compressedDataUrl) => {
+          currentCategories[cIdx].iconImg = compressedDataUrl;
+          showAlert('panelAlert', `Ícone da categoria "${currentCategories[cIdx].name}" ajustado! Clique em Salvar Categorias.`, 'success');
+        });
+      }
+    }
+
+    function updateAdminItemName(cIdx, iIdx, val) {
+      currentCategories[cIdx].items[iIdx] = val;
+    }
+
+    function removeAdminItem(cIdx, iIdx) {
+      currentCategories[cIdx].items.splice(iIdx, 1);
+      renderAdminCategories();
+    }
+
+    function addAdminItem(cIdx) {
+      if (!currentCategories[cIdx].items) currentCategories[cIdx].items = [];
+      currentCategories[cIdx].items.push("Novo Item");
+      renderAdminCategories();
+    }
+
+    function removeAdminCategory(cIdx) {
+      if (confirm("Deseja mesmo remover esta categoria inteira?")) {
+        currentCategories.splice(cIdx, 1);
+        renderAdminCategories();
+        showAlert('panelAlert', 'Categoria removida. Lembre-se de salvar as alterações.', 'info');
+      }
+    }
+
+    function addNewAdminCategory() {
+      currentCategories.push({
+        id: "cat_" + Date.now(),
+        name: "Nova Categoria",
+        hint: "Descrição",
+        color: "#12203a",
+        iconImg: "",
+        items: []
+      });
+      renderAdminCategories();
+      showAlert('panelAlert', 'Nova categoria criada!', 'info');
+    }
+
+    async function saveCategoriesConfig() {
+      const btnId = 'btnSaveCategories';
+      setBtnLoading(btnId, true);
+
+      try {
+        const { doc, setDoc } = window.fs;
+        await setDoc(doc(window.db, "merchan_categories", "data"), { list: currentCategories });
+        showAlert('panelAlert', 'Todas as categorias e itens foram salvos no Firebase!', 'success');
+      } catch (err) {
+        showAlert('panelAlert', 'Erro ao salvar categorias: ' + err.message, 'error');
+      } finally {
+        setBtnLoading(btnId, false);
+      }
+    }
+  </script>
+</body>
+</html>
