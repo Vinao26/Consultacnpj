@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Visualizador de Imagens Pro & Firebase</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBQqJg2uYcCSa133v2lonnd-eAHiQiMlJA",
+          authDomain: "bancoia.firebaseapp.com",
+          projectId: "bancoia",
+          storageBucket: "bancoia.firebasestorage.app",
+          messagingSenderId: "32042568752",
+          appId: "1:32042568752:web:ce0014f1ae033e7d8231f5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.fs = { collection, onSnapshot, doc, setDoc, deleteDoc };
+    </script>
+
+    <style>
+        /* TEMAS GLOBALMENTE DEFINIDOS */
+        body.dark-theme {
+            --bg-main: #0b0f19;
+            --card-bg: #111827;
+            --card-border: rgba(255, 255, 255, 0.15);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --btn-bg: rgba(255, 255, 255, 0.1);
+            --btn-hover: rgba(255, 255, 255, 0.2);
+            --viewer-bg: #000;
+        }
+
+        body.light-theme {
+            --bg-main: #f3f4f6;
+            --card-bg: #ffffff;
+            --card-border: rgba(0, 0, 0, 0.15);
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --accent: #4f46e5;
+            --accent-glow: rgba(79, 70, 229, 0.3);
+            --btn-bg: rgba(0, 0, 0, 0.06);
+            --btn-hover: rgba(0, 0, 0, 0.15);
+            --viewer-bg: #e5e7eb;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-main); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s, color 0.3s; }
+
+        /* BARRA SUPERIOR */
+        .top-nav-bar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; background: var(--card-bg);
+            border-bottom: 1px solid var(--card-border); gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .tabs-container { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; align-items: center; }
+        .tabs-container::-webkit-scrollbar { display: none; }
+        
+        .tab-btn {
+            padding: 6px 14px; border-radius: 10px; background: var(--btn-bg); border: 1px solid var(--card-border);
+            color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 12px var(--accent-glow); }
+
+        /* PAINEL DE ADMIN NA BARRA SUPERIOR (EXIBIDO DIRETAMENTE VIA JS) */
+        .admin-controls-bar { display: none; gap: 6px; align-items: center; }
+        .admin-controls-bar.visible { display: flex; }
+
+        .admin-action-btn {
+            background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981;
+            padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        .admin-action-btn:hover { background: rgba(16, 185, 129, 0.35); }
+
+        .nav-controls-right { display: flex; align-items: center; gap: 6px; }
+
+        .control-btn {
+            background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--text-main);
+            padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        .control-btn:hover { background: var(--btn-hover); border-color: var(--accent); }
+
+        /* HUB DE GRUPOS */
+        .groups-hub-container {
+            position: absolute; top: 58px; left: 0; right: 0; bottom: 0;
+            overflow-y: auto; padding: 24px; display: flex; flex-direction: column; align-items: center;
+            background: var(--bg-main); z-index: 10;
+        }
+        .hub-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; text-align: center; color: var(--text-main); }
+        .hub-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; text-align: center; }
+
+        .groups-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px; width: 100%; max-width: 1000px; padding-bottom: 30px;
+        }
+
+        .group-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
+            overflow: hidden; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        .group-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 30px var(--accent-glow); }
+
+        .group-card-thumb-wrapper { width: 100%; height: 150px; background: #000; position: relative; overflow: hidden; }
+        .group-card-thumb { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+        
+        .group-card-badge {
+            position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8);
+            padding: 3px 8px; border-radius: 15px; font-size: 10px; font-weight: 700; color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .group-card-info { padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+        .group-card-name { font-size: 15px; font-weight: 700; color: var(--text-main); }
+        .group-card-count { font-size: 11px; color: var(--text-muted); }
+
+        .empty-hub-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 12px; text-align: center; padding: 40px; width: 100%;
+        }
+        .empty-hub-state p { color: var(--text-muted); font-size: 13px; }
+
+        /* VISUALIZADOR EM TELA CHEIA */
+        .fullscreen-viewer {
+            position: absolute; top: 58px; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center;
+            background: var(--viewer-bg); overflow: hidden; z-index: 20;
+        }
+
+        .viewer-image { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; }
+
+        .nav-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff;
+            width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; z-index: 10;
+        }
+        .nav-arrow:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-50%) scale(1.1); }
+        .nav-prev { left: 16px; }
+        .nav-next { right: 16px; }
+
+        .image-counter {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #fff; z-index: 10;
+        }
+
+        .back-to-hub-btn {
+            position: absolute; top: 16px; left: 16px; background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff; padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer; z-index: 30;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .back-to-hub-btn:hover { background: var(--accent); }
+
+        /* PAINEL FLUTUANTE DE ADMIN */
+        .admin-floating-panel {
+            position: fixed; bottom: 20px; right: 20px; z-index: 500; display: none; gap: 8px;
+        }
+        .admin-floating-panel.visible { display: flex; }
+
+        .fab-btn {
+            background: var(--accent); color: #fff; border: none; width: 42px; height: 42px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .fab-btn:hover { transform: scale(1.1); }
+
+        #feedbackToast {
+            position: fixed; bottom: 75px; left: 50%; transform: translateX(-50%);
+            background: var(--card-bg); color: #38bdf8; padding: 8px 18px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; border: 1px solid var(--card-border); z-index: 3000;
+            display: none; box-shadow: 0 8px 25px rgba(0,0,0,0.6); align-items: center; gap: 8px;
+        }
+
+        /* MODAIS */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 16px; }
+        .modal-body { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 22px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); color: var(--text-main); max-height: 90vh; overflow-y: auto; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-field { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--btn-bg); color: var(--text-main); font-size: 13px; outline: none; width: 100%; }
+        .input-field:focus { border-color: var(--accent); }
+        select.input-field option { background: var(--card-bg); color: var(--text-main); }
+
+        .btn-submit { width: 100%; padding: 12px; border: none; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .btn-secondary { background: var(--btn-bg); color: var(--text-main); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 12px; }
+
+        .admin-image-item { display: flex; align-items: center; justify-content: space-between; background: var(--btn-bg); padding: 8px; border-radius: 8px; border: 1px solid var(--card-border); gap: 8px; margin-bottom: 6px; }
+        .admin-image-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: #000; flex-shrink: 0; }
+
+        /* EDITOR */
+        #modalEditor .modal-body { max-width: 900px; width: 95vw; height: 90vh; display: flex; flex-direction: column; }
+        .editor-container { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #05050a; border-radius: 10px; border: 1px solid var(--card-border); }
+        .editor-ribbon { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 12px; background: var(--card-bg); border-bottom: 1px solid var(--card-border); }
+        .ribbon-group { display: flex; align-items: center; gap: 5px; border-right: 1px solid var(--card-border); padding-right: 8px; }
+        .ribbon-btn { background: var(--btn-bg); border: 1px solid var(--card-border); color: var(--text-main); padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .ribbon-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .canvas-workspace { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: auto; padding: 15px; }
+        canvas { touch-action: none; cursor: crosshair; max-width: 100%; max-height: 100%; object-fit: contain; }
+    </style>
+</head>
+<body id="bodyRoot" class="dark-theme">
+
+    <!-- BARRA SUPERIOR -->
+    <div class="top-nav-bar">
+        <div class="tabs-container" id="tabsWrapper"></div>
+        
+        <!-- BOTÕES DIRETOS PARA ADMIN (EXIBIÇÃO CONTROLADA VIA JS) -->
+        <div class="admin-controls-bar" id="adminControlsBar">
+            <button class="admin-action-btn" onclick="abrirModalConfigAba()"><i class="fas fa-folder-plus"></i> Aba</button>
+            <button class="admin-action-btn" onclick="abrirModalGerenciarImagens()"><i class="fas fa-images"></i> Imagens</button>
+        </div>
+
+        <div class="nav-controls-right">
+            <button class="control-btn" onclick="alternarTemaGlobal()" title="Alternar Tema"><i class="fas fa-moon" id="themeIcon"></i></button>
+            <button class="control-btn" id="adminToggleBtn" onclick="toggleAdminMode()">
+                <i class="fas fa-lock" id="adminLockIcon"></i> <span id="adminBtnText">Admin</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- HUB DE GRUPOS -->
+    <div class="groups-hub-container" id="groupsHubContainer">
+        <h2 class="hub-title" id="hubTitleText">Selecione um Grupo</h2>
+        <p class="hub-subtitle">Escolha um grupo abaixo para iniciar a apresentação</p>
+        <div class="groups-grid" id="groupsGridContainer"></div>
+    </div>
+
+    <!-- TELA CHEIA DE VISUALIZAÇÃO -->
+    <div class="fullscreen-viewer" id="viewerContainer">
+        <button class="back-to-hub-btn" onclick="voltarParaHub()"><i class="fas fa-th-large"></i> Grupos</button>
+        <button class="nav-arrow nav-prev" onclick="mudarImagem(-1)"><i class="fas fa-chevron-left"></i></button>
+        <img src="" alt="Visualizador" class="viewer-image" id="currentViewerImage">
+        <button class="nav-arrow nav-next" onclick="mudarImagem(1)"><i class="fas fa-chevron-right"></i></button>
+        <div class="image-counter" id="imageCounterText">0 / 0</div>
+    </div>
+
+    <!-- PAINEL FLUTUANTE DE ADMIN -->
+    <div class="admin-floating-panel" id="adminFloatingPanel">
+        <button class="fab-btn" onclick="abrirEditorImagemAtual()" title="Editor PowerPoint"><i class="fas fa-edit"></i></button>
+        <button class="fab-btn" onclick="abrirModalSenhaMaster()" title="Alterar Senha"><i class="fas fa-key"></i></button>
+    </div>
+
+    <div id="feedbackToast"><i class="fas fa-check-circle" style="color:#38bdf8;"></i> <span id="feedbackToastText">Mensagem</span></div>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div class="modal-overlay" id="modalLogin">
+        <div class="modal-body" style="max-width:300px; text-align:center;">
+            <h3 style="font-size:15px; font-weight:800;"><i class="fas fa-shield-alt" style="color:var(--accent);"></i> Acesso Restrito</h3>
+            <input type="password" id="inputAdminSenha" class="input-field" placeholder="Senha (padrão: vinao123)">
+            <div style="display:flex; gap:8px; justify-content:center; margin-top:4px;">
+                <button class="btn-secondary" onclick="fecharModais()">Cancelar</button>
+                <button class="btn-submit" onclick="fazerLoginAdmin()">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GERENCIAR IMAGENS E GRUPOS -->
+    <div class="modal-overlay" id="modalGerenciarImagens">
+        <div class="modal-body">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="font-size:15px; font-weight:800;"><i class="fas fa-layer-group" style="color:var(--accent);"></i> Gerenciar Imagens & Grupos</h3>
+                <button class="btn-secondary" onclick="fecharModais()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Nome do Grupo</label>
+                <input type="text" id="inputGrupoNome" class="input-field" placeholder="Ex: Módulo 1, Capas...">
+            </div>
+            <div class="form-group">
+                <label>Adicionar por Link (Drive / URL)</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="url" id="inputImageUrl" class="input-field" placeholder="Cole o link direto...">
+                    <button class="btn-submit" style="width:auto;" onclick="adicionarImagemPorLink()">Adicionar</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Ou Enviar Arquivos Locais</label>
+                <input type="file" id="inputFileLocal" accept="image/*" multiple class="input-field" onchange="processarArquivosLocais(this)">
+            </div>
+            <hr style="border-color:var(--card-border); margin:2px 0;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Sequência Atual:</label>
+            <div id="listaImagensAdminContainer" style="display:flex; flex-direction:column; gap:6px; max-height:200px; overflow-y:auto; padding-right:2px;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURAR ABA -->
+    <div class="modal-overlay" id="modalConfigAba">
+        <div class="modal-body">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="font-size:15px; font-weight:800;"><i class="fas fa-folder-open" style="color:var(--accent);"></i> Gerenciar Aba</h3>
+                <button class="btn-secondary" onclick="fecharModais()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Nome da Aba</label>
+                <input type="text" id="inputNomeAba" class="input-field" placeholder="Ex: Apresentação">
+            </div>
+            <div class="form-group">
+                <label>Tema Padrão</label>
+                <select id="selectTemaPadrao" class="input-field">
+                    <option value="dark">Escuro</option>
+                    <option value="light">Claro</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:space-between; margin-top:8px;">
+                <button class="btn-secondary" style="color:#ef4444;" onclick="excluirAbaAtual()"><i class="fas fa-trash"></i> Apagar Aba</button>
+                <button class="btn-submit" style="width:auto;" onclick="salvarConfigAbaAtual()">Salvar Aba</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITOR -->
+    <div class="modal-overlay" id="modalEditor">
+        <div class="modal-body">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="font-size:15px; font-weight:800;"><i class="fas fa-edit" style="color:var(--accent);"></i> Editor Pro</h3>
+                <button class="btn-secondary" onclick="fecharModais()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="editor-container">
+                <div class="editor-ribbon">
+                    <div class="ribbon-group">
+                        <button class="ribbon-btn active" id="toolPencil" onclick="setTool('pencil')"><i class="fas fa-pencil-alt"></i> Lápis</button>
+                        <button class="ribbon-btn" id="toolLine" onclick="setTool('line')"><i class="fas fa-slash"></i> Linha</button>
+                        <button class="ribbon-btn" id="toolArrow" onclick="setTool('arrow')"><i class="fas fa-long-arrow-alt-right"></i> Seta</button>
+                        <button class="ribbon-btn" id="toolRect" onclick="setTool('rect')"><i class="far fa-square"></i> Retângulo</button>
+                        <button class="ribbon-btn" id="toolText" onclick="setTool('text')"><i class="fas fa-font"></i> Texto</button>
+                    </div>
+                    <div class="ribbon-group">
+                        <input type="color" id="drawColor" value="#ef4444" style="width:24px; height:24px; border:none; background:none; cursor:pointer;">
+                        <select id="drawWidth" class="input-field" style="width:55px; padding:2px; font-size:11px;">
+                            <option value="2">2px</option>
+                            <option value="4" selected>4px</option>
+                            <option value="8">8px</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:4px; margin-left:auto;">
+                        <button class="ribbon-btn" onclick="desfazerCanvas()"><i class="fas fa-undo"></i></button>
+                        <button class="ribbon-btn" onclick="limparCanvas()"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="canvas-workspace"><canvas id="imageCanvas"></canvas></div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn-secondary" onclick="fecharModais()">Cancelar</button>
+                <button class="btn-submit" style="width:auto;" onclick="salvarImagemEditada()"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SENHA MASTER -->
+    <div class="modal-overlay" id="modalSenhaMaster">
+        <div class="modal-body" style="max-width:300px;">
+            <h3 style="font-size:15px; font-weight:800;"><i class="fas fa-key" style="color:var(--accent);"></i> Nova Senha Admin</h3>
+            <input type="password" id="inputNovaSenhaMaster" class="input-field" placeholder="Nova senha">
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:4px;">
+                <button class="btn-secondary" onclick="fecharModais()">Cancelar</button>
+                <button class="btn-submit" onclick="salvarNovaSenhaAdmin()">Atualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let abas = [];
+        let abaAtivaId = '';
+        let grupoAtivoSelecionado = null;
+        let indiceImagemAtual = 0;
+        let isAdminLogado = false;
+        let senhaAdminAtual = localStorage.getItem('hub_admin_pass') || 'vinao123';
+        let temaAtual = 'dark';
+
+        const COLECAO_FIREBASE = "visualizador_albuns_pro";
+
+        let canvas, ctx;
+        let currentTool = 'pencil';
+        let historyCanvas = [];
+        let baseImageObj = new Image();
+        let drawing = false;
+        let startX, startY;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            escutarDadosGerais();
+            configurarGestosTouch();
+
+            window.addEventListener('keydown', (e) => {
+                if (document.getElementById('viewerContainer').style.display === 'flex') {
+                    if (e.key === 'ArrowLeft') mudarImagem(-1);
+                    if (e.key === 'ArrowRight') mudarImagem(1);
+                }
+            });
+        });
+
+        function mostrarFeedback(msg, tipo = 'success') {
+            const t = document.getElementById('feedbackToast');
+            if(!t) return;
+            const icon = tipo === 'success' ? 'fa-check-circle' : tipo === 'loading' ? 'fa-spinner fa-spin' : 'fa-exclamation-triangle';
+            t.innerHTML = `<i class="fas ${icon}" style="color:#38bdf8;"></i> <span>${msg}</span>`;
+            t.style.display = 'flex';
+            if(tipo !== 'loading') setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function aplicarTema(tema) {
+            temaAtual = tema;
+            const root = document.getElementById('bodyRoot');
+            const themeIcon = document.getElementById('themeIcon');
+            if (tema === 'light') {
+                root.className = 'light-theme';
+                if(themeIcon) themeIcon.className = "fas fa-sun";
+            } else {
+                root.className = 'dark-theme';
+                if(themeIcon) themeIcon.className = "fas fa-moon";
+            }
+        }
+
+        function alternarTemaGlobal() {
+            aplicarTema(temaAtual === 'dark' ? 'light' : 'dark');
+        }
+
+        function escutarDadosGerais() {
+            mostrarFeedback("Conectando ao Firebase...", "loading");
+            try {
+                window.fs.onSnapshot(window.fs.collection(window.db, COLECAO_FIREBASE), async (snapshot) => {
+                    abas = [];
+                    snapshot.forEach(doc => abas.push({ id: doc.id, ...doc.data() }));
+
+                    if (abas.length === 0) {
+                        const defaultAba = {
+                            nome: 'Apresentação Principal',
+                            imagens: [{ url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop', grupo: 'Geral' }],
+                            temaPadrao: 'dark',
+                            principal: true
+                        };
+                        await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, "album_principal"), defaultAba);
+                        return;
+                    }
+
+                    if (!abaAtivaId || !abas.find(a => a.id === abaAtivaId)) {
+                        const principal = abas.find(a => a.principal === true);
+                        abaAtivaId = principal ? principal.id : abas[0].id;
+                    }
+
+                    const abaAtiva = abas.find(a => a.id === abaAtivaId);
+                    if (abaAtiva && abaAtiva.temaPadrao) aplicarTema(abaAtiva.temaPadrao);
+
+                    renderizarAbasTop();
+                    renderizarHubGrupos();
+                    mostrarFeedback("Sincronizado!");
+                }, (error) => {
+                    console.error(error);
+                    mostrarFeedback("Erro ao sincronizar", "error");
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function processarUrlImagem(url) {
+            url = url.trim();
+            const matchDrive = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (matchDrive && matchDrive[1]) return `https://lh3.googleusercontent.com/d/${matchDrive[1]}=s1600`;
+            return url;
+        }
+
+        function renderizarAbasTop() {
+            const container = document.getElementById('tabsWrapper');
+            if(!container) return;
+            container.innerHTML = '';
+
+            abas.forEach(a => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${a.id === abaAtivaId ? 'active' : ''}`;
+                btn.innerHTML = `<i class="fas fa-images"></i> ${a.nome || 'Aba'}`;
+                btn.onclick = () => mudarAbaDireto(a.id);
+                container.appendChild(btn);
+            });
+        }
+
+        function mudarAbaDireto(id) {
+            abaAtivaId = id;
+            grupoAtivoSelecionado = null;
+            document.getElementById('viewerContainer').style.display = 'none';
+            document.getElementById('groupsHubContainer').style.display = 'flex';
+            
+            const aba = abas.find(a => a.id === id);
+            if (aba && aba.temaPadrao) aplicarTema(aba.temaPadrao);
+
+            renderizarAbasTop();
+            renderizarHubGrupos();
+        }
+
+        function obterListaImagensTratadas() {
+            const aba = abas.find(a => a.id === abaAtivaId);
+            if (!aba || !aba.imagens) return [];
+            return aba.imagens.map(img => typeof img === 'string' ? { url: img, grupo: 'Geral' } : img);
+        }
+
+        function renderizarHubGrupos() {
+            const gridContainer = document.getElementById('groupsGridContainer');
+            const hubTitle = document.getElementById('hubTitleText');
+            if(!gridContainer) return;
+
+            const aba = abas.find(a => a.id === abaAtivaId);
+            hubTitle.innerText = aba ? aba.nome : "Selecione um Grupo";
+
+            const lista = obterListaImagensTratadas();
+            let gruposMap = {};
+            lista.forEach(item => {
+                let g = item.grupo || 'Geral';
+                if (!gruposMap[g]) gruposMap[g] = [];
+                gruposMap[g].push(item);
+            });
+
+            gridContainer.innerHTML = "";
+            const nomesGrupos = Object.keys(gruposMap);
+
+            if (nomesGrupos.length === 0) {
+                gridContainer.innerHTML = `
+                    <div class="empty-hub-state" style="grid-column: 1 / -1;">
+                        <p>Nenhum grupo ou imagem nesta aba.</p>
+                        ${isAdminLogado ? `<button class="btn-submit" style="width:auto; padding:8px 16px;" onclick="abrirModalGerenciarImagens()"><i class="fas fa-plus"></i> Adicionar Imagens</button>` : `<p style="font-size:11px; color:var(--accent);">Ative o modo Admin no canto superior para adicionar imagens.</p>`}
+                    </div>
+                `;
+                return;
+            }
+
+            nomesGrupos.forEach(nomeGrupo => {
+                const imagensDoGrupo = gruposMap[nomeGrupo];
+                const capaUrl = imagensDoGrupo[0].url;
+
+                const card = document.createElement('div');
+                card.className = 'group-card';
+                card.onclick = () => abrirVisualizadorGrupo(nomeGrupo);
+                card.innerHTML = `
+                    <div class="group-card-thumb-wrapper">
+                        <img src="${capaUrl}" class="group-card-thumb" onerror="this.src='https://via.placeholder.com/300x150?text=Erro'">
+                        <div class="group-card-badge">${imagensDoGrupo.length} imgs</div>
+                    </div>
+                    <div class="group-card-info">
+                        <span class="group-card-name"><i class="fas fa-folder-open" style="color:var(--accent);"></i> ${nomeGrupo}</span>
+                        <span class="group-card-count">Clique para iniciar</span>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+        }
+
+        function abrirVisualizadorGrupo(nomeGrupo) {
+            grupoAtivoSelecionado = nomeGrupo;
+            indiceImagemAtual = 0;
+            document.getElementById('groupsHubContainer').style.display = 'none';
+            document.getElementById('viewerContainer').style.display = 'flex';
+            atualizarVisualizador();
+        }
+
+        function voltarParaHub() {
+            grupoAtivoSelecionado = null;
+            document.getElementById('viewerContainer').style.display = 'none';
+            document.getElementById('groupsHubContainer').style.display = 'flex';
+            renderizarHubGrupos();
+        }
+
+        function obterImagensDoGrupoAtivo() {
+            const lista = obterListaImagensTratadas();
+            if (!grupoAtivoSelecionado) return lista;
+            return lista.filter(i => (i.grupo || 'Geral') === grupoAtivoSelecionado);
+        }
+
+        function atualizarVisualizador() {
+            const listaGrupo = obterImagensDoGrupoAtivo();
+            const imgEl = document.getElementById('currentViewerImage');
+            const counterEl = document.getElementById('imageCounterText');
+
+            if (listaGrupo.length === 0) {
+                imgEl.src = "";
+                counterEl.innerText = "Vazio";
+                return;
+            }
+
+            if (indiceImagemAtual >= listaGrupo.length) indiceImagemAtual = 0;
+            if (indiceImagemAtual < 0) indiceImagemAtual = listaGrupo.length - 1;
+
+            imgEl.src = listaGrupo[indiceImagemAtual].url;
+            counterEl.innerText = `${grupoAtivoSelecionado} | ${indiceImagemAtual + 1} / ${listaGrupo.length}`;
+        }
+
+        function mudarImagem(direcao) {
+            const listaGrupo = obterImagensDoGrupoAtivo();
+            if (listaGrupo.length === 0) return;
+            indiceImagemAtual += direcao;
+            if (indiceImagemAtual >= listaGrupo.length) indiceImagemAtual = 0;
+            if (indiceImagemAtual < 0) indiceImagemAtual = listaGrupo.length - 1;
+            atualizarVisualizador();
+        }
+
+        function configurarGestosTouch() {
+            let touchStartX = 0;
+            const viewer = document.getElementById('viewerContainer');
+            if(!viewer) return;
+            viewer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+            viewer.addEventListener('touchend', e => {
+                let touchEndX = e.changedTouches[0].screenX;
+                if (touchEndX < touchStartX - 40) mudarImagem(1);
+                if (touchEndX > touchStartX + 40) mudarImagem(-1);
+            }, false);
+        }
+
+        function toggleAdminMode() {
+            if (isAdminLogado) {
+                isAdminLogado = false;
+                document.getElementById('adminControlsBar').classList.remove('visible');
+                document.getElementById('adminFloatingPanel').classList.remove('visible');
+                document.getElementById('adminLockIcon').className = "fas fa-lock";
+                document.getElementById('adminBtnText').innerText = "Admin";
+                renderizarHubGrupos();
+                mostrarFeedback("Modo Admin desativado");
+            } else {
+                document.getElementById('inputAdminSenha').value = '';
+                document.getElementById('modalLogin').style.display = 'flex';
+            }
+        }
+
+        function fazerLoginAdmin() {
+            const senha = document.getElementById('inputAdminSenha').value;
+            if (senha === senhaAdminAtual) {
+                isAdminLogado = true;
+                document.getElementById('adminControlsBar').classList.add('visible');
+                document.getElementById('adminFloatingPanel').classList.add('visible');
+                document.getElementById('adminLockIcon').className = "fas fa-unlock";
+                document.getElementById('adminBtnText').innerText = "Sair";
+                fecharModais();
+                renderizarHubGrupos();
+                mostrarFeedback("Admin ativado com sucesso!");
+            } else {
+                mostrarFeedback("Senha incorreta!", "error");
+            }
+        }
+
+        function fecharModais() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        }
+
+        function abrirModalGerenciarImagens() {
+            document.getElementById('modalGerenciarImagens').style.display = 'flex';
+            renderizarListaImagensAdmin();
+        }
+
+        function renderizarListaImagensAdmin() {
+            const container = document.getElementById('listaImagensAdminContainer');
+            if(!container) return;
+            container.innerHTML = "";
+            const lista = obterListaImagensTratadas();
+
+            if (lista.length === 0) {
+                container.innerHTML = `<span style="font-size:11px; color:var(--text-muted);">Nenhuma imagem.</span>`;
+                return;
+            }
+
+            lista.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'admin-image-item';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px; overflow:hidden; flex:1;">
+                        <img src="${item.url}" class="admin-image-thumb" onerror="this.src='https://via.placeholder.com/40?text=Erro'">
+                        <div style="overflow:hidden;">
+                            <span style="font-size:10px; font-weight:700; color:var(--accent);">[${item.grupo || 'Geral'}] #${index + 1}</span>
+                            <span style="font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:180px; color:var(--text-muted);">${item.url}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:3px;">
+                        <button class="btn-secondary" style="padding:4px 6px;" onclick="moverSequencia(${index}, -1)"><i class="fas fa-arrow-up"></i></button>
+                        <button class="btn-secondary" style="padding:4px 6px;" onclick="moverSequencia(${index}, 1)"><i class="fas fa-arrow-down"></i></button>
+                        <button class="btn-secondary" style="color:#ef4444; padding:4px 6px;" onclick="removerImagem(${index})"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function adicionarImagemPorLink() {
+            const input = document.getElementById('inputImageUrl');
+            const inputGrupo = document.getElementById('inputGrupoNome');
+            let url = processarUrlImagem(input.value);
+            let grupo = inputGrupo.value.trim() || 'Geral';
+
+            if (!url) return mostrarFeedback("Insira uma URL válida!", "error");
+
+            let lista = obterListaImagensTratadas();
+            lista.push({ url, grupo });
+
+            mostrarFeedback("Salvando...", "loading");
+            try {
+                await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, abaAtivaId), { imagens: lista }, { merge: true });
+                input.value = "";
+                renderizarListaImagensAdmin();
+                renderizarHubGrupos();
+                mostrarFeedback("Adicionado!");
+            } catch (err) {
+                mostrarFeedback("Erro ao salvar", "error");
+            }
+        }
+
+        async function processarArquivosLocais(inputEl) {
+            const files = inputEl.files;
+            if (!files || files.length === 0) return;
+            let grupo = document.getElementById('inputGrupoNome').value.trim() || 'Geral';
+            let lista = obterListaImagensTratadas();
+
+            mostrarFeedback("Processando arquivos...", "loading");
+            try {
+                for (let file of files) {
+                    const base64 = await comprimirImagemLocal(file);
+                    lista.push({ url: base64, grupo });
+                }
+                await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, abaAtivaId), { imagens: lista }, { merge: true });
+                inputEl.value = "";
+                renderizarListaImagensAdmin();
+                renderizarHubGrupos();
+                mostrarFeedback("Upload concluído!");
+            } catch (err) {
+                mostrarFeedback("Erro no upload", "error");
+            }
+        }
+
+        function comprimirImagemLocal(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvasL = document.createElement('canvas');
+                        const MAX = 1200;
+                        let w = img.width, h = img.height;
+                        if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
+                        else if (h > MAX) { w *= MAX / h; h = MAX; }
+                        canvasL.width = w; canvasL.height = h;
+                        canvasL.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvasL.toDataURL('image/jpeg', 0.8));
+                    };
+                };
+            });
+        }
+
+        async function moverSequencia(index, direcao) {
+            let lista = obterListaImagensTratadas();
+            const novoIndex = index + direcao;
+            if (novoIndex < 0 || novoIndex >= lista.length) return;
+            const item = lista.splice(index, 1)[0];
+            lista.splice(novoIndex, 0, item);
+            await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, abaAtivaId), { imagens: lista }, { merge: true });
+            renderizarListaImagensAdmin();
+            renderizarHubGrupos();
+        }
+
+        async function removerImagem(index) {
+            let lista = obterListaImagensTratadas();
+            lista.splice(index, 1);
+            await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, abaAtivaId), { imagens: lista }, { merge: true });
+            renderizarListaImagensAdmin();
+            renderizarHubGrupos();
+        }
+
+        function abrirEditorImagemAtual() {
+            const listaGrupo = obterImagensDoGrupoAtivo();
+            if (listaGrupo.length === 0) return mostrarFeedback("Nenhuma imagem para editar", "error");
+            document.getElementById('modalEditor').style.display = 'flex';
+            canvas = document.getElementById('imageCanvas');
+            ctx = canvas.getContext('2d');
+            historyCanvas = [];
+            baseImageObj = new Image();
+            baseImageObj.crossOrigin = "anonymous";
+            baseImageObj.src = listaGrupo[indiceImagemAtual].url;
+            baseImageObj.onload = () => {
+                canvas.width = baseImageObj.width;
+                canvas.height = baseImageObj.height;
+                ctx.drawImage(baseImageObj, 0, 0);
+                salvarEstadoCanvas();
+            };
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.ribbon-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`).classList.add('active');
+        }
+
+        function salvarEstadoCanvas() { historyCanvas.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); }
+        function desfazerCanvas() {
+            if (historyCanvas.length > 1) { historyCanvas.pop(); ctx.putImageData(historyCanvas[historyCanvas.length - 1], 0, 0); }
+            else { ctx.drawImage(baseImageObj, 0, 0); }
+        }
+        function limparCanvas() { ctx.drawImage(baseImageObj, 0, 0); salvarEstadoCanvas(); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const c = document.getElementById('imageCanvas');
+            if(!c) return;
+            c.addEventListener('mousedown', startDraw);
+            c.addEventListener('mousemove', draw);
+            c.addEventListener('mouseup', endDraw);
+        });
+
+        function getMousePos(e, el) {
+            const r = el.getBoundingClientRect();
+            return { x: (e.clientX - r.left) * (el.width / r.width), y: (e.clientY - r.top) * (el.height / r.height) };
+        }
+
+        function startDraw(e) {
+            drawing = true;
+            const p = getMousePos(e, canvas);
+            startX = p.x; startY = p.y;
+            if (currentTool === 'text') {
+                const txt = prompt("Texto:");
+                if (txt) {
+                    ctx.fillStyle = document.getElementById('drawColor').value;
+                    ctx.font = `bold ${Math.max(20, canvas.width/30)}px sans-serif`;
+                    ctx.fillText(txt, startX, startY);
+                    salvarEstadoCanvas();
+                }
+                drawing = false;
+            } else if (currentTool === 'pencil') { ctx.beginPath(); ctx.moveTo(startX, startY); }
+        }
+
+        function draw(e) {
+            if (!drawing || currentTool === 'text') return;
+            const p = getMousePos(e, canvas);
+            ctx.strokeStyle = document.getElementById('drawColor').value;
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.lineWidth = document.getElementById('drawWidth').value;
+            ctx.lineCap = 'round';
+            if (currentTool === 'pencil') { ctx.lineTo(p.x, p.y); ctx.stroke(); }
+            else {
+                ctx.putImageData(historyCanvas[historyCanvas.length - 1], 0, 0);
+                if (currentTool === 'line') { ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+                else if (currentTool === 'rect') { ctx.strokeRect(startX, startY, p.x - startX, p.y - startY); }
+            }
+        }
+
+        function endDraw() { if (!drawing) return; drawing = false; salvarEstadoCanvas(); }
+
+        async function salvarImagemEditada() {
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            let listaCompleta = obterListaImagensTratadas();
+            const listaGrupo = obterImagensDoGrupoAtivo();
+            const alv = listaGrupo[indiceImagemAtual];
+            const realIdx = listaCompleta.findIndex(i => i.url === alv.url && i.grupo === alv.grupo);
+            if (realIdx !== -1) listaCompleta[realIdx].url = dataUrl;
+
+            await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, abaAtivaId), { imagens: listaCompleta }, { merge: true });
+            fecharModais();
+            atualizarVisualizador();
+            renderizarHubGrupos();
+            mostrarFeedback("Edição salva!");
+        }
+
+        function abrirModalConfigAba() {
+            const aba = abas.find(a => a.id === abaAtivaId);
+            document.getElementById('inputNomeAba').value = aba ? aba.nome : "";
+            document.getElementById('selectTemaPadrao').value = aba && aba.temaPadrao ? aba.temaPadrao : "dark";
+            document.getElementById('modalConfigAba').style.display = 'flex';
+        }
+
+        async function salvarConfigAbaAtual() {
+            const nome = document.getElementById('inputNomeAba').value.trim();
+            const temaPadrao = document.getElementById('selectTemaPadrao').value;
+            if (!nome) return mostrarFeedback("Digite o nome", "error");
+
+            const newId = abaAtivaId || ('album_' + Date.now());
+            await window.fs.setDoc(window.fs.doc(window.db, COLECAO_FIREBASE, newId), {
+                nome: nome,
+                temaPadrao: temaPadrao,
+                imagens: abas.find(a => a.id === abaAtivaId)?.imagens || []
+            }, { merge: true });
+
+            fecharModais();
+            mudarAbaDireto(newId);
+            mostrarFeedback("Aba salva!");
+        }
+
+        async function excluirAbaAtual() {
+            if (abas.length <= 1) return mostrarFeedback("Mantenha ao menos uma aba", "error");
+            if (!confirm("Apagar aba?")) return;
+            await window.fs.deleteDoc(window.fs.doc(window.db, COLECAO_FIREBASE, abaAtivaId));
+            fecharModais();
+            mostrarFeedback("Aba excluída");
+        }
+
+        function abrirModalSenhaMaster() { document.getElementById('modalSenhaMaster').style.display = 'flex'; }
+        async function salvarNovaSenhaAdmin() {
+            const ns = document.getElementById('inputNovaSenhaMaster').value.trim();
+            if (!ns) return mostrarFeedback("Senha inválida", "error");
+            senhaAdminAtual = ns;
+            localStorage.setItem('hub_admin_pass', ns);
+            fecharModais();
+            mostrarFeedback("Senha alterada!");
+        }
+    </script>
+</body>
+</html>
